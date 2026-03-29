@@ -555,6 +555,18 @@ describe('Schema Validation Against OpenAPI Specs', () => {
       const result = CreateProductInputSchema.safeParse(invalidData);
       expect(result.success).toBe(false);
     });
+
+    it('should accept new product fields', () => {
+      const validData = {
+        name: 'Test Product',
+        purchasePrice: 50.00,
+        tags: ['electronics', 'sale'],
+        calculatecost: 45.00,
+      };
+
+      const result = CreateProductInputSchema.safeParse(validData);
+      expect(result.success).toBe(true);
+    });
   });
 
   describe('Service Creation', () => {
