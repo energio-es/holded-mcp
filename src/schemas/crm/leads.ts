@@ -36,22 +36,12 @@ export type GetLeadInput = z.infer<typeof GetLeadInputSchema>;
  */
 export const CreateLeadInputSchema = z.strictObject({
   name: z.string().min(1, { message: "Name is required" }).describe("Lead name (required)"),
-  funnel_id: z.string().optional().describe("Funnel ID to place the lead in"),
+  funnel_id: z.string().min(1, { message: "Funnel ID is required" }).describe("Funnel ID to place the lead in (required)"),
+  contact_id: z.string().min(1, { message: "Contact ID is required" }).describe("Associated contact ID (required)"),
   stage_id: z.string().optional().describe("Stage ID within the funnel"),
-  contact_id: z.string().optional().describe("Associated contact ID"),
   contact_name: z.string().optional().describe("Contact name"),
   value: z.number().min(0).optional().describe("Monetary value of the lead"),
-  potential: z.number().min(0).optional().describe("Potential value of the lead"),
-  probability: z
-    .number()
-    .min(0)
-    .max(100)
-    .optional()
-    .describe("Probability of closing (0-100%)"),
   due_date: TimestampSchema.describe("Due date as Unix timestamp"),
-  expected_close_date: TimestampSchema.describe("Expected close date as Unix timestamp"),
-  assigned_to: z.string().optional().describe("User ID to assign the lead to"),
-  notes: z.string().optional().describe("Notes about the lead"),
 })
 
 export type CreateLeadInput = z.infer<typeof CreateLeadInputSchema>;
@@ -63,17 +53,7 @@ export const UpdateLeadInputSchema = z.strictObject({
   lead_id: IdSchema.describe("The lead ID to update"),
   name: z.string().min(1).optional().describe("Lead name"),
   value: z.number().min(0).optional().describe("Monetary value of the lead"),
-  potential: z.number().min(0).optional().describe("Potential value of the lead"),
-  probability: z
-    .number()
-    .min(0)
-    .max(100)
-    .optional()
-    .describe("Probability of closing (0-100%)"),
   due_date: TimestampSchema.describe("Due date as Unix timestamp"),
-  expected_close_date: TimestampSchema.describe("Expected close date as Unix timestamp"),
-  assigned_to: z.string().optional().describe("User ID to assign the lead to"),
-  notes: z.string().optional().describe("Notes about the lead"),
   status: z.number().int().optional().describe("Lead status indicator"),
   customFields: z.array(z.strictObject({
     field: z.string().describe("Custom field name"),

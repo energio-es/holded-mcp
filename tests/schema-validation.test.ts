@@ -778,29 +778,33 @@ describe('Schema Validation Against OpenAPI Specs', () => {
   // ===== CRM MODULE TESTS =====
 
   describe('Lead Creation', () => {
-    it('should require name field', () => {
+    it('should require name, funnel_id, and contact_id', () => {
       const result = CreateLeadInputSchema.safeParse({});
       expect(result.success).toBe(false);
 
       if (!result.success) {
         const issues = result.error.issues.map(i => i.path[0]);
         expect(issues).toContain('name');
+        expect(issues).toContain('funnel_id');
+        expect(issues).toContain('contact_id');
       }
     });
 
     it('should accept valid lead data', () => {
       const validData = {
         name: 'New Lead',
+        funnel_id: 'funnel123',
+        contact_id: 'contact456',
       };
 
       const result = CreateLeadInputSchema.safeParse(validData);
       expect(result.success).toBe(true);
     });
 
-    it('should validate probability range', () => {
+    it('should reject missing funnel_id', () => {
       const invalidData = {
         name: 'New Lead',
-        probability: 150, // Should be 0-100
+        contact_id: 'contact456',
       };
 
       const result = CreateLeadInputSchema.safeParse(invalidData);
@@ -811,22 +815,9 @@ describe('Schema Validation Against OpenAPI Specs', () => {
       const validData = {
         name: 'New Lead',
         funnel_id: 'funnel123',
-        stage_id: 'stage456',
-        potential: 5000,
-        probability: 75,
-      };
-
-      const result = CreateLeadInputSchema.safeParse(validData);
-      expect(result.success).toBe(true);
-    });
-
-    it('should accept new lead fields', () => {
-      const validData = {
-        name: 'New Lead',
-        funnel_id: 'funnel123',
-        contact_name: 'John Doe',
-        value: 10000,
-        potential: 5000,
+        contact_id: 'contact456',
+        stage_id: 'stage789',
+        value: 5000,
         due_date: 1730109600,
       };
 
