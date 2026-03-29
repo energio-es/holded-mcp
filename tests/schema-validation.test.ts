@@ -807,6 +807,20 @@ describe('Schema Validation Against OpenAPI Specs', () => {
       const result = CreateLeadInputSchema.safeParse(validData);
       expect(result.success).toBe(true);
     });
+
+    it('should accept new lead fields', () => {
+      const validData = {
+        name: 'New Lead',
+        funnel_id: 'funnel123',
+        contact_name: 'John Doe',
+        value: 10000,
+        potential: 5000,
+        due_date: 1730109600,
+      };
+
+      const result = CreateLeadInputSchema.safeParse(validData);
+      expect(result.success).toBe(true);
+    });
   });
 
   describe('Funnel Creation', () => {
