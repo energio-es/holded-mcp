@@ -492,7 +492,8 @@ export function formatResponse<T>(
       );
       truncated = true;
     } else {
-      text = text.substring(0, characterLimit) + "\n... (response truncated)";
+      const suffix = "\n... (response truncated)";
+      text = text.substring(0, characterLimit - suffix.length) + suffix;
       truncated = true;
     }
   }
@@ -526,4 +527,13 @@ export function toStructuredContent(response: unknown): Record<string, unknown> 
   }
   // For arrays or other types, wrap in a data property
   return { data: response, success: true };
+}
+
+/**
+ * Reset internal state for testing purposes only
+ */
+export function _resetForTesting(): void {
+  rateLimiter = null;
+  axiosInstance = undefined;
+  apiKey = undefined;
 }
