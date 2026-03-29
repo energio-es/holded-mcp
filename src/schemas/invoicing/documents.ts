@@ -19,12 +19,18 @@ export const DocumentItemSchema = z.strictObject({
   desc: z.string().optional().describe("Item description"),
   units: z.number().positive().optional().describe("Quantity"),
   subtotal: z.number().optional().describe("Subtotal before tax"),
-  tax: z.string().optional().describe("Tax rate ID or percentage"),
+  tax: z.string().optional().describe("Tax rate ID or percentage (single tax)"),
+  taxes: z.array(z.string()).optional().describe("Multiple tax keys (e.g., ['s_iva_21'])"),
   discount: z.number().min(0).max(100).optional().describe("Discount percentage"),
   productId: z.string().optional().describe("Product ID if linked to a product"),
   sku: z.string().optional().describe("SKU code"),
   weight: z.number().min(0).optional().describe("Item weight"),
-  accountingAccount: z.string().optional().describe("Accounting account code"),
+  accountingAccountId: z.string().optional().describe("Accounting account ID"),
+  serviceId: z.string().optional().describe("Service identifier"),
+  supplied: z.enum(["Yes", "No"]).optional().describe("Whether item has been supplied"),
+  tags: z.array(z.string()).optional().describe("Item tags"),
+  kind: z.string().optional().describe("Item kind (e.g., 'lots')"),
+  lotSku: z.string().optional().describe("Lot SKU (required when kind is 'lots')"),
 })
 
 /**
@@ -54,19 +60,50 @@ export type GetDocumentInput = z.infer<typeof GetDocumentInputSchema>;
  */
 export const CreateDocumentInputSchema = z.strictObject({
   doc_type: DocumentTypeSchema,
+  // Contact identification (provide one)
   contactId: z.string().optional().describe("Contact ID to associate with the document"),
   contactName: z.string().optional().describe("Contact name (used if creating a new contact)"),
-  date: TimestampSchema.describe("Document date as Unix timestamp"),
+  contactCode: z.string().optional().describe("Contact NIF/CIF/VAT identifier"),
+  contactEmail: z.string().optional().describe("Contact email"),
+  contactAddress: z.string().optional().describe("Contact street address"),
+  contactCity: z.string().optional().describe("Contact city"),
+  contactCp: z.string().optional().describe("Contact postal code"),
+  contactProvince: z.string().optional().describe("Contact province"),
+  contactCountryCode: z.string().optional().describe("Contact country code"),
+  // Document details
+  date: z.number().int().positive().describe("Document date as Unix timestamp (required)"),
   dueDate: TimestampSchema.describe("Due date as Unix timestamp"),
+  desc: z.string().optional().describe("Document description"),
+  notes: z.string().optional().describe("Document notes"),
+  language: z.string().optional().describe("Document language code"),
+  currency: z.string().optional().describe("ISO currency code (e.g., 'eur')"),
   currencyChange: z.number().positive().optional().describe("Currency exchange rate"),
+  // Document configuration
+  invoiceNum: z.string().optional().describe("Custom document number (auto-generated if not provided)"),
+  numSerieId: z.string().optional().describe("Numbering series ID"),
+  salesChannelId: z.string().optional().describe("Sales channel ID"),
+  paymentMethodId: z.string().optional().describe("Payment method ID"),
+  designId: z.string().optional().describe("Document design template ID"),
+  warehouseId: z.string().optional().describe("Warehouse ID (for salesorder/purchaseorder/waybill)"),
+  approveDoc: z.boolean().optional().describe("Auto-approve document (default false)"),
+  applyContactDefaults: z.boolean().optional().describe("Apply contact defaults (default true)"),
+  directDebitProvider: z.string().optional().describe("Direct debit provider (e.g., 'gocardless')"),
+  // Shipping
+  shippingAddress: z.string().optional().describe("Shipping street address"),
+  shippingPostalCode: z.string().optional().describe("Shipping postal code"),
+  shippingCity: z.string().optional().describe("Shipping city"),
+  shippingProvince: z.string().optional().describe("Shipping province"),
+  shippingCountry: z.string().optional().describe("Shipping country"),
+  // Items and metadata
   items: z
     .array(DocumentItemSchema)
     .min(1, { message: "At least one item is required" })
     .describe("Document line items (required)"),
-  notes: z.string().optional().describe("Document notes"),
-  salesChannel: z.string().optional().describe("Sales channel"),
-  docNumber: z.string().optional().describe("Custom document number (auto-generated if not provided)"),
-  numSerieId: z.string().optional().describe("Numbering series ID"),
+  customFields: z.array(z.strictObject({
+    field: z.string().describe("Custom field name"),
+    value: z.string().describe("Custom field value"),
+  })).optional().describe("Custom field key-value pairs"),
+  tags: z.array(z.string()).optional().describe("Document tags"),
 })
 
 export type CreateDocumentInput = z.infer<typeof CreateDocumentInputSchema>;
@@ -80,10 +117,19 @@ export const UpdateDocumentInputSchema = z.strictObject({
   contactId: z.string().optional().describe("Contact ID to associate with the document"),
   date: TimestampSchema.describe("Document date as Unix timestamp"),
   dueDate: TimestampSchema.describe("Due date as Unix timestamp"),
+  desc: z.string().optional().describe("Document description"),
+  notes: z.string().optional().describe("Document notes"),
+  language: z.string().optional().describe("Document language code"),
   currencyChange: z.number().positive().optional().describe("Currency exchange rate"),
   items: z.array(DocumentItemSchema).optional().describe("Document line items"),
-  notes: z.string().optional().describe("Document notes"),
-  salesChannel: z.string().optional().describe("Sales channel"),
+  salesChannelId: z.string().optional().describe("Sales channel ID"),
+  paymentMethod: z.string().optional().describe("Payment method ID"),
+  warehouseId: z.string().optional().describe("Warehouse ID (for salesorder/purchaseorder/waybill)"),
+  expAccountId: z.string().optional().describe("Expenses account ID"),
+  customFields: z.array(z.strictObject({
+    field: z.string().describe("Custom field name"),
+    value: z.string().describe("Custom field value"),
+  })).optional().describe("Custom field key-value pairs"),
 })
 
 export type UpdateDocumentInput = z.infer<typeof UpdateDocumentInputSchema>;
