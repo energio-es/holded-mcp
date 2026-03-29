@@ -45,7 +45,8 @@ import { CreateProjectTimeTrackingInputSchema } from '../src/schemas/projects/ti
 import { CreateAccountInputSchema, ListAccountingAccountsInputSchema } from '../src/schemas/accounting/accounts.js';
 
 // Common schemas
-import { PaginationSchema, TimestampSchema, AddressSchema } from '../src/schemas/common.js';
+import { PaginationSchema, TimestampSchema, AddressSchema, ShippingAddressSchema, NumberingSeriesSchema, ContactPersonSchema } from '../src/schemas/common.js';
+import { ContactDefaultsSchema } from '../src/schemas/invoicing/contacts.js';
 
 describe('Schema Validation Against OpenAPI Specs', () => {
 
@@ -408,6 +409,56 @@ describe('Schema Validation Against OpenAPI Specs', () => {
 
       const result = CreateContactInputSchema.safeParse(validData);
       expect(result.success).toBe(true);
+    });
+
+    it('should reject invalid taxOperation', () => {
+      const invalidData = {
+        name: 'Test Contact',
+        taxOperation: 'invalid',
+      };
+
+      const result = CreateContactInputSchema.safeParse(invalidData);
+      expect(result.success).toBe(false);
+    });
+
+    it('should reject contactPerson with empty name', () => {
+      const invalidData = {
+        name: 'Test Contact',
+        contactPersons: [{ name: '', email: 'john@test.com' }],
+      };
+
+      const result = CreateContactInputSchema.safeParse(invalidData);
+      expect(result.success).toBe(false);
+    });
+
+    it('should reject unknown keys in numberingSeries (strictObject)', () => {
+      const invalidData = {
+        name: 'Test Contact',
+        numberingSeries: { invoice: 'series1', unknownDocType: 'series2' },
+      };
+
+      const result = CreateContactInputSchema.safeParse(invalidData);
+      expect(result.success).toBe(false);
+    });
+
+    it('should reject invalid language in defaults', () => {
+      const invalidData = {
+        name: 'Test Contact',
+        defaults: { language: 'xx' },
+      };
+
+      const result = CreateContactInputSchema.safeParse(invalidData);
+      expect(result.success).toBe(false);
+    });
+
+    it('should reject invalid accumulateInForm347 value', () => {
+      const invalidData = {
+        name: 'Test Contact',
+        defaults: { accumulateInForm347: 'Maybe' },
+      };
+
+      const result = CreateContactInputSchema.safeParse(invalidData);
+      expect(result.success).toBe(false);
     });
   });
 
@@ -1157,6 +1208,72 @@ describe('Schema Validation Against OpenAPI Specs', () => {
 
       const result = AddressSchema.safeParse(validData);
       expect(result.success).toBe(true);
+    });
+  });
+
+  describe('ShippingAddressSchema', () => {
+    it('should accept address with countryCode inherited from AddressSchema', () => {
+      const validData = {
+        address: '123 Main St',
+        city: 'Madrid',
+        countryCode: 'ES',
+        name: 'Main Warehouse',
+        notes: 'Ring bell twice',
+      };
+
+      const result = ShippingAddressSchema.safeParse(validData);
+      expect(result.success).toBe(true);
+    });
+
+    it('should accept all shipping-specific fields', () => {
+      const validData = {
+        name: 'Office',
+        address: '456 Oak Ave',
+        city: 'Barcelona',
+        postalCode: '08001',
+        province: 'Barcelona',
+        country: 'Spain',
+        countryCode: 'ES',
+        notes: 'Leave at reception',
+        privateNote: 'Internal use only',
+      };
+
+      const result = ShippingAddressSchema.safeParse(validData);
+      expect(result.success).toBe(true);
+    });
+
+    it('should reject unknown fields (strictObject)', () => {
+      const invalidData = {
+        address: '123 Main St',
+        unknownField: 'should fail',
+      };
+
+      const result = ShippingAddressSchema.safeParse(invalidData);
+      expect(result.success).toBe(false);
+    });
+  });
+
+  describe('NumberingSeriesSchema', () => {
+    it('should reject unknown document type keys', () => {
+      const invalidData = {
+        invoice: 'series1',
+        unknownType: 'series2',
+      };
+
+      const result = NumberingSeriesSchema.safeParse(invalidData);
+      expect(result.success).toBe(false);
+    });
+  });
+
+  describe('ContactPersonSchema', () => {
+    it('should require name', () => {
+      const result = ContactPersonSchema.safeParse({ email: 'test@test.com' });
+      expect(result.success).toBe(false);
+    });
+
+    it('should reject invalid email', () => {
+      const result = ContactPersonSchema.safeParse({ name: 'John', email: 'not-email' });
+      expect(result.success).toBe(false);
     });
   });
 });

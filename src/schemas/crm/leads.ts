@@ -8,6 +8,7 @@ import {
   PaginationSchema,
   ResponseFormatSchema,
   TimestampSchema,
+  CustomFieldsSchema,
 } from "../common.js";
 
 /**
@@ -55,10 +56,7 @@ export const UpdateLeadInputSchema = z.strictObject({
   value: z.number().min(0).optional().describe("Monetary value of the lead"),
   due_date: TimestampSchema.describe("Due date as Unix timestamp"),
   status: z.number().int().optional().describe("Lead status indicator"),
-  customFields: z.array(z.strictObject({
-    field: z.string().describe("Custom field name"),
-    value: z.string().describe("Custom field value"),
-  })).optional().describe("Custom field key-value pairs"),
+  customFields: CustomFieldsSchema,
 })
 
 export type UpdateLeadInput = z.infer<typeof UpdateLeadInputSchema>;
