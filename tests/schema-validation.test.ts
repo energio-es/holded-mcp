@@ -387,6 +387,28 @@ describe('Schema Validation Against OpenAPI Specs', () => {
       const result = CreateContactInputSchema.safeParse(validData);
       expect(result.success).toBe(true);
     });
+
+    it('should accept new contact fields', () => {
+      const validData = {
+        name: 'Test Contact',
+        CustomId: 'CUST-001',
+        tradeName: 'Test Trading Co',
+        sepaRef: 'SEPA-REF-001',
+        clientRecord: 4300,
+        taxOperation: 'general' as const,
+        numberingSeries: { invoice: 'series1', receipt: 'series2' },
+        contactPersons: [{ name: 'John Doe', email: 'john@test.com' }],
+        defaults: {
+          salesTax: 21,
+          currency: 'eur',
+          language: 'es' as const,
+          showTradeNameOnDocs: true,
+        },
+      };
+
+      const result = CreateContactInputSchema.safeParse(validData);
+      expect(result.success).toBe(true);
+    });
   });
 
   describe('Contact Update', () => {
