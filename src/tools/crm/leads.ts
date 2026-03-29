@@ -206,12 +206,12 @@ Returns:
 
 Args:
   - name (string): Lead name (required)
-  - funnel_id (string): Funnel ID to place the lead in
+  - funnel_id (string): Funnel ID (required)
+  - contact_id (string): Contact ID (required)
   - stage_id (string): Stage ID within the funnel
-  - contact_id (string): Associated contact ID
-  - potential (number): Potential value of the lead
-  - probability (number): Probability of closing (0-100%)
-  - And other optional fields
+  - contact_name (string): Contact name
+  - value (number): Monetary value of the lead
+  - due_date (number): Due date as Unix timestamp
 
 Returns:
   The created lead with its assigned ID.`,
@@ -271,9 +271,10 @@ Returns:
 Args:
   - lead_id (string): The lead ID to update (required)
   - name (string): Lead name
-  - potential (number): Potential value
-  - probability (number): Probability (0-100%)
-  - And other optional fields
+  - value (number): Monetary value
+  - due_date (number): Due date as Unix timestamp
+  - status (number): Lead status indicator
+  - customFields (array): Custom field key-value pairs
 
 Returns:
   The updated lead.`,
