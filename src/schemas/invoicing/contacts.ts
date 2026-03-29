@@ -8,7 +8,10 @@ import {
   PaginationSchema,
   ResponseFormatSchema,
   AddressSchema,
+  ShippingAddressSchema,
   TagsSchema,
+  NumberingSeriesSchema,
+  ContactPersonSchema,
 } from "../common.js";
 
 /**
@@ -48,9 +51,21 @@ export const SocialNetworksSchema = z.strictObject({
  */
 export const ContactDefaultsSchema = z.strictObject({
     salesChannel: z.string().optional().describe("Default sales channel"),
-    paymentMethod: z.string().optional().describe("Default payment method"),
+    paymentMethod: z.string().optional().describe("Default payment method ID"),
     paymentDay: z.number().int().min(1).max(31).optional().describe("Default payment day of month"),
     dueDays: z.number().int().min(0).optional().describe("Default due days"),
+    expensesAccountRecord: z.number().int().optional().describe("Default expenses account record"),
+    expensesAccountName: z.string().optional().describe("Default expenses account name"),
+    salesAccountRecord: z.number().int().optional().describe("Default sales account record"),
+    salesAccountName: z.string().optional().describe("Default sales account name"),
+    salesTax: z.number().int().optional().describe("Default sales tax percentage"),
+    purchasesTax: z.number().int().optional().describe("Default purchases tax percentage"),
+    accumulateInForm347: z.enum(["Yes", "No"]).optional().describe("Accumulate in Form 347"),
+    discount: z.number().int().min(0).max(100).optional().describe("Default discount percentage"),
+    currency: z.string().optional().describe("ISO currency code lowercase (e.g., 'eur')"),
+    language: z.enum(["es", "en", "fr", "de", "it", "ca", "eu"]).optional().describe("Default language"),
+    showTradeNameOnDocs: z.boolean().optional().describe("Show trade name on documents"),
+    showCountryOnDocs: z.boolean().optional().describe("Show country on documents"),
   })
   .optional();
 
@@ -59,35 +74,8 @@ export const ContactDefaultsSchema = z.strictObject({
  */
 export const CreateContactInputSchema = z.strictObject({
   name: z.string().min(1, { message: "Name is required" }).describe("Contact name (required)"),
-  code: z.string().optional().describe("Contact code/reference"),
-  email: z.string().email().optional().describe("Email address"),
-  phone: z.string().optional().describe("Phone number"),
-  mobile: z.string().optional().describe("Mobile phone number"),
-  type: z
-    .enum(["client", "supplier", "lead", "debtor", "creditor"])
-    .optional()
-    .describe("Contact type"),
-  isperson: z.boolean().optional().describe("Is this an individual person (true) or company (false)"),
-  iban: z.string().optional().describe("Bank IBAN"),
-  swift: z.string().optional().describe("Bank SWIFT/BIC code"),
-  billAddress: AddressSchema.optional().describe("Billing address"),
-  shippingAddresses: z.array(AddressSchema).optional().describe("Shipping addresses"),
-  socialNetworks: SocialNetworksSchema,
-  defaults: ContactDefaultsSchema,
-  tags: TagsSchema,
-  note: z.string().optional().describe("Notes about the contact"),
-  groupId: z.string().optional().describe("Contact group ID"),
-});
-
-export type CreateContactInput = z.infer<typeof CreateContactInputSchema>;
-
-/**
- * Update contact input schema
- */
-export const UpdateContactInputSchema = z.strictObject({
-  contact_id: IdSchema.describe("The contact ID to update"),
-  name: z.string().min(1).optional().describe("Contact name"),
-  code: z.string().optional().describe("Contact code/reference"),
+  CustomId: z.string().optional().describe("Custom reference identifier"),
+  code: z.string().optional().describe("Contact code/reference (NIF/CIF/VAT)"),
   tradeName: z.string().optional().describe("Trade/business name"),
   email: z.string().email().optional().describe("Email address"),
   phone: z.string().optional().describe("Phone number"),
@@ -99,11 +87,57 @@ export const UpdateContactInputSchema = z.strictObject({
   isperson: z.boolean().optional().describe("Is this an individual person (true) or company (false)"),
   iban: z.string().optional().describe("Bank IBAN"),
   swift: z.string().optional().describe("Bank SWIFT/BIC code"),
+  sepaRef: z.string().optional().describe("SEPA reference"),
+  sepaDate: z.number().optional().describe("SEPA date"),
+  clientRecord: z.number().int().optional().describe("Client accounting record number"),
+  supplierRecord: z.number().int().optional().describe("Supplier accounting record number"),
+  taxOperation: z.enum(["general", "intra", "impexp", "nosujeto", "receq", "exento"]).optional().describe("Tax operation type (Spain)"),
+  groupId: z.string().optional().describe("Contact group ID"),
   billAddress: AddressSchema.optional().describe("Billing address"),
-  shippingAddresses: z.array(AddressSchema).optional().describe("Shipping addresses"),
+  shippingAddresses: z.array(ShippingAddressSchema).optional().describe("Shipping addresses"),
   socialNetworks: SocialNetworksSchema,
   defaults: ContactDefaultsSchema,
+  numberingSeries: NumberingSeriesSchema,
+  contactPersons: z.array(ContactPersonSchema).optional().describe("Contact persons"),
+  tags: TagsSchema,
+  note: z.string().optional().describe("Notes about the contact"),
+});
+
+export type CreateContactInput = z.infer<typeof CreateContactInputSchema>;
+
+/**
+ * Update contact input schema
+ */
+export const UpdateContactInputSchema = z.strictObject({
+  contact_id: IdSchema.describe("The contact ID to update"),
+  name: z.string().min(1).optional().describe("Contact name"),
+  CustomId: z.string().optional().describe("Custom reference identifier"),
+  code: z.string().optional().describe("Contact code/reference (NIF/CIF/VAT)"),
+  tradeName: z.string().optional().describe("Trade/business name"),
+  email: z.string().email().optional().describe("Email address"),
+  phone: z.string().optional().describe("Phone number"),
+  mobile: z.string().optional().describe("Mobile phone number"),
+  type: z
+    .enum(["client", "supplier", "lead", "debtor", "creditor"])
+    .optional()
+    .describe("Contact type"),
+  isperson: z.boolean().optional().describe("Is this an individual person (true) or company (false)"),
+  iban: z.string().optional().describe("Bank IBAN"),
+  swift: z.string().optional().describe("Bank SWIFT/BIC code"),
+  sepaRef: z.string().optional().describe("SEPA reference"),
+  sepaDate: z.number().optional().describe("SEPA date"),
+  clientRecord: z.number().int().optional().describe("Client accounting record number"),
+  supplierRecord: z.number().int().optional().describe("Supplier accounting record number"),
+  taxOperation: z.enum(["general", "intra", "impexp", "nosujeto", "receq", "exento"]).optional().describe("Tax operation type (Spain)"),
   groupId: z.string().optional().describe("Contact group ID"),
+  billAddress: AddressSchema.optional().describe("Billing address"),
+  shippingAddresses: z.array(ShippingAddressSchema).optional().describe("Shipping addresses"),
+  socialNetworks: SocialNetworksSchema,
+  defaults: ContactDefaultsSchema,
+  numberingSeries: NumberingSeriesSchema,
+  contactPersons: z.array(ContactPersonSchema).optional().describe("Contact persons"),
+  tags: TagsSchema,
+  note: z.string().optional().describe("Notes about the contact"),
 });
 
 export type UpdateContactInput = z.infer<typeof UpdateContactInputSchema>;
