@@ -457,6 +457,39 @@ describe('Schema Validation Against OpenAPI Specs', () => {
       });
       expect(result.success).toBe(true);
     });
+
+    it('should require date field', () => {
+      const invalidData = {
+        doc_type: 'invoice',
+        items: [{ name: 'Product 1', units: 2, subtotal: 100 }],
+      };
+
+      const result = CreateDocumentInputSchema.safeParse(invalidData);
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        const issues = result.error.issues.map(i => i.path[0]);
+        expect(issues).toContain('date');
+      }
+    });
+
+    it('should accept new document fields', () => {
+      const validData = {
+        doc_type: 'invoice',
+        date: 1730109600,
+        items: [{ name: 'Product 1', units: 2, subtotal: 100, taxes: ['s_iva_21'], serviceId: 'svc1' }],
+        contactCode: 'B12345678',
+        language: 'es',
+        currency: 'eur',
+        approveDoc: true,
+        shippingAddress: '123 Main St',
+        shippingCity: 'Madrid',
+        customFields: [{ field: 'ref', value: '123' }],
+        tags: ['urgent'],
+      };
+
+      const result = CreateDocumentInputSchema.safeParse(validData);
+      expect(result.success).toBe(true);
+    });
   });
 
   describe('Product Creation', () => {
