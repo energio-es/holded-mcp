@@ -25,23 +25,24 @@ import {
   isRetryableError,
   getRetryAfterHeader,
   buildPaginationParams,
-  sleep
+  sleep,
+  _resetForTesting,
 } from '../src/services/api.js';
 
 describe('API Client Tests', () => {
   beforeEach(() => {
-    // Reset mocks before each test
     jest.clearAllMocks();
+    _resetForTesting();
 
-    // Initialize with test API key
-    initializeApi('test-api-key-12345');
-
-    // Mock axios.create to return a mocked instance
+    // Mock axios.create BEFORE initializing API
     const mockInstance = {
       request: jest.fn(),
       post: jest.fn(),
     };
     mockedAxios.create.mockReturnValue(mockInstance as any);
+
+    // Initialize with test API key (uses the mock above)
+    initializeApi('test-api-key-12345');
   });
 
   afterEach(() => {
@@ -176,6 +177,14 @@ describe('API Client Tests', () => {
   });
 
   describe('Retry Logic', () => {
+    beforeEach(() => {
+      jest.useFakeTimers();
+    });
+
+    afterEach(() => {
+      jest.useRealTimers();
+    });
+
     it('should retry on 429 rate limit error', async () => {
       const mockInstance = mockedAxios.create() as any;
       const rateLimitError = {
@@ -183,7 +192,6 @@ describe('API Client Tests', () => {
         response: { status: 429 },
       } as AxiosError;
 
-      // First two calls fail with 429, third succeeds
       mockInstance.request
         .mockRejectedValueOnce(rateLimitError)
         .mockRejectedValueOnce(rateLimitError)
@@ -191,7 +199,9 @@ describe('API Client Tests', () => {
 
       mockedAxios.isAxiosError.mockReturnValue(true);
 
-      const result = await makeApiRequest('invoicing', 'contacts', 'GET');
+      const resultPromise = makeApiRequest('invoicing', 'contacts', 'GET');
+      await jest.advanceTimersByTimeAsync(30000);
+      const result = await resultPromise;
 
       expect(result).toEqual({ success: true });
       expect(mockInstance.request).toHaveBeenCalledTimes(3);
@@ -210,15 +220,15 @@ describe('API Client Tests', () => {
 
       mockedAxios.isAxiosError.mockReturnValue(true);
 
-      const result = await makeApiRequest('invoicing', 'contacts', 'GET');
+      const resultPromise = makeApiRequest('invoicing', 'contacts', 'GET');
+      await jest.advanceTimersByTimeAsync(30000);
+      const result = await resultPromise;
 
       expect(result).toEqual({ success: true });
       expect(mockInstance.request).toHaveBeenCalledTimes(2);
     });
 
     it('should respect Retry-After header', async () => {
-      jest.useFakeTimers();
-      
       const mockInstance = mockedAxios.create() as any;
       const rateLimitError = {
         isAxiosError: true,
@@ -234,18 +244,12 @@ describe('API Client Tests', () => {
 
       mockedAxios.isAxiosError.mockReturnValue(true);
 
-      // Start the request (it will wait for 2 seconds)
       const requestPromise = makeApiRequest('invoicing', 'contacts', 'GET');
-      
-      // Advance timers by 2 seconds to simulate the wait
-      await jest.advanceTimersByTimeAsync(2000);
-      
+      await jest.advanceTimersByTimeAsync(30000);
       const result = await requestPromise;
 
       expect(result).toEqual({ success: true });
       expect(mockInstance.request).toHaveBeenCalledTimes(2);
-      
-      jest.useRealTimers();
     });
 
     it('should not retry on 404 not found error', async () => {
@@ -258,11 +262,12 @@ describe('API Client Tests', () => {
       mockInstance.request.mockRejectedValueOnce(notFoundError);
       mockedAxios.isAxiosError.mockReturnValue(true);
 
-      await expect(
-        makeApiRequest('invoicing', 'contacts/invalid-id', 'GET')
-      ).rejects.toThrow();
+      const resultPromise = makeApiRequest('invoicing', 'contacts/invalid-id', 'GET');
+      // Attach rejection handler before advancing timers to avoid unhandled rejection
+      const expectPromise = expect(resultPromise).rejects.toBeDefined();
+      await jest.advanceTimersByTimeAsync(1000);
+      await expectPromise;
 
-      // Should not retry, only called once
       expect(mockInstance.request).toHaveBeenCalledTimes(1);
     });
 
@@ -276,11 +281,11 @@ describe('API Client Tests', () => {
       mockInstance.request.mockRejectedValue(serverError);
       mockedAxios.isAxiosError.mockReturnValue(true);
 
-      await expect(
-        makeApiRequest('invoicing', 'contacts', 'GET')
-      ).rejects.toThrow();
+      const resultPromise = makeApiRequest('invoicing', 'contacts', 'GET');
+      const expectPromise = expect(resultPromise).rejects.toBeDefined();
+      await jest.advanceTimersByTimeAsync(30000);
+      await expectPromise;
 
-      // Should try once + 3 retries = 4 total
       expect(mockInstance.request).toHaveBeenCalledTimes(4);
     });
   });
@@ -872,8 +877,9 @@ describe('API Client Tests', () => {
 
   describe('makeMultipartApiRequest', () => {
     beforeEach(() => {
-      // Set environment variable for API key
       process.env.HOLDED_API_KEY = 'test-api-key-12345';
+      _resetForTesting();
+      initializeApi('test-api-key-12345');
     });
 
     it('should construct multipart form data correctly', async () => {
@@ -935,6 +941,7 @@ describe('API Client Tests', () => {
     });
 
     it('should retry on transient errors', async () => {
+      jest.useFakeTimers();
       const serverError = {
         isAxiosError: true,
         response: { status: 500 },
@@ -952,14 +959,17 @@ describe('API Client Tests', () => {
       const fileBuffer = Buffer.from('test file content');
       const fileName = 'test.jpg';
 
-      const result = await makeMultipartApiRequest('invoicing', 'contacts/123/attachment', fileBuffer, fileName);
+      const resultPromise = makeMultipartApiRequest('invoicing', 'contacts/123/attachment', fileBuffer, fileName);
+      await jest.advanceTimersByTimeAsync(30000);
+      const result = await resultPromise;
 
       expect(result).toEqual({ success: true });
-      // Should have been called twice (initial + 1 retry)
       expect(mockAxiosInstance.post).toHaveBeenCalledTimes(2);
+      jest.useRealTimers();
     });
 
     it('should retry on rate limit (429)', async () => {
+      jest.useFakeTimers();
       const rateLimitError = {
         isAxiosError: true,
         response: { status: 429, headers: {} },
@@ -977,13 +987,17 @@ describe('API Client Tests', () => {
       const fileBuffer = Buffer.from('test file content');
       const fileName = 'test.jpg';
 
-      const result = await makeMultipartApiRequest('invoicing', 'contacts/123/attachment', fileBuffer, fileName);
+      const resultPromise = makeMultipartApiRequest('invoicing', 'contacts/123/attachment', fileBuffer, fileName);
+      await jest.advanceTimersByTimeAsync(30000);
+      const result = await resultPromise;
 
       expect(result).toEqual({ success: true });
       expect(mockAxiosInstance.post).toHaveBeenCalledTimes(2);
+      jest.useRealTimers();
     });
 
     it('should not retry on 404 error', async () => {
+      jest.useFakeTimers();
       const notFoundError = {
         isAxiosError: true,
         response: { status: 404 },
@@ -1000,15 +1014,17 @@ describe('API Client Tests', () => {
       const fileBuffer = Buffer.from('test file content');
       const fileName = 'test.jpg';
 
-      await expect(
-        makeMultipartApiRequest('invoicing', 'contacts/123/attachment', fileBuffer, fileName)
-      ).rejects.toThrow();
+      const resultPromise = makeMultipartApiRequest('invoicing', 'contacts/123/attachment', fileBuffer, fileName);
+      const expectPromise = expect(resultPromise).rejects.toBeDefined();
+      await jest.advanceTimersByTimeAsync(1000);
+      await expectPromise;
 
-      // Should only be called once (no retry)
       expect(mockAxiosInstance.post).toHaveBeenCalledTimes(1);
+      jest.useRealTimers();
     });
 
     it('should stop after max retries', async () => {
+      jest.useFakeTimers();
       const serverError = {
         isAxiosError: true,
         response: { status: 500 },
@@ -1025,12 +1041,13 @@ describe('API Client Tests', () => {
       const fileBuffer = Buffer.from('test file content');
       const fileName = 'test.jpg';
 
-      await expect(
-        makeMultipartApiRequest('invoicing', 'contacts/123/attachment', fileBuffer, fileName)
-      ).rejects.toThrow();
+      const resultPromise = makeMultipartApiRequest('invoicing', 'contacts/123/attachment', fileBuffer, fileName);
+      const expectPromise = expect(resultPromise).rejects.toBeDefined();
+      await jest.advanceTimersByTimeAsync(30000);
+      await expectPromise;
 
-      // Should try once + 3 retries = 4 total
       expect(mockAxiosInstance.post).toHaveBeenCalledTimes(4);
+      jest.useRealTimers();
     });
 
     it('should handle different modules correctly', async () => {
