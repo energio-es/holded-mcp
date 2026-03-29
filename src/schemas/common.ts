@@ -98,6 +98,41 @@ export const AddressSchema = z.strictObject({
 });
 
 /**
+ * Shipping address schema (extends address with name and notes)
+ */
+export const ShippingAddressSchema = z.strictObject({
+  name: z.string().optional().describe("Address label/name"),
+  address: z.string().optional().describe("Street address"),
+  city: z.string().optional().describe("City name"),
+  postalCode: z.string().optional().describe("Postal/ZIP code"),
+  province: z.string().optional().describe("Province/State"),
+  country: z.string().optional().describe("Country name"),
+  notes: z.string().optional().describe("Public notes"),
+  privateNote: z.string().optional().describe("Private notes"),
+});
+
+/**
+ * Numbering series schema (per-document-type numbering series IDs)
+ */
+export const NumberingSeriesSchema = z.strictObject({
+  invoice: z.string().optional().describe("Numbering series ID for invoices"),
+  receipt: z.string().optional().describe("Numbering series ID for receipts"),
+  salesOrder: z.string().optional().describe("Numbering series ID for sales orders"),
+  purchasesOrder: z.string().optional().describe("Numbering series ID for purchase orders"),
+  proform: z.string().optional().describe("Numbering series ID for proforms"),
+  waybill: z.string().optional().describe("Numbering series ID for waybills"),
+}).optional();
+
+/**
+ * Contact person schema
+ */
+export const ContactPersonSchema = z.strictObject({
+  name: z.string().min(1).describe("Contact person name (required)"),
+  phone: z.string().optional().describe("Phone number"),
+  email: z.string().email().optional().describe("Email address"),
+});
+
+/**
  * Custom field schema
  */
 export const CustomFieldSchema = z.strictObject({
