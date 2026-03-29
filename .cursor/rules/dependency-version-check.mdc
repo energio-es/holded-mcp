@@ -1,0 +1,59 @@
+---
+description: Always check latest stable versions when adding or updating dependencies
+alwaysApply: true
+---
+
+# Dependency Version Check
+
+When adding, updating, or reviewing dependencies in `package.json`, **always** use web search to verify the latest stable versions before making changes.
+
+## Required Process
+
+1. **Before adding a dependency**: Search for the latest stable version on npm
+   - Use web search: `[package-name] npm latest version [current-year]`
+   - Check npm registry directly if available
+   - Verify it's a stable release (not beta/alpha unless specifically needed)
+
+2. **When updating dependencies**: Check current vs latest versions
+   - Compare current version in package.json with latest available
+   - Note major version changes (may include breaking changes)
+   - Document any breaking changes that require code updates
+
+3. **Version Selection Guidelines**:
+   - **Prefer latest stable** within the same major version for bug fixes
+   - **Major version upgrades** require explicit approval and testing
+   - **Use caret (^)** for minor/patch updates: `^1.2.3`
+   - **Use exact versions** only when necessary for security/compatibility
+
+## Examples
+
+```json
+// ❌ BAD - Using outdated version without checking
+{
+  "dependencies": {
+    "axios": "^1.7.9"  // Latest is 1.13.3
+  }
+}
+
+// ✅ GOOD - Verified latest stable version
+{
+  "dependencies": {
+    "axios": "^1.13.3"  // Latest stable as of 2026-01
+  }
+}
+```
+
+## Special Cases
+
+- **Major version updates**: Always note breaking changes and get approval
+- **Pre-release versions**: Only use if explicitly required (alpha/beta/rc)
+- **Peer dependencies**: Verify compatibility with peer dependency requirements
+- **Security updates**: Prioritize security patches even if they're major versions
+
+## Verification
+
+After updating dependencies, verify:
+1. Package installs correctly: `npm install`
+2. Project builds successfully: `npm run build`
+3. No breaking changes in API usage
+4. Tests pass (if applicable)
