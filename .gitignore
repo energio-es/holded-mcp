@@ -38,8 +38,6 @@ Thumbs.db
 *.swo
 *~
 
-# Cursor IDE local config (may contain secrets)
-.cursor/mcp.json
 
 # Testing
 coverage/

@@ -1,9 +1,0 @@
-{
-  "mcpServers": {
-    "holded": {
-      "command": "bash",
-      "args": ["scripts/start-with-env.sh"],
-      "cwd": "/path/to/holded-mcp-server"
-    }
-  }
-}
