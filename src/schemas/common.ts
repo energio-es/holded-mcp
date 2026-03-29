@@ -98,15 +98,10 @@ export const AddressSchema = z.strictObject({
 });
 
 /**
- * Shipping address schema (extends address with name and notes)
+ * Shipping address schema (extends AddressSchema with name and notes)
  */
-export const ShippingAddressSchema = z.strictObject({
+export const ShippingAddressSchema = AddressSchema.extend({
   name: z.string().optional().describe("Address label/name"),
-  address: z.string().optional().describe("Street address"),
-  city: z.string().optional().describe("City name"),
-  postalCode: z.string().optional().describe("Postal/ZIP code"),
-  province: z.string().optional().describe("Province/State"),
-  country: z.string().optional().describe("Country name"),
   notes: z.string().optional().describe("Public notes"),
   privateNote: z.string().optional().describe("Private notes"),
 });
@@ -121,7 +116,7 @@ export const NumberingSeriesSchema = z.strictObject({
   purchasesOrder: z.string().optional().describe("Numbering series ID for purchase orders"),
   proform: z.string().optional().describe("Numbering series ID for proforms"),
   waybill: z.string().optional().describe("Numbering series ID for waybills"),
-}).optional();
+});
 
 /**
  * Contact person schema

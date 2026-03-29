@@ -74,7 +74,7 @@ export const ContactDefaultsSchema = z.strictObject({
  */
 export const CreateContactInputSchema = z.strictObject({
   name: z.string().min(1, { message: "Name is required" }).describe("Contact name (required)"),
-  CustomId: z.string().optional().describe("Custom reference identifier"),
+  CustomId: z.string().optional().describe("Custom reference identifier"), // PascalCase matches Holded API field name
   code: z.string().optional().describe("Contact code/reference (NIF/CIF/VAT)"),
   tradeName: z.string().optional().describe("Trade/business name"),
   email: z.string().email().optional().describe("Email address"),
@@ -97,7 +97,7 @@ export const CreateContactInputSchema = z.strictObject({
   shippingAddresses: z.array(ShippingAddressSchema).optional().describe("Shipping addresses"),
   socialNetworks: SocialNetworksSchema,
   defaults: ContactDefaultsSchema,
-  numberingSeries: NumberingSeriesSchema,
+  numberingSeries: NumberingSeriesSchema.optional(),
   contactPersons: z.array(ContactPersonSchema).optional().describe("Contact persons"),
   tags: TagsSchema,
   note: z.string().optional().describe("Notes about the contact"),
@@ -111,7 +111,7 @@ export type CreateContactInput = z.infer<typeof CreateContactInputSchema>;
 export const UpdateContactInputSchema = z.strictObject({
   contact_id: IdSchema.describe("The contact ID to update"),
   name: z.string().min(1).optional().describe("Contact name"),
-  CustomId: z.string().optional().describe("Custom reference identifier"),
+  CustomId: z.string().optional().describe("Custom reference identifier"), // PascalCase matches Holded API field name
   code: z.string().optional().describe("Contact code/reference (NIF/CIF/VAT)"),
   tradeName: z.string().optional().describe("Trade/business name"),
   email: z.string().email().optional().describe("Email address"),
@@ -134,7 +134,7 @@ export const UpdateContactInputSchema = z.strictObject({
   shippingAddresses: z.array(ShippingAddressSchema).optional().describe("Shipping addresses"),
   socialNetworks: SocialNetworksSchema,
   defaults: ContactDefaultsSchema,
-  numberingSeries: NumberingSeriesSchema,
+  numberingSeries: NumberingSeriesSchema.optional(),
   contactPersons: z.array(ContactPersonSchema).optional().describe("Contact persons"),
   tags: TagsSchema,
   note: z.string().optional().describe("Notes about the contact"),

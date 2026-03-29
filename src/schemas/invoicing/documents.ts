@@ -9,6 +9,7 @@ import {
   ResponseFormatSchema,
   DocumentTypeSchema,
   TimestampSchema,
+  CustomFieldsSchema,
 } from "../common.js";
 
 /**
@@ -99,10 +100,7 @@ export const CreateDocumentInputSchema = z.strictObject({
     .array(DocumentItemSchema)
     .min(1, { message: "At least one item is required" })
     .describe("Document line items (required)"),
-  customFields: z.array(z.strictObject({
-    field: z.string().describe("Custom field name"),
-    value: z.string().describe("Custom field value"),
-  })).optional().describe("Custom field key-value pairs"),
+  customFields: CustomFieldsSchema,
   tags: z.array(z.string()).optional().describe("Document tags"),
 })
 
@@ -126,10 +124,7 @@ export const UpdateDocumentInputSchema = z.strictObject({
   paymentMethod: z.string().optional().describe("Payment method ID"),
   warehouseId: z.string().optional().describe("Warehouse ID (for salesorder/purchaseorder/waybill)"),
   expAccountId: z.string().optional().describe("Expenses account ID"),
-  customFields: z.array(z.strictObject({
-    field: z.string().describe("Custom field name"),
-    value: z.string().describe("Custom field value"),
-  })).optional().describe("Custom field key-value pairs"),
+  customFields: CustomFieldsSchema,
 })
 
 export type UpdateDocumentInput = z.infer<typeof UpdateDocumentInputSchema>;
