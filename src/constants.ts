@@ -56,7 +56,7 @@ export const DOCUMENT_TYPES = [
   "invoice",
   "salesreceipt",
   "creditnote",
-  "receiptnote",
+  "receiptnote", // Undocumented but valid — confirmed working via live API 2026-03-30
   "estimate",
   "salesorder",
   "waybill",

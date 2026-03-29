@@ -228,18 +228,13 @@ Returns:
         // Map snake_case to camelCase for API
         const requestData: Record<string, unknown> = {
           name: params.name,
+          funnelId: params.funnel_id,
+          contactId: params.contact_id,
         };
-        if (params.funnel_id) requestData.funnelId = params.funnel_id;
         if (params.stage_id) requestData.stageId = params.stage_id;
-        if (params.contact_id) requestData.contactId = params.contact_id;
         if (params.contact_name) requestData.contactName = params.contact_name;
         if (params.value !== undefined) requestData.value = params.value;
-        if (params.potential !== undefined) requestData.potential = params.potential;
-        if (params.probability !== undefined) requestData.probability = params.probability;
         if (params.due_date) requestData.dueDate = params.due_date;
-        if (params.expected_close_date) requestData.expectedCloseDate = params.expected_close_date;
-        if (params.assigned_to) requestData.assignedTo = params.assigned_to;
-        if (params.notes) requestData.notes = params.notes;
 
         const lead = await makeApiRequest<Lead>(
           "crm",
@@ -292,11 +287,9 @@ Returns:
     },
     async (params: UpdateLeadInput) => {
       try {
-        const { lead_id, expected_close_date, assigned_to, due_date, ...rest } = params;
+        const { lead_id, due_date, ...rest } = params;
         const requestData: Record<string, unknown> = { ...rest };
         if (due_date) requestData.dueDate = due_date;
-        if (expected_close_date) requestData.expectedCloseDate = expected_close_date;
-        if (assigned_to) requestData.assignedTo = assigned_to;
 
         const lead = await makeApiRequest<Lead>(
           "crm",
