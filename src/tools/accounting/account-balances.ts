@@ -15,8 +15,8 @@ import {
   AccountBalancesInput,
 } from "../../schemas/accounting/account-balances.js";
 
-/** Maximum entry lines per page returned by the daily ledger API */
-const LEDGER_PAGE_SIZE = 500;
+/** Maximum entry lines per page returned by the daily ledger API (docs say 500, actual is 250) */
+const LEDGER_PAGE_SIZE = 250;
 
 /**
  * Account metadata from list_accounts, used for enrichment.
