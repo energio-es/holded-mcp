@@ -43,10 +43,20 @@ import { CreateProjectTimeTrackingInputSchema } from '../src/schemas/projects/ti
 
 // Accounting schemas
 import { CreateAccountInputSchema, ListAccountingAccountsInputSchema } from '../src/schemas/accounting/accounts.js';
+import {
+  AccountBalancesInputSchema,
+} from '../src/schemas/accounting/account-balances.js';
 
 // Common schemas
 import { PaginationSchema, TimestampSchema, AddressSchema, ShippingAddressSchema, NumberingSeriesSchema, ContactPersonSchema } from '../src/schemas/common.js';
 import { ContactDefaultsSchema } from '../src/schemas/invoicing/contacts.js';
+import {
+  validAccountBalances,
+  accountBalancesWithFilter,
+  invalidAccountBalancesEndBeforeStart,
+  invalidAccountBalancesMissingStart,
+  invalidAccountBalancesMissingEnd,
+} from './fixtures/accounting.js';
 
 describe('Schema Validation Against OpenAPI Specs', () => {
 
@@ -1137,6 +1147,53 @@ describe('Schema Validation Against OpenAPI Specs', () => {
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.data.include_empty).toBe(true);
+      }
+    });
+  });
+
+  describe('Account Balances', () => {
+    it('should accept valid starttmp and endtmp', () => {
+      const result = AccountBalancesInputSchema.safeParse(validAccountBalances);
+      expect(result.success).toBe(true);
+    });
+
+    it('should accept optional account_filter and include_opening', () => {
+      const result = AccountBalancesInputSchema.safeParse(accountBalancesWithFilter);
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.account_filter).toEqual([62900001, 62900002]);
+        expect(result.data.include_opening).toBe(true);
+      }
+    });
+
+    it('should reject when endtmp is before starttmp', () => {
+      const result = AccountBalancesInputSchema.safeParse(invalidAccountBalancesEndBeforeStart);
+      expect(result.success).toBe(false);
+    });
+
+    it('should require starttmp', () => {
+      const result = AccountBalancesInputSchema.safeParse(invalidAccountBalancesMissingStart);
+      expect(result.success).toBe(false);
+    });
+
+    it('should require endtmp', () => {
+      const result = AccountBalancesInputSchema.safeParse(invalidAccountBalancesMissingEnd);
+      expect(result.success).toBe(false);
+    });
+
+    it('should default include_opening to false', () => {
+      const result = AccountBalancesInputSchema.safeParse(validAccountBalances);
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.include_opening).toBe(false);
+      }
+    });
+
+    it('should default response_format to json', () => {
+      const result = AccountBalancesInputSchema.safeParse(validAccountBalances);
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.response_format).toBe('json');
       }
     });
   });
