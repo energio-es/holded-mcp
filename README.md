@@ -1,5 +1,6 @@
 # Holded MCP Server
 
+[![npm version](https://img.shields.io/npm/v/holded-mcp-server.svg)](https://www.npmjs.com/package/holded-mcp-server)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![CI](https://github.com/energio-es/holded-mcp-server/actions/workflows/ci.yml/badge.svg)](https://github.com/energio-es/holded-mcp-server/actions/workflows/ci.yml)
 [![Node.js Version](https://img.shields.io/badge/node-%3E%3D20-brightgreen.svg)](package.json)
@@ -68,32 +69,6 @@ A Model Context Protocol (MCP) server for integrating with the Holded API. This 
 
 The easiest way to use this MCP server is via `npx` - no installation or build required! Just configure your MCP client as shown below.
 
-### Setup for Cursor IDE
-
-Add the following to your Cursor MCP settings file:
-
-- **macOS**: `~/.cursor/mcp.json`
-- **Windows**: `%APPDATA%\Cursor\mcp.json`
-- **Linux**: `~/.config/cursor/mcp.json`
-
-```json
-{
-  "mcpServers": {
-    "holded": {
-      "command": "npx",
-      "args": ["-y", "holded-mcp-server"],
-      "env": {
-        "HOLDED_API_KEY": "your_api_key_here"
-      }
-    }
-  }
-}
-```
-
-The `-y` flag auto-confirms package installation without prompting.
-
-After saving, restart Cursor or reload the MCP servers from the settings.
-
 ### Setup for Claude Desktop
 
 Add the following to your Claude Desktop configuration file:
@@ -115,16 +90,112 @@ Add the following to your Claude Desktop configuration file:
 }
 ```
 
-The `-y` flag auto-confirms package installation without prompting.
-
 Restart Claude Desktop to load the server.
+
+### Setup for Claude Code
+
+Add the server with a single command:
+
+```bash
+claude mcp add holded -- npx -y holded-mcp-server
+```
+
+Then set the API key in your environment:
+
+```bash
+export HOLDED_API_KEY=your_api_key_here
+```
+
+### Setup for Cursor
+
+Add the following to your Cursor MCP settings file:
+
+- **macOS**: `~/.cursor/mcp.json`
+- **Windows**: `%APPDATA%\Cursor\mcp.json`
+- **Linux**: `~/.config/cursor/mcp.json`
+
+```json
+{
+  "mcpServers": {
+    "holded": {
+      "command": "npx",
+      "args": ["-y", "holded-mcp-server"],
+      "env": {
+        "HOLDED_API_KEY": "your_api_key_here"
+      }
+    }
+  }
+}
+```
+
+After saving, restart Cursor or reload the MCP servers from the settings.
+
+### Setup for VS Code
+
+Add the following to your VS Code user settings (`settings.json`) or workspace settings (`.vscode/mcp.json`):
+
+**User settings (`settings.json`):**
+
+```json
+{
+  "mcp": {
+    "servers": {
+      "holded": {
+        "command": "npx",
+        "args": ["-y", "holded-mcp-server"],
+        "env": {
+          "HOLDED_API_KEY": "your_api_key_here"
+        }
+      }
+    }
+  }
+}
+```
+
+**Workspace settings (`.vscode/mcp.json`):**
+
+```json
+{
+  "servers": {
+    "holded": {
+      "command": "npx",
+      "args": ["-y", "holded-mcp-server"],
+      "env": {
+        "HOLDED_API_KEY": "your_api_key_here"
+      }
+    }
+  }
+}
+```
+
+### Setup for Windsurf
+
+Add the following to your Windsurf MCP configuration file:
+
+- **macOS**: `~/.codeium/windsurf/mcp_config.json`
+- **Windows**: `%APPDATA%\Codeium\windsurf\mcp_config.json`
+- **Linux**: `~/.codeium/windsurf/mcp_config.json`
+
+```json
+{
+  "mcpServers": {
+    "holded": {
+      "command": "npx",
+      "args": ["-y", "holded-mcp-server"],
+      "env": {
+        "HOLDED_API_KEY": "your_api_key_here"
+      }
+    }
+  }
+}
+```
 
 ### Setup for Other MCP-Compatible Agents
 
 Any MCP-compatible agent can use this server via npx. The general configuration requires:
 
 1. **Command**: `npx`
-2. **Arguments**: `["-y", "holded-mcp-server"]` (the `-y` flag auto-confirms installation)
+2. **Arguments**: `["-y", "holded-mcp-server"]`
 3. **Environment variable**: `HOLDED_API_KEY` with your API key
 
 Example configuration:
@@ -144,33 +215,6 @@ Example configuration:
 ```
 
 The server communicates via stdio using the MCP protocol and can be integrated with any client that supports the [Model Context Protocol](https://modelcontextprotocol.io/).
-
-### Build from Source
-
-If you want to build from source (for development or contributions):
-
-```bash
-git clone https://github.com/energio-es/holded-mcp-server.git
-cd holded-mcp-server
-npm install
-npm run build
-```
-
-Then use the built server in your MCP client configuration:
-
-```json
-{
-  "mcpServers": {
-    "holded": {
-      "command": "node",
-      "args": ["/absolute/path/to/holded-mcp-server/dist/index.js"],
-      "env": {
-        "HOLDED_API_KEY": "your_api_key_here"
-      }
-    }
-  }
-}
-```
 
 ## Configuration
 
@@ -920,6 +964,35 @@ const invoice = await holded_invoicing_create_document({
 ```
 
 ## Development
+
+### Build from Source
+
+If you want to build from source (for development or contributions):
+
+```bash
+git clone https://github.com/energio-es/holded-mcp-server.git
+cd holded-mcp-server
+npm install
+npm run build
+```
+
+Then use the built server in your MCP client configuration:
+
+```json
+{
+  "mcpServers": {
+    "holded": {
+      "command": "node",
+      "args": ["/absolute/path/to/holded-mcp-server/dist/index.js"],
+      "env": {
+        "HOLDED_API_KEY": "your_api_key_here"
+      }
+    }
+  }
+}
+```
+
+### Development Commands
 
 ```bash
 # Install dependencies
