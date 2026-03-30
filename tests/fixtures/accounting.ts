@@ -36,16 +36,6 @@ export const invalidEntryLineNegativeAccount = {
   debit: 1000,
 };
 
-export const validAccountingAccountList = {
-  starttmp: 1730109600,
-  endtmp: 1730196000,
-};
-
-export const invalidAccountingAccountListEndBeforeStart = {
-  starttmp: 1730196000,
-  endtmp: 1730109600, // End before start
-};
-
 export const validAccountBalances = {
   starttmp: 1730109600,
   endtmp: 1730196000,
