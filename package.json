@@ -23,12 +23,12 @@
     "node": ">=20"
   },
   "keywords": [
-    "mcp",
     "holded",
-    "invoicing",
-    "crm",
-    "api"
+    "mcp",
+    "mcp-server",
+    "model-context-protocol"
   ],
+  "mcpName": "io.github.energio-es/holded-mcp-server",
   "author": "Andrei Baybaratskiy <andrei@energio.es>",
   "license": "MIT",
   "repository": {
