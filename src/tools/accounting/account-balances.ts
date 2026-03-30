@@ -105,3 +105,26 @@ export function filterLeakedEntries(
 
   return { filtered, leakedCount, openingExcluded };
 }
+
+/**
+ * Aggregate daily ledger entries into per-account debit/credit totals.
+ *
+ * Exported for unit testing.
+ */
+export function aggregateByAccount(
+  entries: LedgerEntryLine[],
+): Map<number, { debit: number; credit: number }> {
+  const map = new Map<number, { debit: number; credit: number }>();
+
+  for (const e of entries) {
+    let acc = map.get(e.account);
+    if (!acc) {
+      acc = { debit: 0, credit: 0 };
+      map.set(e.account, acc);
+    }
+    acc.debit += e.debit;
+    acc.credit += e.credit;
+  }
+
+  return map;
+}
