@@ -3,8 +3,6 @@
  */
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { makeApiRequest, handleApiError, toStructuredContent } from "../../services/api.js";
-import { ResponseFormat } from "../../constants.js";
 import { AccountingAccount } from "../../types.js";
 import {
   ListAccountingAccountsInputSchema,
@@ -12,12 +10,8 @@ import {
   GetAccountInputSchema,
   UpdateAccountInputSchema,
   DeleteAccountInputSchema,
-  ListAccountingAccountsInput,
-  CreateAccountInput,
-  GetAccountInput,
-  UpdateAccountInput,
-  DeleteAccountInput,
 } from "../../schemas/accounting/accounts.js";
+import { registerCrudTools } from "../factory.js";
 
 /**
  * Format accounting accounts as markdown
@@ -57,12 +51,30 @@ function formatAccountingAccountMarkdown(account: AccountingAccount): string {
  * Register all accounting account-related tools
  */
 export function registerAccountTools(server: McpServer): void {
-  // List Accounting Accounts
-  server.registerTool(
-    "holded_accounting_list_accounts",
-    {
-      title: "List Holded Accounting Accounts",
-      description: `List all accounting accounts (chart of accounts/PGC accounts) from Holded.
+  registerCrudTools<AccountingAccount>(server, {
+    module: "accounting",
+    toolPrefix: "holded_accounting",
+    resource: "account",
+    resourcePlural: "accounts",
+    endpoint: "account",
+    listEndpoint: "chartofaccounts",
+    idParam: "account_id",
+    schemas: {
+      list: ListAccountingAccountsInputSchema,
+      get: GetAccountInputSchema,
+      create: CreateAccountInputSchema,
+      update: UpdateAccountInputSchema,
+      delete: DeleteAccountInputSchema,
+    },
+    titles: {
+      list: "List Holded Accounting Accounts",
+      get: "Get Holded Accounting Account",
+      create: "Create Holded Accounting Account",
+      update: "Update Holded Accounting Account",
+      delete: "Delete Holded Accounting Account",
+    },
+    descriptions: {
+      list: `List all accounting accounts (chart of accounts/PGC accounts) from Holded.
 
 Returns paginated list of accounting accounts. Use page parameter to navigate through results.
 
@@ -77,65 +89,15 @@ Note: When using starttmp/endtmp, the returned debit/credit/balance totals may i
 
 Returns:
   Array of accounting accounts with id, code, name, type, and parent account information.`,
-      inputSchema: ListAccountingAccountsInputSchema,
-      annotations: {
-        readOnlyHint: true,
-        destructiveHint: false,
-        idempotentHint: true,
-        openWorldHint: true,
-      },
-    },
-    async (params: ListAccountingAccountsInput) => {
-      try {
-        const queryParams: Record<string, unknown> = {};
-        if (params.page > 1) {
-          queryParams.page = params.page;
-        }
-        // Include empty accounts parameter (as per Holded API documentation)
-        // API expects 0 or 1, not boolean
-        if (params.include_empty !== undefined) {
-          queryParams.includeEmpty = params.include_empty ? 1 : 0;
-        }
-        // Date filtering parameters
-        if (params.starttmp !== undefined) {
-          queryParams.starttmp = params.starttmp;
-        }
-        if (params.endtmp !== undefined) {
-          queryParams.endtmp = params.endtmp;
-        }
+      get: `Get a specific accounting account by ID from Holded.
 
-        const accounts = await makeApiRequest<AccountingAccount[]>(
-          "accounting",
-          "chartofaccounts",
-          "GET",
-          undefined,
-          queryParams
-        );
+Args:
+  - account_id (string): The accounting account ID to retrieve (required)
+  - response_format ('json' | 'markdown'): Output format (default: 'json')
 
-        const textContent =
-          params.response_format === ResponseFormat.MARKDOWN
-            ? formatAccountingAccountsMarkdown(accounts)
-            : JSON.stringify(accounts, null, 2);
-
-        return {
-          content: [{ type: "text", text: textContent }],
-          structuredContent: { accounts, count: accounts.length, page: params.page },
-        };
-      } catch (error) {
-        return {
-          content: [{ type: "text", text: handleApiError(error) }],
-          isError: true,
-        };
-      }
-    }
-  );
-
-  // Create Accounting Account
-  server.registerTool(
-    "holded_accounting_create_account",
-    {
-      title: "Create Holded Accounting Account",
-      description: `Create a new accounting account in Holded.
+Returns:
+  Accounting account details including code, name, type, and parent account.`,
+      create: `Create a new accounting account in Holded.
 
 The prefix parameter takes a 4-digit integer that matches the prefix of the corresponding account in Holded.
 The API will create an account at the next available number under this prefix.
@@ -149,94 +111,7 @@ Args:
 
 Returns:
   The created accounting account with its assigned code.`,
-      inputSchema: CreateAccountInputSchema,
-      annotations: {
-        readOnlyHint: false,
-        destructiveHint: false,
-        idempotentHint: false,
-        openWorldHint: true,
-      },
-    },
-    async (params: CreateAccountInput) => {
-      try {
-        const account = await makeApiRequest<AccountingAccount>(
-          "accounting",
-          "account",
-          "POST",
-          params
-        );
-
-        return {
-          content: [
-            {
-              type: "text",
-              text: `Accounting account created successfully.\n\n${JSON.stringify(account, null, 2)}`,
-            },
-          ],
-          structuredContent: toStructuredContent(account),
-        };
-      } catch (error) {
-        return {
-          content: [{ type: "text", text: handleApiError(error) }],
-          isError: true,
-        };
-      }
-    }
-  );
-
-  // Get Accounting Account
-  server.registerTool(
-    "holded_accounting_get_account",
-    {
-      title: "Get Holded Accounting Account",
-      description: `Get a specific accounting account by ID from Holded.
-
-Args:
-  - account_id (string): The accounting account ID to retrieve (required)
-  - response_format ('json' | 'markdown'): Output format (default: 'json')
-
-Returns:
-  Accounting account details including code, name, type, and parent account.`,
-      inputSchema: GetAccountInputSchema,
-      annotations: {
-        readOnlyHint: true,
-        destructiveHint: false,
-        idempotentHint: true,
-        openWorldHint: true,
-      },
-    },
-    async (params: GetAccountInput) => {
-      try {
-        const account = await makeApiRequest<AccountingAccount>(
-          "accounting",
-          `account/${params.account_id}`,
-          "GET"
-        );
-
-        const textContent =
-          params.response_format === ResponseFormat.MARKDOWN
-            ? formatAccountingAccountMarkdown(account)
-            : JSON.stringify(account, null, 2);
-
-        return {
-          content: [{ type: "text", text: textContent }],
-          structuredContent: toStructuredContent(account),
-        };
-      } catch (error) {
-        return {
-          content: [{ type: "text", text: handleApiError(error) }],
-          isError: true,
-        };
-      }
-    }
-  );
-
-  // Update Accounting Account
-  server.registerTool(
-    "holded_accounting_update_account",
-    {
-      title: "Update Holded Accounting Account",
-      description: `Update an existing accounting account in Holded.
+      update: `Update an existing accounting account in Holded.
 
 Args:
   - account_id (string): The accounting account ID to update (required)
@@ -247,85 +122,24 @@ Args:
 
 Returns:
   The updated accounting account.`,
-      inputSchema: UpdateAccountInputSchema,
-      annotations: {
-        readOnlyHint: false,
-        destructiveHint: false,
-        idempotentHint: true,
-        openWorldHint: true,
-      },
-    },
-    async (params: UpdateAccountInput) => {
-      try {
-        const { account_id, ...updateData } = params;
-        const account = await makeApiRequest<AccountingAccount>(
-          "accounting",
-          `account/${account_id}`,
-          "PUT",
-          updateData
-        );
-
-        return {
-          content: [
-            {
-              type: "text",
-              text: `Accounting account updated successfully.\n\n${JSON.stringify(account, null, 2)}`,
-            },
-          ],
-          structuredContent: toStructuredContent(account),
-        };
-      } catch (error) {
-        return {
-          content: [{ type: "text", text: handleApiError(error) }],
-          isError: true,
-        };
-      }
-    }
-  );
-
-  // Delete Accounting Account
-  server.registerTool(
-    "holded_accounting_delete_account",
-    {
-      title: "Delete Holded Accounting Account",
-      description: `Delete an accounting account from Holded.
+      delete: `Delete an accounting account from Holded.
 
 Args:
   - account_id (string): The accounting account ID to delete (required)
 
 Returns:
   Confirmation of deletion.`,
-      inputSchema: DeleteAccountInputSchema,
-      annotations: {
-        readOnlyHint: false,
-        destructiveHint: true,
-        idempotentHint: true,
-        openWorldHint: true,
-      },
     },
-    async (params: DeleteAccountInput) => {
-      try {
-        await makeApiRequest<void>(
-          "accounting",
-          `account/${params.account_id}`,
-          "DELETE"
-        );
-
-        return {
-          content: [
-            {
-              type: "text",
-              text: `Accounting account ${params.account_id} deleted successfully.`,
-            },
-          ],
-          structuredContent: { deleted: true, id: params.account_id },
-        };
-      } catch (error) {
-        return {
-          content: [{ type: "text", text: handleApiError(error) }],
-          isError: true,
-        };
-      }
-    }
-  );
+    formatters: {
+      list: formatAccountingAccountsMarkdown,
+      single: formatAccountingAccountMarkdown,
+    },
+    listQueryParams: (params) => {
+      const qp: Record<string, unknown> = {};
+      if (params.include_empty !== undefined) qp.includeEmpty = params.include_empty ? 1 : 0;
+      if (params.starttmp !== undefined) qp.starttmp = params.starttmp;
+      if (params.endtmp !== undefined) qp.endtmp = params.endtmp;
+      return qp;
+    },
+  });
 }

@@ -3,7 +3,7 @@
  */
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { makeApiRequest, makeMultipartApiRequest, handleApiError, toStructuredContent } from "../../services/api.js";
+import { makeApiRequest, makeMultipartApiRequest, handleApiError } from "../../services/api.js";
 import { ResponseFormat } from "../../constants.js";
 import { Product, ProductStock } from "../../types.js";
 import {
@@ -18,11 +18,6 @@ import {
   ListProductImagesInputSchema,
   GetProductSecondaryImageInputSchema,
   UploadProductImageInputSchema,
-  ListProductsInput,
-  GetProductInput,
-  CreateProductInput,
-  UpdateProductInput,
-  DeleteProductInput,
   ListProductsStockInput,
   UpdateProductStockInput,
   GetProductImageInput,
@@ -30,6 +25,7 @@ import {
   GetProductSecondaryImageInput,
   UploadProductImageInput,
 } from "../../schemas/invoicing/products.js";
+import { registerCrudTools } from "../factory.js";
 
 /**
  * Format products as markdown
@@ -93,12 +89,30 @@ function formatProductMarkdown(product: Product): string {
  * Register all product-related tools
  */
 export function registerProductTools(server: McpServer): void {
-  // List Products
-  server.registerTool(
-    "holded_invoicing_list_products",
-    {
-      title: "List Holded Products",
-      description: `List all products from Holded.
+  // ── Standard CRUD via factory ─────────────────────────
+  registerCrudTools<Product>(server, {
+    module: "invoicing",
+    toolPrefix: "holded_invoicing",
+    resource: "product",
+    resourcePlural: "products",
+    endpoint: "products",
+    idParam: "product_id",
+    schemas: {
+      list: ListProductsInputSchema,
+      get: GetProductInputSchema,
+      create: CreateProductInputSchema,
+      update: UpdateProductInputSchema,
+      delete: DeleteProductInputSchema,
+    },
+    titles: {
+      list: "List Holded Products",
+      get: "Get Holded Product",
+      create: "Create Holded Product",
+      update: "Update Holded Product",
+      delete: "Delete Holded Product",
+    },
+    descriptions: {
+      list: `List all products from Holded.
 
 Returns paginated list of products. Use page parameter to navigate through results.
 
@@ -108,53 +122,7 @@ Args:
 
 Returns:
   Array of products with id, name, sku, price, stock, and other details.`,
-      inputSchema: ListProductsInputSchema,
-      annotations: {
-        readOnlyHint: true,
-        destructiveHint: false,
-        idempotentHint: true,
-        openWorldHint: true,
-      },
-    },
-    async (params: ListProductsInput) => {
-      try {
-        const queryParams: Record<string, unknown> = {};
-        if (params.page > 1) {
-          queryParams.page = params.page;
-        }
-
-        const products = await makeApiRequest<Product[]>(
-          "invoicing",
-          "products",
-          "GET",
-          undefined,
-          queryParams
-        );
-
-        const textContent =
-          params.response_format === ResponseFormat.MARKDOWN
-            ? formatProductsMarkdown(products)
-            : JSON.stringify(products, null, 2);
-
-        return {
-          content: [{ type: "text", text: textContent }],
-          structuredContent: { products, count: products.length, page: params.page },
-        };
-      } catch (error) {
-        return {
-          content: [{ type: "text", text: handleApiError(error) }],
-          isError: true,
-        };
-      }
-    }
-  );
-
-  // Get Product
-  server.registerTool(
-    "holded_invoicing_get_product",
-    {
-      title: "Get Holded Product",
-      description: `Get a specific product by ID from Holded.
+      get: `Get a specific product by ID from Holded.
 
 Args:
   - product_id (string): The product ID to retrieve (required)
@@ -162,46 +130,7 @@ Args:
 
 Returns:
   Product details including name, sku, price, stock, variants, and custom fields.`,
-      inputSchema: GetProductInputSchema,
-      annotations: {
-        readOnlyHint: true,
-        destructiveHint: false,
-        idempotentHint: true,
-        openWorldHint: true,
-      },
-    },
-    async (params: GetProductInput) => {
-      try {
-        const product = await makeApiRequest<Product>(
-          "invoicing",
-          `products/${params.product_id}`,
-          "GET"
-        );
-
-        const textContent =
-          params.response_format === ResponseFormat.MARKDOWN
-            ? formatProductMarkdown(product)
-            : JSON.stringify(product, null, 2);
-
-        return {
-          content: [{ type: "text", text: textContent }],
-          structuredContent: toStructuredContent(product),
-        };
-      } catch (error) {
-        return {
-          content: [{ type: "text", text: handleApiError(error) }],
-          isError: true,
-        };
-      }
-    }
-  );
-
-  // Create Product
-  server.registerTool(
-    "holded_invoicing_create_product",
-    {
-      title: "Create Holded Product",
-      description: `Create a new product in Holded.
+      create: `Create a new product in Holded.
 
 Args:
   - name (string): Product name (required)
@@ -214,47 +143,7 @@ Args:
 
 Returns:
   The created product with its assigned ID.`,
-      inputSchema: CreateProductInputSchema,
-      annotations: {
-        readOnlyHint: false,
-        destructiveHint: false,
-        idempotentHint: false,
-        openWorldHint: true,
-      },
-    },
-    async (params: CreateProductInput) => {
-      try {
-        const product = await makeApiRequest<Product>(
-          "invoicing",
-          "products",
-          "POST",
-          params
-        );
-
-        return {
-          content: [
-            {
-              type: "text",
-              text: `Product created successfully.\n\n${JSON.stringify(product, null, 2)}`,
-            },
-          ],
-          structuredContent: toStructuredContent(product),
-        };
-      } catch (error) {
-        return {
-          content: [{ type: "text", text: handleApiError(error) }],
-          isError: true,
-        };
-      }
-    }
-  );
-
-  // Update Product
-  server.registerTool(
-    "holded_invoicing_update_product",
-    {
-      title: "Update Holded Product",
-      description: `Update an existing product in Holded. Only provided fields will be updated.
+      update: `Update an existing product in Holded. Only provided fields will be updated.
 
 Args:
   - product_id (string): The product ID to update (required)
@@ -265,87 +154,21 @@ Args:
 
 Returns:
   The updated product.`,
-      inputSchema: UpdateProductInputSchema,
-      annotations: {
-        readOnlyHint: false,
-        destructiveHint: false,
-        idempotentHint: true,
-        openWorldHint: true,
-      },
-    },
-    async (params: UpdateProductInput) => {
-      try {
-        const { product_id, ...updateData } = params;
-        const product = await makeApiRequest<Product>(
-          "invoicing",
-          `products/${product_id}`,
-          "PUT",
-          updateData
-        );
-
-        return {
-          content: [
-            {
-              type: "text",
-              text: `Product updated successfully.\n\n${JSON.stringify(product, null, 2)}`,
-            },
-          ],
-          structuredContent: toStructuredContent(product),
-        };
-      } catch (error) {
-        return {
-          content: [{ type: "text", text: handleApiError(error) }],
-          isError: true,
-        };
-      }
-    }
-  );
-
-  // Delete Product
-  server.registerTool(
-    "holded_invoicing_delete_product",
-    {
-      title: "Delete Holded Product",
-      description: `Delete a product from Holded.
+      delete: `Delete a product from Holded.
 
 Args:
   - product_id (string): The product ID to delete (required)
 
 Returns:
   Confirmation of deletion.`,
-      inputSchema: DeleteProductInputSchema,
-      annotations: {
-        readOnlyHint: false,
-        destructiveHint: true,
-        idempotentHint: true,
-        openWorldHint: true,
-      },
     },
-    async (params: DeleteProductInput) => {
-      try {
-        await makeApiRequest<void>(
-          "invoicing",
-          `products/${params.product_id}`,
-          "DELETE"
-        );
+    formatters: {
+      list: formatProductsMarkdown,
+      single: formatProductMarkdown,
+    },
+  });
 
-        return {
-          content: [
-            {
-              type: "text",
-              text: `Product ${params.product_id} deleted successfully.`,
-            },
-          ],
-          structuredContent: { deleted: true, id: params.product_id },
-        };
-      } catch (error) {
-        return {
-          content: [{ type: "text", text: handleApiError(error) }],
-          isError: true,
-        };
-      }
-    }
-  );
+  // ── Manual tools (non-standard endpoints) ─────────────
 
   // List Products Stock
   server.registerTool(
