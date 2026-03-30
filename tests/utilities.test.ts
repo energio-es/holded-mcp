@@ -5,7 +5,7 @@
 import { describe, it, expect, vi } from "vitest";
 import { ResponseFormat } from "../src/constants.js";
 import { toStructuredContent } from "../src/services/api.js";
-import { buildToolResponse, withErrorHandling } from "../src/tools/utilities.js";
+import { buildToolResponse, withErrorHandling, snakeToCamel } from "../src/tools/utilities.js";
 
 describe("buildToolResponse", () => {
   it("returns markdown when format is MARKDOWN", () => {
@@ -96,5 +96,43 @@ describe("withErrorHandling", () => {
     await wrapped(params);
 
     expect(handler).toHaveBeenCalledWith(params);
+  });
+});
+
+describe("snakeToCamel", () => {
+  it("converts snake_case keys to camelCase", () => {
+    const input = { first_name: "Alice", last_name: "Smith" };
+    expect(snakeToCamel(input)).toEqual({ firstName: "Alice", lastName: "Smith" });
+  });
+
+  it("preserves already camelCase keys", () => {
+    const input = { firstName: "Alice", lastName: "Smith" };
+    expect(snakeToCamel(input)).toEqual({ firstName: "Alice", lastName: "Smith" });
+  });
+
+  it("handles mixed keys", () => {
+    const input = { first_name: "Alice", lastName: "Smith", age: 30 };
+    expect(snakeToCamel(input)).toEqual({ firstName: "Alice", lastName: "Smith", age: 30 });
+  });
+
+  it("handles empty object", () => {
+    expect(snakeToCamel({})).toEqual({});
+  });
+
+  it("does not convert nested objects", () => {
+    const input = { user_name: "Alice", address: { street_name: "Main St" } };
+    const result = snakeToCamel(input);
+    expect(result).toEqual({
+      userName: "Alice",
+      address: { street_name: "Main St" },
+    });
+  });
+
+  it("handles keys with multiple underscores", () => {
+    const input = { first_middle_last_name: "Alice B Smith", api_base_url: "http://example.com" };
+    expect(snakeToCamel(input)).toEqual({
+      firstMiddleLastName: "Alice B Smith",
+      apiBaseUrl: "http://example.com",
+    });
   });
 });

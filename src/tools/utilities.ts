@@ -58,3 +58,19 @@ export function withErrorHandling(
     }
   };
 }
+
+/**
+ * Convert top-level snake_case keys to camelCase.
+ * Does NOT recurse into nested objects.
+ * Preserves keys that are already camelCase.
+ */
+export function snakeToCamel(
+  obj: Record<string, unknown>,
+): Record<string, unknown> {
+  const result: Record<string, unknown> = {};
+  for (const key of Object.keys(obj)) {
+    const camelKey = key.replace(/_([a-z])/g, (_, c) => c.toUpperCase());
+    result[camelKey] = obj[key];
+  }
+  return result;
+}
