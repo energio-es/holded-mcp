@@ -3,8 +3,6 @@
  */
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { makeApiRequest, handleApiError, toStructuredContent } from "../../services/api.js";
-import { ResponseFormat } from "../../constants.js";
 import { Employee } from "../../types.js";
 import {
   ListEmployeesInputSchema,
@@ -12,12 +10,8 @@ import {
   CreateEmployeeInputSchema,
   UpdateEmployeeInputSchema,
   DeleteEmployeeInputSchema,
-  ListEmployeesInput,
-  GetEmployeeInput,
-  CreateEmployeeInput,
-  UpdateEmployeeInput,
-  DeleteEmployeeInput,
 } from "../../schemas/team/employees.js";
+import { registerCrudTools } from "../factory.js";
 
 /**
  * Format employees as markdown
@@ -64,12 +58,29 @@ function formatEmployeeMarkdown(employee: Employee): string {
  * Register all employee-related tools
  */
 export function registerEmployeeTools(server: McpServer): void {
-  // List Employees
-  server.registerTool(
-    "holded_team_list_employees",
-    {
-      title: "List Holded Employees",
-      description: `List all employees from Holded.
+  registerCrudTools<Employee>(server, {
+    module: "team",
+    toolPrefix: "holded_team",
+    resource: "employee",
+    resourcePlural: "employees",
+    endpoint: "employees",
+    idParam: "employee_id",
+    schemas: {
+      list: ListEmployeesInputSchema,
+      get: GetEmployeeInputSchema,
+      create: CreateEmployeeInputSchema,
+      update: UpdateEmployeeInputSchema,
+      delete: DeleteEmployeeInputSchema,
+    },
+    titles: {
+      list: "List Holded Employees",
+      get: "Get Holded Employee",
+      create: "Create Holded Employee",
+      update: "Update Holded Employee",
+      delete: "Delete Holded Employee",
+    },
+    descriptions: {
+      list: `List all employees from Holded.
 
 Args:
   - page (number): Page number for pagination (default: 1, max 500 items per page)
@@ -77,53 +88,7 @@ Args:
 
 Returns:
   Array of employees with id, name, email, position, department, and status.`,
-      inputSchema: ListEmployeesInputSchema,
-      annotations: {
-        readOnlyHint: true,
-        destructiveHint: false,
-        idempotentHint: true,
-        openWorldHint: true,
-      },
-    },
-    async (params: ListEmployeesInput) => {
-      try {
-        const queryParams: Record<string, unknown> = {};
-        if (params.page > 1) {
-          queryParams.page = params.page;
-        }
-
-        const employees = await makeApiRequest<Employee[]>(
-          "team",
-          "employees",
-          "GET",
-          undefined,
-          queryParams
-        );
-
-        const textContent =
-          params.response_format === ResponseFormat.MARKDOWN
-            ? formatEmployeesMarkdown(employees)
-            : JSON.stringify(employees, null, 2);
-
-        return {
-          content: [{ type: "text", text: textContent }],
-          structuredContent: { employees, count: employees.length, page: params.page },
-        };
-      } catch (error) {
-        return {
-          content: [{ type: "text", text: handleApiError(error) }],
-          isError: true,
-        };
-      }
-    }
-  );
-
-  // Get Employee
-  server.registerTool(
-    "holded_team_get_employee",
-    {
-      title: "Get Holded Employee",
-      description: `Get a specific employee by ID from Holded.
+      get: `Get a specific employee by ID from Holded.
 
 Args:
   - employee_id (string): The employee ID to retrieve (required)
@@ -131,46 +96,7 @@ Args:
 
 Returns:
   Employee details including name, email, position, department, and status.`,
-      inputSchema: GetEmployeeInputSchema,
-      annotations: {
-        readOnlyHint: true,
-        destructiveHint: false,
-        idempotentHint: true,
-        openWorldHint: true,
-      },
-    },
-    async (params: GetEmployeeInput) => {
-      try {
-        const employee = await makeApiRequest<Employee>(
-          "team",
-          `employees/${params.employee_id}`,
-          "GET"
-        );
-
-        const textContent =
-          params.response_format === ResponseFormat.MARKDOWN
-            ? formatEmployeeMarkdown(employee)
-            : JSON.stringify(employee, null, 2);
-
-        return {
-          content: [{ type: "text", text: textContent }],
-          structuredContent: toStructuredContent(employee),
-        };
-      } catch (error) {
-        return {
-          content: [{ type: "text", text: handleApiError(error) }],
-          isError: true,
-        };
-      }
-    }
-  );
-
-  // Create Employee
-  server.registerTool(
-    "holded_team_create_employee",
-    {
-      title: "Create Holded Employee",
-      description: `Create a new employee in Holded.
+      create: `Create a new employee in Holded.
 
 According to Holded Team API v1.0.1, employee creation supports:
   - name (string): Employee name (required)
@@ -182,47 +108,7 @@ Additional fields like phone, position, department should be set via Update Empl
 
 Returns:
   The created employee with its assigned ID.`,
-      inputSchema: CreateEmployeeInputSchema,
-      annotations: {
-        readOnlyHint: false,
-        destructiveHint: false,
-        idempotentHint: false,
-        openWorldHint: true,
-      },
-    },
-    async (params: CreateEmployeeInput) => {
-      try {
-        const employee = await makeApiRequest<Employee>(
-          "team",
-          "employees",
-          "POST",
-          params
-        );
-
-        return {
-          content: [
-            {
-              type: "text",
-              text: `Employee created successfully.\n\n${JSON.stringify(employee, null, 2)}`,
-            },
-          ],
-          structuredContent: toStructuredContent(employee),
-        };
-      } catch (error) {
-        return {
-          content: [{ type: "text", text: handleApiError(error) }],
-          isError: true,
-        };
-      }
-    }
-  );
-
-  // Update Employee
-  server.registerTool(
-    "holded_team_update_employee",
-    {
-      title: "Update Holded Employee",
-      description: `Update an existing employee in Holded.
+      update: `Update an existing employee in Holded.
 
 Args:
   - employee_id (string): The employee ID to update (required)
@@ -251,85 +137,17 @@ Args:
 
 Returns:
   Confirmation with status, info, and employee ID.`,
-      inputSchema: UpdateEmployeeInputSchema,
-      annotations: {
-        readOnlyHint: false,
-        destructiveHint: false,
-        idempotentHint: true,
-        openWorldHint: true,
-      },
-    },
-    async (params: UpdateEmployeeInput) => {
-      try {
-        const { employee_id, ...updateData } = params;
-        const result = await makeApiRequest<{ status: number; info: string; id: string;[key: string]: unknown }>(
-          "team",
-          `employees/${employee_id}`,
-          "PUT",
-          updateData
-        );
-
-        return {
-          content: [
-            {
-              type: "text",
-              text: `Employee updated successfully.\n\n${JSON.stringify(result, null, 2)}`,
-            },
-          ],
-          structuredContent: { updated: true, employeeId: employee_id, ...result },
-        };
-      } catch (error) {
-        return {
-          content: [{ type: "text", text: handleApiError(error) }],
-          isError: true,
-        };
-      }
-    }
-  );
-
-  // Delete Employee
-  server.registerTool(
-    "holded_team_delete_employee",
-    {
-      title: "Delete Holded Employee",
-      description: `Delete an employee from Holded.
+      delete: `Delete an employee from Holded.
 
 Args:
   - employee_id (string): The employee ID to delete (required)
 
 Returns:
   Confirmation of deletion.`,
-      inputSchema: DeleteEmployeeInputSchema,
-      annotations: {
-        readOnlyHint: false,
-        destructiveHint: true,
-        idempotentHint: true,
-        openWorldHint: true,
-      },
     },
-    async (params: DeleteEmployeeInput) => {
-      try {
-        await makeApiRequest<void>(
-          "team",
-          `employees/${params.employee_id}`,
-          "DELETE"
-        );
-
-        return {
-          content: [
-            {
-              type: "text",
-              text: `Employee ${params.employee_id} deleted successfully.`,
-            },
-          ],
-          structuredContent: { deleted: true, id: params.employee_id },
-        };
-      } catch (error) {
-        return {
-          content: [{ type: "text", text: handleApiError(error) }],
-          isError: true,
-        };
-      }
-    }
-  );
+    formatters: {
+      list: formatEmployeesMarkdown,
+      single: formatEmployeeMarkdown,
+    },
+  });
 }
