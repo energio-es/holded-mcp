@@ -6,7 +6,62 @@
  * leak filtering.
  */
 
-import type { LedgerEntryLine } from "../../types.js";
+import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { makeApiRequest, handleApiError } from "../../services/api.js";
+import { ResponseFormat } from "../../constants.js";
+import type { LedgerEntryLine, AccountBalance } from "../../types.js";
+import {
+  AccountBalancesInputSchema,
+  AccountBalancesInput,
+} from "../../schemas/accounting/account-balances.js";
+
+/** Maximum entry lines per page returned by the daily ledger API */
+const LEDGER_PAGE_SIZE = 500;
+
+/**
+ * Account metadata from list_accounts, used for enrichment.
+ */
+interface AccountMetadata {
+  num: number;
+  name: string;
+  group: string;
+  [key: string]: unknown;
+}
+
+/**
+ * Fetch all daily ledger entry lines for a date range, auto-paginating.
+ */
+async function fetchAllLedgerEntries(
+  starttmp: number,
+  endtmp: number,
+): Promise<{ entries: LedgerEntryLine[]; pagesFetched: number }> {
+  const allEntries: LedgerEntryLine[] = [];
+  let page = 1;
+
+  while (true) {
+    const queryParams: Record<string, unknown> = { starttmp, endtmp };
+    if (page > 1) {
+      queryParams.page = page;
+    }
+
+    const pageEntries = await makeApiRequest<LedgerEntryLine[]>(
+      "accounting",
+      "dailyledger",
+      "GET",
+      undefined,
+      queryParams,
+    );
+
+    allEntries.push(...pageEntries);
+
+    if (pageEntries.length < LEDGER_PAGE_SIZE) {
+      break;
+    }
+    page++;
+  }
+
+  return { entries: allEntries, pagesFetched: page };
+}
 
 /**
  * Entry types that legitimately appear at the fiscal year boundary timestamp.
@@ -127,4 +182,147 @@ export function aggregateByAccount(
   }
 
   return map;
+}
+
+/**
+ * Format account balances as markdown
+ */
+function formatAccountBalancesMarkdown(accounts: AccountBalance[]): string {
+  if (!accounts.length) {
+    return "No account balances found for the requested period.";
+  }
+
+  const lines = [
+    "# Account Balances",
+    "",
+    `Found ${accounts.length} accounts:`,
+    "",
+    "| Account | Name | Group | Debit | Credit | Balance |",
+    "|---------|------|-------|------:|-------:|--------:|",
+  ];
+
+  for (const a of accounts) {
+    lines.push(
+      `| ${a.num} | ${a.name} | ${a.group} | ${a.debit.toFixed(2)} | ${a.credit.toFixed(2)} | ${a.balance.toFixed(2)} |`
+    );
+  }
+
+  return lines.join("\n");
+}
+
+/**
+ * Register the account balances tool.
+ */
+export function registerAccountBalancesTools(server: McpServer): void {
+  server.registerTool(
+    "holded_accounting_account_balances",
+    {
+      title: "Holded Accounting Account Balances",
+      description: `Compute accurate, date-scoped per-account debit/credit/balance totals.
+
+Unlike list_accounts (which may include entries from outside the requested date range due to a Holded API limitation), this tool aggregates from individual daily ledger entries and filters out cross-fiscal-year leakage.
+
+Use this tool when you need correct account totals for a specific period (P&L, trial balance).
+
+Args:
+  - starttmp (number): Period start as Unix timestamp (required)
+  - endtmp (number): Period end as Unix timestamp (required)
+  - account_filter (number[]): Filter to specific account numbers (optional, returns all if omitted)
+  - include_opening (boolean): Include opening balance entry in totals (default: false — set true for balance sheet, false for P&L)
+  - response_format ('json' | 'markdown'): Output format (default: 'json')
+
+Returns:
+  Per-account debit/credit/balance totals, plus metadata about filtered entries.`,
+      inputSchema: AccountBalancesInputSchema,
+      annotations: {
+        readOnlyHint: true,
+        destructiveHint: false,
+        idempotentHint: true,
+        openWorldHint: true,
+      },
+    },
+    async (params: AccountBalancesInput) => {
+      try {
+        // 1. Fetch all ledger entries (auto-paginate)
+        const { entries, pagesFetched } = await fetchAllLedgerEntries(
+          params.starttmp,
+          params.endtmp,
+        );
+
+        // 2. Filter leaked entries
+        const { filtered, leakedCount, openingExcluded } = filterLeakedEntries(
+          entries,
+          params.include_opening,
+        );
+
+        // 3. Aggregate by account
+        const totals = aggregateByAccount(filtered);
+
+        // 4. Enrich with account metadata from list_accounts
+        const accountMeta = await makeApiRequest<AccountMetadata[]>(
+          "accounting",
+          "chartofaccounts",
+          "GET",
+          undefined,
+          { starttmp: params.starttmp, endtmp: params.endtmp, includeEmpty: 0 },
+        );
+        const metaByNum = new Map<number, AccountMetadata>();
+        for (const a of accountMeta) {
+          metaByNum.set(a.num, a);
+        }
+
+        // 5. Build result
+        let accounts: AccountBalance[] = [];
+        for (const [num, { debit, credit }] of totals) {
+          const meta = metaByNum.get(num);
+          accounts.push({
+            num,
+            name: meta?.name ?? String(num),
+            group: meta?.group ?? "",
+            debit: Math.round(debit * 100) / 100,
+            credit: Math.round(credit * 100) / 100,
+            balance: Math.round((debit - credit) * 100) / 100,
+          });
+        }
+
+        // 6. Apply account filter
+        if (params.account_filter && params.account_filter.length > 0) {
+          const filterSet = new Set(params.account_filter);
+          accounts = accounts.filter((a) => filterSet.has(a.num));
+        }
+
+        // Sort by account number
+        accounts.sort((a, b) => a.num - b.num);
+
+        const structured = {
+          accounts,
+          count: accounts.length,
+          period: {
+            starttmp: params.starttmp,
+            endtmp: params.endtmp,
+          },
+          filtered_entries: {
+            leaked_cross_year: leakedCount,
+            opening_balance_excluded: openingExcluded,
+          },
+          pages_fetched: pagesFetched,
+        };
+
+        const textContent =
+          params.response_format === ResponseFormat.MARKDOWN
+            ? formatAccountBalancesMarkdown(accounts)
+            : JSON.stringify(structured, null, 2);
+
+        return {
+          content: [{ type: "text", text: textContent }],
+          structuredContent: structured,
+        };
+      } catch (error) {
+        return {
+          content: [{ type: "text", text: handleApiError(error) }],
+          isError: true,
+        };
+      }
+    },
+  );
 }
