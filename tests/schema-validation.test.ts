@@ -8,7 +8,7 @@
  * - Optional parameters are correctly marked
  */
 
-import { describe, it, expect } from '@jest/globals';
+import { describe, it, expect } from 'vitest';
 import * as z from 'zod';
 
 // Import schemas
