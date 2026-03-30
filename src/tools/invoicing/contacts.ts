@@ -29,7 +29,7 @@ import { registerCrudTools } from "../factory.js";
 /**
  * Format contacts as markdown
  */
-function formatContactsMarkdown(contacts: Contact[]): string {
+export function formatContactsMarkdown(contacts: Contact[]): string {
   if (!contacts.length) {
     return "No contacts found.";
   }
@@ -52,7 +52,7 @@ function formatContactsMarkdown(contacts: Contact[]): string {
 /**
  * Format a single contact as markdown
  */
-function formatContactMarkdown(contact: Contact): string {
+export function formatContactMarkdown(contact: Contact): string {
   const lines = [`# ${contact.name}`, "", `**ID**: ${contact.id}`, ""];
 
   if (contact.code) lines.push(`- **Code**: ${contact.code}`);

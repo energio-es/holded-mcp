@@ -16,7 +16,7 @@ import { registerCrudTools } from "../factory.js";
 /**
  * Format employees as markdown
  */
-function formatEmployeesMarkdown(employees: Employee[]): string {
+export function formatEmployeesMarkdown(employees: Employee[]): string {
   if (!employees.length) {
     return "No employees found.";
   }
@@ -41,7 +41,7 @@ function formatEmployeesMarkdown(employees: Employee[]): string {
 /**
  * Format a single employee as markdown
  */
-function formatEmployeeMarkdown(employee: Employee): string {
+export function formatEmployeeMarkdown(employee: Employee): string {
   const lines = [`# ${employee.name}`, "", `**ID**: ${employee.id}`, ""];
 
   if (employee.email) lines.push(`- **Email**: ${employee.email}`);
