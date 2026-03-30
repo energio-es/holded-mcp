@@ -3,7 +3,7 @@
  */
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { makeApiRequest, handleApiError, toStructuredContent } from "../../services/api.js";
+import { makeApiRequest, toStructuredContent } from "../../services/api.js";
 import { Task } from "../../types.js";
 import {
   ListTasksInputSchema,
@@ -14,6 +14,7 @@ import {
   CreateTaskInput,
 } from "../../schemas/projects/tasks.js";
 import { registerCrudTools } from "../factory.js";
+import { withErrorHandling } from "../utilities.js";
 
 /**
  * Format tasks as markdown
@@ -144,38 +145,31 @@ Returns:
         openWorldHint: true,
       },
     },
-    async (params: CreateTaskInput) => {
-      try {
-        const { project_id, list_id, name } = params;
-        // Transform snake_case to camelCase for API
-        const requestData = {
-          name,
-          projectId: project_id,
-          listId: list_id,
-        };
+    withErrorHandling(async (params) => {
+      const { project_id, list_id, name } = params as unknown as CreateTaskInput;
+      // Transform snake_case to camelCase for API
+      const requestData = {
+        name,
+        projectId: project_id,
+        listId: list_id,
+      };
 
-        const task = await makeApiRequest<Task>(
-          "projects",
-          "tasks",
-          "POST",
-          requestData
-        );
+      const task = await makeApiRequest<Task>(
+        "projects",
+        "tasks",
+        "POST",
+        requestData
+      );
 
-        return {
-          content: [
-            {
-              type: "text",
-              text: `Task created successfully.\n\n${JSON.stringify(task, null, 2)}`,
-            },
-          ],
-          structuredContent: toStructuredContent(task),
-        };
-      } catch (error) {
-        return {
-          content: [{ type: "text", text: handleApiError(error) }],
-          isError: true,
-        };
-      }
-    }
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Task created successfully.\n\n${JSON.stringify(task, null, 2)}`,
+          },
+        ],
+        structuredContent: toStructuredContent(task),
+      };
+    })
   );
 }

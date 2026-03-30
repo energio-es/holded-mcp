@@ -3,7 +3,7 @@
  */
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { makeApiRequest, makeMultipartApiRequest, handleApiError } from "../../services/api.js";
+import { makeApiRequest, makeMultipartApiRequest } from "../../services/api.js";
 import { ResponseFormat } from "../../constants.js";
 import { Product, ProductStock } from "../../types.js";
 import {
@@ -26,6 +26,7 @@ import {
   UploadProductImageInput,
 } from "../../schemas/invoicing/products.js";
 import { registerCrudTools } from "../factory.js";
+import { withErrorHandling } from "../utilities.js";
 
 /**
  * Format products as markdown
@@ -192,51 +193,45 @@ Returns:
         openWorldHint: true,
       },
     },
-    async (params: ListProductsStockInput) => {
-      try {
-        const queryParams: Record<string, unknown> = {};
-        if (params.page > 1) {
-          queryParams.page = params.page;
-        }
-
-        const stocks = await makeApiRequest<ProductStock[]>(
-          "invoicing",
-          `warehouses/${params.warehouse_id}/stock`,
-          "GET",
-          undefined,
-          queryParams
-        );
-
-        let textContent: string;
-        if (params.response_format === ResponseFormat.MARKDOWN) {
-          if (!stocks.length) {
-            textContent = `No product stock information found for warehouse ${params.warehouse_id}.`;
-          } else {
-            const lines = ["# Product Stock Levels", "", `**Warehouse ID**: ${params.warehouse_id}`, "", `Found ${stocks.length} products:`, ""];
-            for (const stock of stocks) {
-              lines.push(`## ${stock.name || stock.productId}`);
-              lines.push(`- **ID**: ${stock.productId}`);
-              if (stock.sku) lines.push(`- **SKU**: ${stock.sku}`);
-              lines.push(`- **Stock**: ${stock.stock}`);
-              lines.push("");
-            }
-            textContent = lines.join("\n");
-          }
-        } else {
-          textContent = JSON.stringify(stocks, null, 2);
-        }
-
-        return {
-          content: [{ type: "text", text: textContent }],
-          structuredContent: { stocks, count: stocks.length, page: params.page, warehouseId: params.warehouse_id },
-        };
-      } catch (error) {
-        return {
-          content: [{ type: "text", text: handleApiError(error) }],
-          isError: true,
-        };
+    withErrorHandling(async (params) => {
+      const typedParams = params as unknown as ListProductsStockInput;
+      const queryParams: Record<string, unknown> = {};
+      if (typedParams.page > 1) {
+        queryParams.page = typedParams.page;
       }
-    }
+
+      const stocks = await makeApiRequest<ProductStock[]>(
+        "invoicing",
+        `warehouses/${typedParams.warehouse_id}/stock`,
+        "GET",
+        undefined,
+        queryParams
+      );
+
+      let textContent: string;
+      if (typedParams.response_format === ResponseFormat.MARKDOWN) {
+        if (!stocks.length) {
+          textContent = `No product stock information found for warehouse ${typedParams.warehouse_id}.`;
+        } else {
+          const lines = ["# Product Stock Levels", "", `**Warehouse ID**: ${typedParams.warehouse_id}`, "", `Found ${stocks.length} products:`, ""];
+          for (const stock of stocks) {
+            lines.push(`## ${stock.name || stock.productId}`);
+            lines.push(`- **ID**: ${stock.productId}`);
+            if (stock.sku) lines.push(`- **SKU**: ${stock.sku}`);
+            lines.push(`- **Stock**: ${stock.stock}`);
+            lines.push("");
+          }
+          textContent = lines.join("\n");
+        }
+      } else {
+        textContent = JSON.stringify(stocks, null, 2);
+      }
+
+      return {
+        content: [{ type: "text", text: textContent }],
+        structuredContent: { stocks, count: stocks.length, page: typedParams.page, warehouseId: typedParams.warehouse_id },
+      };
+    })
   );
 
   // Update Product Stock
@@ -261,32 +256,25 @@ Returns:
         openWorldHint: true,
       },
     },
-    async (params: UpdateProductStockInput) => {
-      try {
-        const { product_id, stock } = params;
-        const result = await makeApiRequest<{ status: number; info: string; id: string }>(
-          "invoicing",
-          `products/${product_id}/stock`,
-          "PUT",
-          { stock }
-        );
+    withErrorHandling(async (params) => {
+      const { product_id, stock } = params as unknown as UpdateProductStockInput;
+      const result = await makeApiRequest<{ status: number; info: string; id: string }>(
+        "invoicing",
+        `products/${product_id}/stock`,
+        "PUT",
+        { stock }
+      );
 
-        return {
-          content: [
-            {
-              type: "text",
-              text: `Product stock updated successfully.\n\n${JSON.stringify(result, null, 2)}`,
-            },
-          ],
-          structuredContent: { updated: true, productId: product_id, stock },
-        };
-      } catch (error) {
-        return {
-          content: [{ type: "text", text: handleApiError(error) }],
-          isError: true,
-        };
-      }
-    }
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Product stock updated successfully.\n\n${JSON.stringify(result, null, 2)}`,
+          },
+        ],
+        structuredContent: { updated: true, productId: product_id, stock },
+      };
+    })
   );
 
   // Get Product Main Image
@@ -310,32 +298,26 @@ Returns:
         openWorldHint: true,
       },
     },
-    async (params: GetProductImageInput) => {
-      try {
-        const result = await makeApiRequest<{ url?: string; data?: string; [key: string]: unknown }>(
-          "invoicing",
-          `products/${params.product_id}/image`,
-          "GET"
-        );
+    withErrorHandling(async (params) => {
+      const typedParams = params as unknown as GetProductImageInput;
+      const result = await makeApiRequest<{ url?: string; data?: string; [key: string]: unknown }>(
+        "invoicing",
+        `products/${typedParams.product_id}/image`,
+        "GET"
+      );
 
-        const textContent =
-          params.response_format === ResponseFormat.MARKDOWN
-            ? result.url
-              ? `# Product Main Image\n\n**URL**: ${result.url}`
-              : `# Product Main Image\n\nImage data available.`
-            : JSON.stringify(result, null, 2);
+      const textContent =
+        typedParams.response_format === ResponseFormat.MARKDOWN
+          ? result.url
+            ? `# Product Main Image\n\n**URL**: ${result.url}`
+            : `# Product Main Image\n\nImage data available.`
+          : JSON.stringify(result, null, 2);
 
-        return {
-          content: [{ type: "text", text: textContent }],
-          structuredContent: { productId: params.product_id, ...result },
-        };
-      } catch (error) {
-        return {
-          content: [{ type: "text", text: handleApiError(error) }],
-          isError: true,
-        };
-      }
-    }
+      return {
+        content: [{ type: "text", text: textContent }],
+        structuredContent: { productId: typedParams.product_id, ...result },
+      };
+    })
   );
 
   // List Product Images
@@ -359,44 +341,38 @@ Returns:
         openWorldHint: true,
       },
     },
-    async (params: ListProductImagesInput) => {
-      try {
-        const images = await makeApiRequest<Array<string> | Array<{ name: string; url?: string; [key: string]: unknown }>>(
-          "invoicing",
-          `products/${params.product_id}/imagesList`,
-          "GET"
-        );
+    withErrorHandling(async (params) => {
+      const typedParams = params as unknown as ListProductImagesInput;
+      const images = await makeApiRequest<Array<string> | Array<{ name: string; url?: string; [key: string]: unknown }>>(
+        "invoicing",
+        `products/${typedParams.product_id}/imagesList`,
+        "GET"
+      );
 
-        let textContent: string;
-        if (params.response_format === ResponseFormat.MARKDOWN) {
-          if (!images.length) {
-            textContent = `No product images found for product ${params.product_id}.`;
-          } else {
-            const lines = ["# Product Images", "", `Found ${images.length} images:`, ""];
-            for (const image of images) {
-              if (typeof image === "string") {
-                lines.push(`- ${image}`);
-              } else {
-                lines.push(`- ${image.name || image.url || "Image"}`);
-              }
-            }
-            textContent = lines.join("\n");
-          }
+      let textContent: string;
+      if (typedParams.response_format === ResponseFormat.MARKDOWN) {
+        if (!images.length) {
+          textContent = `No product images found for product ${typedParams.product_id}.`;
         } else {
-          textContent = JSON.stringify(images, null, 2);
+          const lines = ["# Product Images", "", `Found ${images.length} images:`, ""];
+          for (const image of images) {
+            if (typeof image === "string") {
+              lines.push(`- ${image}`);
+            } else {
+              lines.push(`- ${image.name || image.url || "Image"}`);
+            }
+          }
+          textContent = lines.join("\n");
         }
-
-        return {
-          content: [{ type: "text", text: textContent }],
-          structuredContent: { images, count: images.length, productId: params.product_id },
-        };
-      } catch (error) {
-        return {
-          content: [{ type: "text", text: handleApiError(error) }],
-          isError: true,
-        };
+      } else {
+        textContent = JSON.stringify(images, null, 2);
       }
-    }
+
+      return {
+        content: [{ type: "text", text: textContent }],
+        structuredContent: { images, count: images.length, productId: typedParams.product_id },
+      };
+    })
   );
 
   // Get Product Secondary Image
@@ -421,32 +397,26 @@ Returns:
         openWorldHint: true,
       },
     },
-    async (params: GetProductSecondaryImageInput) => {
-      try {
-        const result = await makeApiRequest<{ url?: string; data?: string; [key: string]: unknown }>(
-          "invoicing",
-          `products/${params.product_id}/image/${params.image_file_name}`,
-          "GET"
-        );
+    withErrorHandling(async (params) => {
+      const typedParams = params as unknown as GetProductSecondaryImageInput;
+      const result = await makeApiRequest<{ url?: string; data?: string; [key: string]: unknown }>(
+        "invoicing",
+        `products/${typedParams.product_id}/image/${typedParams.image_file_name}`,
+        "GET"
+      );
 
-        const textContent =
-          params.response_format === ResponseFormat.MARKDOWN
-            ? result.url
-              ? `# Product Secondary Image\n\n**File**: ${params.image_file_name}\n**URL**: ${result.url}`
-              : `# Product Secondary Image\n\n**File**: ${params.image_file_name}\nImage data available.`
-            : JSON.stringify(result, null, 2);
+      const textContent =
+        typedParams.response_format === ResponseFormat.MARKDOWN
+          ? result.url
+            ? `# Product Secondary Image\n\n**File**: ${typedParams.image_file_name}\n**URL**: ${result.url}`
+            : `# Product Secondary Image\n\n**File**: ${typedParams.image_file_name}\nImage data available.`
+          : JSON.stringify(result, null, 2);
 
-        return {
-          content: [{ type: "text", text: textContent }],
-          structuredContent: { productId: params.product_id, imageFileName: params.image_file_name, ...result },
-        };
-      } catch (error) {
-        return {
-          content: [{ type: "text", text: handleApiError(error) }],
-          isError: true,
-        };
-      }
-    }
+      return {
+        content: [{ type: "text", text: textContent }],
+        structuredContent: { productId: typedParams.product_id, imageFileName: typedParams.image_file_name, ...result },
+      };
+    })
   );
 
   // Upload Product Image
@@ -472,36 +442,29 @@ Returns:
         openWorldHint: true,
       },
     },
-    async (params: UploadProductImageInput) => {
-      try {
-        const { product_id, file_content, file_name, set_main } = params;
+    withErrorHandling(async (params) => {
+      const { product_id, file_content, file_name, set_main } = params as unknown as UploadProductImageInput;
 
-        // Convert base64 to buffer
-        const fileBuffer = Buffer.from(file_content, "base64");
+      // Convert base64 to buffer
+      const fileBuffer = Buffer.from(file_content, "base64");
 
-        const result = await makeMultipartApiRequest<{ status: number; info: string; [key: string]: unknown }>(
-          "invoicing",
-          `products/${product_id}/image`,
-          fileBuffer,
-          file_name,
-          set_main
-        );
+      const result = await makeMultipartApiRequest<{ status: number; info: string; [key: string]: unknown }>(
+        "invoicing",
+        `products/${product_id}/image`,
+        fileBuffer,
+        file_name,
+        set_main
+      );
 
-        return {
-          content: [
-            {
-              type: "text",
-              text: `Product image uploaded successfully.\n\n${JSON.stringify(result, null, 2)}`,
-            },
-          ],
-          structuredContent: { uploaded: true, productId: product_id, fileName: file_name, ...result },
-        };
-      } catch (error) {
-        return {
-          content: [{ type: "text", text: handleApiError(error) }],
-          isError: true,
-        };
-      }
-    }
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Product image uploaded successfully.\n\n${JSON.stringify(result, null, 2)}`,
+          },
+        ],
+        structuredContent: { uploaded: true, productId: product_id, fileName: file_name, ...result },
+      };
+    })
   );
 }

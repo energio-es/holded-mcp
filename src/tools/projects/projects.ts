@@ -3,7 +3,7 @@
  */
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { makeApiRequest, handleApiError, toStructuredContent } from "../../services/api.js";
+import { makeApiRequest, toStructuredContent } from "../../services/api.js";
 import { ResponseFormat } from "../../constants.js";
 import { Project, ProjectSummary } from "../../types.js";
 import {
@@ -16,6 +16,7 @@ import {
   GetProjectSummaryInput,
 } from "../../schemas/projects/projects.js";
 import { registerCrudTools } from "../factory.js";
+import { withErrorHandling } from "../utilities.js";
 
 /**
  * Format projects as markdown
@@ -182,38 +183,32 @@ Returns:
         openWorldHint: true,
       },
     },
-    async (params: GetProjectSummaryInput) => {
-      try {
-        const summary = await makeApiRequest<ProjectSummary>(
-          "projects",
-          `projects/${params.project_id}/summary`,
-          "GET"
-        );
+    withErrorHandling(async (params) => {
+      const typedParams = params as unknown as GetProjectSummaryInput;
+      const summary = await makeApiRequest<ProjectSummary>(
+        "projects",
+        `projects/${typedParams.project_id}/summary`,
+        "GET"
+      );
 
-        let textContent: string;
-        if (params.response_format === ResponseFormat.MARKDOWN) {
-          const lines = [`# Project Summary`, ""];
-          lines.push(`- **Project ID**: ${summary.projectId}`);
-          if (summary.totalHours !== undefined) lines.push(`- **Total Hours**: ${summary.totalHours}`);
-          if (summary.totalCost !== undefined) lines.push(`- **Total Cost**: ${summary.totalCost}`);
-          if (summary.totalRevenue !== undefined) lines.push(`- **Total Revenue**: ${summary.totalRevenue}`);
-          if (summary.tasksCompleted !== undefined) lines.push(`- **Tasks Completed**: ${summary.tasksCompleted}`);
-          if (summary.tasksTotal !== undefined) lines.push(`- **Total Tasks**: ${summary.tasksTotal}`);
-          textContent = lines.join("\n");
-        } else {
-          textContent = JSON.stringify(summary, null, 2);
-        }
-
-        return {
-          content: [{ type: "text", text: textContent }],
-          structuredContent: toStructuredContent(summary),
-        };
-      } catch (error) {
-        return {
-          content: [{ type: "text", text: handleApiError(error) }],
-          isError: true,
-        };
+      let textContent: string;
+      if (typedParams.response_format === ResponseFormat.MARKDOWN) {
+        const lines = [`# Project Summary`, ""];
+        lines.push(`- **Project ID**: ${summary.projectId}`);
+        if (summary.totalHours !== undefined) lines.push(`- **Total Hours**: ${summary.totalHours}`);
+        if (summary.totalCost !== undefined) lines.push(`- **Total Cost**: ${summary.totalCost}`);
+        if (summary.totalRevenue !== undefined) lines.push(`- **Total Revenue**: ${summary.totalRevenue}`);
+        if (summary.tasksCompleted !== undefined) lines.push(`- **Tasks Completed**: ${summary.tasksCompleted}`);
+        if (summary.tasksTotal !== undefined) lines.push(`- **Total Tasks**: ${summary.tasksTotal}`);
+        textContent = lines.join("\n");
+      } else {
+        textContent = JSON.stringify(summary, null, 2);
       }
-    }
+
+      return {
+        content: [{ type: "text", text: textContent }],
+        structuredContent: toStructuredContent(summary),
+      };
+    })
   );
 }
