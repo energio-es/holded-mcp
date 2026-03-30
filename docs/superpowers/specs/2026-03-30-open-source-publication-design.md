@@ -52,10 +52,15 @@ Create `server.json` in the project root with:
 - Publish: `npm publish`
 - Verify on npmjs.com
 
-### 5. GitHub Release
+### 5. GitHub Repository & Release
 
-- Create tag `v1.0.0` and GitHub release with notes from CHANGELOG.md
+**Repository setup:**
+- Create the repo under `energio-es` org (or make public if it already exists as private)
+- Set description: "MCP server for Holded — invoicing, CRM, projects, accounting, and team"
 - Set repository topics: `mcp`, `mcp-server`, `holded`, `model-context-protocol`, `typescript`
+
+**Release:**
+- Create tag `v1.0.0` and GitHub release with notes from CHANGELOG.md
 
 ### 6. MCP Registry Submissions
 
