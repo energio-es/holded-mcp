@@ -3,9 +3,10 @@
  */
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { makeApiRequest, handleApiError, toStructuredContent } from "../../services/api.js";
+import { makeApiRequest, toStructuredContent } from "../../services/api.js";
 import { ResponseFormat } from "../../constants.js";
 import { NumberingSeries } from "../../types.js";
+import { withErrorHandling } from "../utilities.js";
 import {
   GetNumberingSeriesInputSchema,
   CreateNumberingSeriesInputSchema,
@@ -42,45 +43,39 @@ Returns:
         openWorldHint: true,
       },
     },
-    async (params: GetNumberingSeriesInput) => {
-      try {
-        const series = await makeApiRequest<NumberingSeries[]>(
-          "invoicing",
-          `numberseries/${params.doc_type}`,
-          "GET"
-        );
+    withErrorHandling(async (params) => {
+      const { doc_type, response_format } = params as unknown as GetNumberingSeriesInput;
+      const series = await makeApiRequest<NumberingSeries[]>(
+        "invoicing",
+        `numberseries/${doc_type}`,
+        "GET"
+      );
 
-        let textContent: string;
-        if (params.response_format === ResponseFormat.MARKDOWN) {
-          if (!series.length) {
-            textContent = `No numbering series found for ${params.doc_type}.`;
-          } else {
-            const lines = [`# Numbering Series for ${params.doc_type}`, "", `Found ${series.length} series:`, ""];
-            for (const s of series) {
-              lines.push(`## ${s.name}`);
-              lines.push(`- **ID**: ${s.id}`);
-              if (s.prefix) lines.push(`- **Prefix**: ${s.prefix}`);
-              if (s.suffix) lines.push(`- **Suffix**: ${s.suffix}`);
-              lines.push(`- **Next Number**: ${s.nextNumber}`);
-              lines.push("");
-            }
-            textContent = lines.join("\n");
-          }
+      let textContent: string;
+      if (response_format === ResponseFormat.MARKDOWN) {
+        if (!series.length) {
+          textContent = `No numbering series found for ${doc_type}.`;
         } else {
-          textContent = JSON.stringify(series, null, 2);
+          const lines = [`# Numbering Series for ${doc_type}`, "", `Found ${series.length} series:`, ""];
+          for (const s of series) {
+            lines.push(`## ${s.name}`);
+            lines.push(`- **ID**: ${s.id}`);
+            if (s.prefix) lines.push(`- **Prefix**: ${s.prefix}`);
+            if (s.suffix) lines.push(`- **Suffix**: ${s.suffix}`);
+            lines.push(`- **Next Number**: ${s.nextNumber}`);
+            lines.push("");
+          }
+          textContent = lines.join("\n");
         }
-
-        return {
-          content: [{ type: "text", text: textContent }],
-          structuredContent: { series, count: series.length, docType: params.doc_type },
-        };
-      } catch (error) {
-        return {
-          content: [{ type: "text", text: handleApiError(error) }],
-          isError: true,
-        };
+      } else {
+        textContent = JSON.stringify(series, null, 2);
       }
-    }
+
+      return {
+        content: [{ type: "text", text: textContent }],
+        structuredContent: { series, count: series.length, docType: doc_type },
+      };
+    })
   );
 
   // Create Numbering Series
@@ -107,32 +102,25 @@ Returns:
         openWorldHint: true,
       },
     },
-    async (params: CreateNumberingSeriesInput) => {
-      try {
-        const { doc_type, ...seriesData } = params;
-        const series = await makeApiRequest<NumberingSeries>(
-          "invoicing",
-          `numberseries/${doc_type}`,
-          "POST",
-          seriesData
-        );
+    withErrorHandling(async (params) => {
+      const { doc_type, ...seriesData } = params as unknown as CreateNumberingSeriesInput;
+      const series = await makeApiRequest<NumberingSeries>(
+        "invoicing",
+        `numberseries/${doc_type}`,
+        "POST",
+        seriesData
+      );
 
-        return {
-          content: [
-            {
-              type: "text",
-              text: `Numbering series created successfully.\n\n${JSON.stringify(series, null, 2)}`,
-            },
-          ],
-          structuredContent: toStructuredContent(series),
-        };
-      } catch (error) {
-        return {
-          content: [{ type: "text", text: handleApiError(error) }],
-          isError: true,
-        };
-      }
-    }
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Numbering series created successfully.\n\n${JSON.stringify(series, null, 2)}`,
+          },
+        ],
+        structuredContent: toStructuredContent(series),
+      };
+    })
   );
 
   // Update Numbering Series
@@ -159,32 +147,25 @@ Returns:
         openWorldHint: true,
       },
     },
-    async (params: UpdateNumberingSeriesInput) => {
-      try {
-        const { doc_type, numbering_series_id, ...updateData } = params;
-        const series = await makeApiRequest<NumberingSeries>(
-          "invoicing",
-          `numberseries/${doc_type}/${numbering_series_id}`,
-          "PUT",
-          updateData
-        );
+    withErrorHandling(async (params) => {
+      const { doc_type, numbering_series_id, ...updateData } = params as unknown as UpdateNumberingSeriesInput;
+      const series = await makeApiRequest<NumberingSeries>(
+        "invoicing",
+        `numberseries/${doc_type}/${numbering_series_id}`,
+        "PUT",
+        updateData
+      );
 
-        return {
-          content: [
-            {
-              type: "text",
-              text: `Numbering series updated successfully.\n\n${JSON.stringify(series, null, 2)}`,
-            },
-          ],
-          structuredContent: toStructuredContent(series),
-        };
-      } catch (error) {
-        return {
-          content: [{ type: "text", text: handleApiError(error) }],
-          isError: true,
-        };
-      }
-    }
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Numbering series updated successfully.\n\n${JSON.stringify(series, null, 2)}`,
+          },
+        ],
+        structuredContent: toStructuredContent(series),
+      };
+    })
   );
 
   // Delete Numbering Series
@@ -208,29 +189,23 @@ Returns:
         openWorldHint: true,
       },
     },
-    async (params: DeleteNumberingSeriesInput) => {
-      try {
-        await makeApiRequest<void>(
-          "invoicing",
-          `numberseries/${params.doc_type}/${params.numbering_series_id}`,
-          "DELETE"
-        );
+    withErrorHandling(async (params) => {
+      const { doc_type, numbering_series_id } = params as unknown as DeleteNumberingSeriesInput;
+      await makeApiRequest<void>(
+        "invoicing",
+        `numberseries/${doc_type}/${numbering_series_id}`,
+        "DELETE"
+      );
 
-        return {
-          content: [
-            {
-              type: "text",
-              text: `Numbering series ${params.numbering_series_id} deleted successfully.`,
-            },
-          ],
-          structuredContent: { deleted: true, id: params.numbering_series_id, docType: params.doc_type },
-        };
-      } catch (error) {
-        return {
-          content: [{ type: "text", text: handleApiError(error) }],
-          isError: true,
-        };
-      }
-    }
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Numbering series ${numbering_series_id} deleted successfully.`,
+          },
+        ],
+        structuredContent: { deleted: true, id: numbering_series_id, docType: doc_type },
+      };
+    })
   );
 }

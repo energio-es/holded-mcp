@@ -3,9 +3,10 @@
  */
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { makeApiRequest, handleApiError, toStructuredContent } from "../../services/api.js";
+import { makeApiRequest, toStructuredContent } from "../../services/api.js";
 import { ResponseFormat } from "../../constants.js";
 import { TimeTracking } from "../../types.js";
+import { withErrorHandling } from "../utilities.js";
 import {
   ListProjectTimeTrackingsInputSchema,
   CreateProjectTimeTrackingInputSchema,
@@ -72,37 +73,31 @@ Returns:
         openWorldHint: true,
       },
     },
-    async (params: ListProjectTimeTrackingsInput) => {
-      try {
-        const queryParams: Record<string, unknown> = {};
-        if (params.page > 1) {
-          queryParams.page = params.page;
-        }
-
-        const times = await makeApiRequest<TimeTracking[]>(
-          "projects",
-          `projects/${params.project_id}/times`,
-          "GET",
-          undefined,
-          queryParams
-        );
-
-        const textContent =
-          params.response_format === ResponseFormat.MARKDOWN
-            ? formatProjectTimeTrackingsMarkdown(times)
-            : JSON.stringify(times, null, 2);
-
-        return {
-          content: [{ type: "text", text: textContent }],
-          structuredContent: { timeTrackings: times, count: times.length, page: params.page },
-        };
-      } catch (error) {
-        return {
-          content: [{ type: "text", text: handleApiError(error) }],
-          isError: true,
-        };
+    withErrorHandling(async (params) => {
+      const { project_id, page, response_format } = params as unknown as ListProjectTimeTrackingsInput;
+      const queryParams: Record<string, unknown> = {};
+      if (page > 1) {
+        queryParams.page = page;
       }
-    }
+
+      const times = await makeApiRequest<TimeTracking[]>(
+        "projects",
+        `projects/${project_id}/times`,
+        "GET",
+        undefined,
+        queryParams
+      );
+
+      const textContent =
+        response_format === ResponseFormat.MARKDOWN
+          ? formatProjectTimeTrackingsMarkdown(times)
+          : JSON.stringify(times, null, 2);
+
+      return {
+        content: [{ type: "text", text: textContent }],
+        structuredContent: { timeTrackings: times, count: times.length, page },
+      };
+    })
   );
 
   // Create Project Time Tracking
@@ -130,32 +125,25 @@ Returns:
         openWorldHint: true,
       },
     },
-    async (params: CreateProjectTimeTrackingInput) => {
-      try {
-        const { project_id, ...timeData } = params;
-        const time = await makeApiRequest<TimeTracking>(
-          "projects",
-          `projects/${project_id}/times`,
-          "POST",
-          timeData
-        );
+    withErrorHandling(async (params) => {
+      const { project_id, ...timeData } = params as unknown as CreateProjectTimeTrackingInput;
+      const time = await makeApiRequest<TimeTracking>(
+        "projects",
+        `projects/${project_id}/times`,
+        "POST",
+        timeData
+      );
 
-        return {
-          content: [
-            {
-              type: "text",
-              text: `Project time-tracking created successfully.\n\n${JSON.stringify(time, null, 2)}`,
-            },
-          ],
-          structuredContent: toStructuredContent(time),
-        };
-      } catch (error) {
-        return {
-          content: [{ type: "text", text: handleApiError(error) }],
-          isError: true,
-        };
-      }
-    }
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Project time-tracking created successfully.\n\n${JSON.stringify(time, null, 2)}`,
+          },
+        ],
+        structuredContent: toStructuredContent(time),
+      };
+    })
   );
 
   // Update Project Time Tracking
@@ -184,32 +172,25 @@ Returns:
         openWorldHint: true,
       },
     },
-    async (params: UpdateProjectTimeTrackingInput) => {
-      try {
-        const { project_id, time_id, ...updateData } = params;
-        const time = await makeApiRequest<TimeTracking>(
-          "projects",
-          `projects/${project_id}/times/${time_id}`,
-          "PUT",
-          updateData
-        );
+    withErrorHandling(async (params) => {
+      const { project_id, time_id, ...updateData } = params as unknown as UpdateProjectTimeTrackingInput;
+      const time = await makeApiRequest<TimeTracking>(
+        "projects",
+        `projects/${project_id}/times/${time_id}`,
+        "PUT",
+        updateData
+      );
 
-        return {
-          content: [
-            {
-              type: "text",
-              text: `Project time-tracking updated successfully.\n\n${JSON.stringify(time, null, 2)}`,
-            },
-          ],
-          structuredContent: toStructuredContent(time),
-        };
-      } catch (error) {
-        return {
-          content: [{ type: "text", text: handleApiError(error) }],
-          isError: true,
-        };
-      }
-    }
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Project time-tracking updated successfully.\n\n${JSON.stringify(time, null, 2)}`,
+          },
+        ],
+        structuredContent: toStructuredContent(time),
+      };
+    })
   );
 
   // Delete Project Time Tracking
@@ -233,30 +214,24 @@ Returns:
         openWorldHint: true,
       },
     },
-    async (params: DeleteProjectTimeTrackingInput) => {
-      try {
-        await makeApiRequest<void>(
-          "projects",
-          `projects/${params.project_id}/times/${params.time_id}`,
-          "DELETE"
-        );
+    withErrorHandling(async (params) => {
+      const { project_id, time_id } = params as unknown as DeleteProjectTimeTrackingInput;
+      await makeApiRequest<void>(
+        "projects",
+        `projects/${project_id}/times/${time_id}`,
+        "DELETE"
+      );
 
-        return {
-          content: [
-            {
-              type: "text",
-              text: `Project time-tracking ${params.time_id} deleted successfully.`,
-            },
-          ],
-          structuredContent: { deleted: true, id: params.time_id, projectId: params.project_id },
-        };
-      } catch (error) {
-        return {
-          content: [{ type: "text", text: handleApiError(error) }],
-          isError: true,
-        };
-      }
-    }
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Project time-tracking ${time_id} deleted successfully.`,
+          },
+        ],
+        structuredContent: { deleted: true, id: time_id, projectId: project_id },
+      };
+    })
   );
 
   // Get Project Time Tracking
@@ -281,42 +256,36 @@ Returns:
         openWorldHint: true,
       },
     },
-    async (params: GetProjectTimeTrackingInput) => {
-      try {
-        const time = await makeApiRequest<TimeTracking>(
-          "projects",
-          `projects/${params.project_id}/times/${params.time_id}`,
-          "GET"
-        );
+    withErrorHandling(async (params) => {
+      const { project_id, time_id, response_format } = params as unknown as GetProjectTimeTrackingInput;
+      const time = await makeApiRequest<TimeTracking>(
+        "projects",
+        `projects/${project_id}/times/${time_id}`,
+        "GET"
+      );
 
-        let textContent: string;
-        if (params.response_format === ResponseFormat.MARKDOWN) {
-          const lines = [`# Time Tracking Entry ${time.id}`, ""];
-          if (time.date) lines.push(`- **Date**: ${new Date(time.date * 1000).toLocaleDateString()}`);
-          if (time.hours !== undefined) lines.push(`- **Hours**: ${time.hours}`);
-          if (time.duration !== undefined) lines.push(`- **Duration**: ${time.duration} seconds`);
-          if (time.description) lines.push(`- **Description**: ${time.description}`);
-          if (time.employeeName) lines.push(`- **Employee**: ${time.employeeName}`);
-          if (time.taskName) lines.push(`- **Task**: ${time.taskName}`);
-          if (time.costHour !== undefined) lines.push(`- **Cost/Hour**: ${time.costHour}`);
-          if (time.total !== undefined) lines.push(`- **Total**: ${time.total}`);
-          if (time.billable !== undefined) lines.push(`- **Billable**: ${time.billable ? "Yes" : "No"}`);
-          textContent = lines.join("\n");
-        } else {
-          textContent = JSON.stringify(time, null, 2);
-        }
-
-        return {
-          content: [{ type: "text", text: textContent }],
-          structuredContent: toStructuredContent(time),
-        };
-      } catch (error) {
-        return {
-          content: [{ type: "text", text: handleApiError(error) }],
-          isError: true,
-        };
+      let textContent: string;
+      if (response_format === ResponseFormat.MARKDOWN) {
+        const lines = [`# Time Tracking Entry ${time.id}`, ""];
+        if (time.date) lines.push(`- **Date**: ${new Date(time.date * 1000).toLocaleDateString()}`);
+        if (time.hours !== undefined) lines.push(`- **Hours**: ${time.hours}`);
+        if (time.duration !== undefined) lines.push(`- **Duration**: ${time.duration} seconds`);
+        if (time.description) lines.push(`- **Description**: ${time.description}`);
+        if (time.employeeName) lines.push(`- **Employee**: ${time.employeeName}`);
+        if (time.taskName) lines.push(`- **Task**: ${time.taskName}`);
+        if (time.costHour !== undefined) lines.push(`- **Cost/Hour**: ${time.costHour}`);
+        if (time.total !== undefined) lines.push(`- **Total**: ${time.total}`);
+        if (time.billable !== undefined) lines.push(`- **Billable**: ${time.billable ? "Yes" : "No"}`);
+        textContent = lines.join("\n");
+      } else {
+        textContent = JSON.stringify(time, null, 2);
       }
-    }
+
+      return {
+        content: [{ type: "text", text: textContent }],
+        structuredContent: toStructuredContent(time),
+      };
+    })
   );
 
   // List All Project Times
@@ -342,73 +311,67 @@ Returns:
         openWorldHint: true,
       },
     },
-    async (params: ListAllProjectTimesInput) => {
-      try {
-        const queryParams: Record<string, unknown> = {};
-        if (params.start !== undefined) {
-          queryParams.start = params.start;
-        }
-        if (params.end !== undefined) {
-          queryParams.end = params.end;
-        }
-        if (params.archived !== undefined) {
-          queryParams.archived = params.archived;
-        }
-
-        const projects = await makeApiRequest<Array<{
-          id: string;
-          name: string;
-          timeTracking: Array<{
-            timeId: string;
-            duration: number;
-            desc: string;
-            costHour: number;
-            userId: string;
-            taskId: string;
-            total: number;
-          }>;
-        }>>(
-          "projects",
-          "projects/times",
-          "GET",
-          undefined,
-          queryParams
-        );
-
-        let textContent: string;
-        if (params.response_format === ResponseFormat.MARKDOWN) {
-          if (!projects.length) {
-            textContent = "No project times found.";
-          } else {
-            const lines = ["# All Project Times", "", `Found ${projects.length} projects:`, ""];
-            for (const project of projects) {
-              lines.push(`## ${project.name} (${project.id})`);
-              if (project.timeTracking && project.timeTracking.length > 0) {
-                lines.push(`**Time Entries**: ${project.timeTracking.length}`);
-                for (const time of project.timeTracking) {
-                  lines.push(`- ${time.desc || "Time entry"} (${time.duration}s, ${time.total || 0} total)`);
-                }
-              } else {
-                lines.push("No time entries");
-              }
-              lines.push("");
-            }
-            textContent = lines.join("\n");
-          }
-        } else {
-          textContent = JSON.stringify(projects, null, 2);
-        }
-
-        return {
-          content: [{ type: "text", text: textContent }],
-          structuredContent: { projects, count: projects.length },
-        };
-      } catch (error) {
-        return {
-          content: [{ type: "text", text: handleApiError(error) }],
-          isError: true,
-        };
+    withErrorHandling(async (params) => {
+      const { start, end, archived, response_format } = params as unknown as ListAllProjectTimesInput;
+      const queryParams: Record<string, unknown> = {};
+      if (start !== undefined) {
+        queryParams.start = start;
       }
-    }
+      if (end !== undefined) {
+        queryParams.end = end;
+      }
+      if (archived !== undefined) {
+        queryParams.archived = archived;
+      }
+
+      const projects = await makeApiRequest<Array<{
+        id: string;
+        name: string;
+        timeTracking: Array<{
+          timeId: string;
+          duration: number;
+          desc: string;
+          costHour: number;
+          userId: string;
+          taskId: string;
+          total: number;
+        }>;
+      }>>(
+        "projects",
+        "projects/times",
+        "GET",
+        undefined,
+        queryParams
+      );
+
+      let textContent: string;
+      if (response_format === ResponseFormat.MARKDOWN) {
+        if (!projects.length) {
+          textContent = "No project times found.";
+        } else {
+          const lines = ["# All Project Times", "", `Found ${projects.length} projects:`, ""];
+          for (const project of projects) {
+            lines.push(`## ${project.name} (${project.id})`);
+            if (project.timeTracking && project.timeTracking.length > 0) {
+              lines.push(`**Time Entries**: ${project.timeTracking.length}`);
+              for (const time of project.timeTracking) {
+                lines.push(`- ${time.desc || "Time entry"} (${time.duration}s, ${time.total || 0} total)`);
+              }
+            } else {
+              lines.push("No time entries");
+            }
+            lines.push("");
+          }
+          textContent = lines.join("\n");
+        }
+      } else {
+        textContent = JSON.stringify(projects, null, 2);
+      }
+
+      return {
+        content: [{ type: "text", text: textContent }],
+        structuredContent: { projects, count: projects.length },
+      };
+    })
   );
 }

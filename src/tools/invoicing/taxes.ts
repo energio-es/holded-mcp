@@ -3,8 +3,9 @@
  */
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { makeApiRequest, handleApiError } from "../../services/api.js";
+import { makeApiRequest } from "../../services/api.js";
 import { ResponseFormat } from "../../constants.js";
+import { withErrorHandling } from "../utilities.js";
 import {
   GetTaxesInputSchema,
   GetTaxesInput,
@@ -54,29 +55,23 @@ Returns:
         openWorldHint: true,
       },
     },
-    async (params: GetTaxesInput) => {
-      try {
-        const taxes = await makeApiRequest<Array<{ id: string; name: string; rate?: number; [key: string]: unknown }>>(
-          "invoicing",
-          "taxes",
-          "GET"
-        );
+    withErrorHandling(async (params) => {
+      const { response_format } = params as unknown as GetTaxesInput;
+      const taxes = await makeApiRequest<Array<{ id: string; name: string; rate?: number; [key: string]: unknown }>>(
+        "invoicing",
+        "taxes",
+        "GET"
+      );
 
-        const textContent =
-          params.response_format === ResponseFormat.MARKDOWN
-            ? formatTaxesMarkdown(taxes)
-            : JSON.stringify(taxes, null, 2);
+      const textContent =
+        response_format === ResponseFormat.MARKDOWN
+          ? formatTaxesMarkdown(taxes)
+          : JSON.stringify(taxes, null, 2);
 
-        return {
-          content: [{ type: "text", text: textContent }],
-          structuredContent: { taxes, count: taxes.length },
-        };
-      } catch (error) {
-        return {
-          content: [{ type: "text", text: handleApiError(error) }],
-          isError: true,
-        };
-      }
-    }
+      return {
+        content: [{ type: "text", text: textContent }],
+        structuredContent: { taxes, count: taxes.length },
+      };
+    })
   );
 }

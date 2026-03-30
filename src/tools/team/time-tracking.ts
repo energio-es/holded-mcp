@@ -3,9 +3,10 @@
  */
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { makeApiRequest, handleApiError, toStructuredContent } from "../../services/api.js";
+import { makeApiRequest, toStructuredContent } from "../../services/api.js";
 import { ResponseFormat } from "../../constants.js";
 import { TimeTracking } from "../../types.js";
+import { withErrorHandling } from "../utilities.js";
 import {
   ListAllTimeTrackingsInputSchema,
   ListEmployeeTimeTrackingsInputSchema,
@@ -95,37 +96,31 @@ Returns:
         openWorldHint: true,
       },
     },
-    async (params: ListAllTimeTrackingsInput) => {
-      try {
-        const queryParams: Record<string, unknown> = {};
-        if (params.page > 1) {
-          queryParams.page = params.page;
-        }
-
-        const times = await makeApiRequest<TimeTracking[]>(
-          "team",
-          "employees/times",
-          "GET",
-          undefined,
-          queryParams
-        );
-
-        const textContent =
-          params.response_format === ResponseFormat.MARKDOWN
-            ? formatTimeTrackingsMarkdown(times)
-            : JSON.stringify(times, null, 2);
-
-        return {
-          content: [{ type: "text", text: textContent }],
-          structuredContent: { timeTrackings: times, count: times.length, page: params.page },
-        };
-      } catch (error) {
-        return {
-          content: [{ type: "text", text: handleApiError(error) }],
-          isError: true,
-        };
+    withErrorHandling(async (params) => {
+      const { page, response_format } = params as unknown as ListAllTimeTrackingsInput;
+      const queryParams: Record<string, unknown> = {};
+      if (page > 1) {
+        queryParams.page = page;
       }
-    }
+
+      const times = await makeApiRequest<TimeTracking[]>(
+        "team",
+        "employees/times",
+        "GET",
+        undefined,
+        queryParams
+      );
+
+      const textContent =
+        response_format === ResponseFormat.MARKDOWN
+          ? formatTimeTrackingsMarkdown(times)
+          : JSON.stringify(times, null, 2);
+
+      return {
+        content: [{ type: "text", text: textContent }],
+        structuredContent: { timeTrackings: times, count: times.length, page },
+      };
+    })
   );
 
   // List Employee Time Trackings
@@ -150,37 +145,31 @@ Returns:
         openWorldHint: true,
       },
     },
-    async (params: ListEmployeeTimeTrackingsInput) => {
-      try {
-        const queryParams: Record<string, unknown> = {};
-        if (params.page > 1) {
-          queryParams.page = params.page;
-        }
-
-        const times = await makeApiRequest<TimeTracking[]>(
-          "team",
-          `employees/${params.employee_id}/times`,
-          "GET",
-          undefined,
-          queryParams
-        );
-
-        const textContent =
-          params.response_format === ResponseFormat.MARKDOWN
-            ? formatTimeTrackingsMarkdown(times)
-            : JSON.stringify(times, null, 2);
-
-        return {
-          content: [{ type: "text", text: textContent }],
-          structuredContent: { timeTrackings: times, count: times.length, page: params.page },
-        };
-      } catch (error) {
-        return {
-          content: [{ type: "text", text: handleApiError(error) }],
-          isError: true,
-        };
+    withErrorHandling(async (params) => {
+      const { employee_id, page, response_format } = params as unknown as ListEmployeeTimeTrackingsInput;
+      const queryParams: Record<string, unknown> = {};
+      if (page > 1) {
+        queryParams.page = page;
       }
-    }
+
+      const times = await makeApiRequest<TimeTracking[]>(
+        "team",
+        `employees/${employee_id}/times`,
+        "GET",
+        undefined,
+        queryParams
+      );
+
+      const textContent =
+        response_format === ResponseFormat.MARKDOWN
+          ? formatTimeTrackingsMarkdown(times)
+          : JSON.stringify(times, null, 2);
+
+      return {
+        content: [{ type: "text", text: textContent }],
+        structuredContent: { timeTrackings: times, count: times.length, page },
+      };
+    })
   );
 
   // Get Time Tracking
@@ -204,30 +193,24 @@ Returns:
         openWorldHint: true,
       },
     },
-    async (params: GetTimeTrackingInput) => {
-      try {
-        const time = await makeApiRequest<TimeTracking>(
-          "team",
-          `employees/times/${params.time_id}`,
-          "GET"
-        );
+    withErrorHandling(async (params) => {
+      const { time_id, response_format } = params as unknown as GetTimeTrackingInput;
+      const time = await makeApiRequest<TimeTracking>(
+        "team",
+        `employees/times/${time_id}`,
+        "GET"
+      );
 
-        const textContent =
-          params.response_format === ResponseFormat.MARKDOWN
-            ? formatTimeTrackingMarkdown(time)
-            : JSON.stringify(time, null, 2);
+      const textContent =
+        response_format === ResponseFormat.MARKDOWN
+          ? formatTimeTrackingMarkdown(time)
+          : JSON.stringify(time, null, 2);
 
-        return {
-          content: [{ type: "text", text: textContent }],
-          structuredContent: toStructuredContent(time),
-        };
-      } catch (error) {
-        return {
-          content: [{ type: "text", text: handleApiError(error) }],
-          isError: true,
-        };
-      }
-    }
+      return {
+        content: [{ type: "text", text: textContent }],
+        structuredContent: toStructuredContent(time),
+      };
+    })
   );
 
   // Create Employee Time Tracking
@@ -252,32 +235,25 @@ Returns:
         openWorldHint: true,
       },
     },
-    async (params: CreateEmployeeTimeTrackingInput) => {
-      try {
-        const { employee_id, startTmp, endTmp } = params;
-        const time = await makeApiRequest<TimeTracking>(
-          "team",
-          `employees/${employee_id}/times`,
-          "POST",
-          { startTmp, endTmp }
-        );
+    withErrorHandling(async (params) => {
+      const { employee_id, startTmp, endTmp } = params as unknown as CreateEmployeeTimeTrackingInput;
+      const time = await makeApiRequest<TimeTracking>(
+        "team",
+        `employees/${employee_id}/times`,
+        "POST",
+        { startTmp, endTmp }
+      );
 
-        return {
-          content: [
-            {
-              type: "text",
-              text: `Time-tracking created successfully.\n\n${JSON.stringify(time, null, 2)}`,
-            },
-          ],
-          structuredContent: toStructuredContent(time),
-        };
-      } catch (error) {
-        return {
-          content: [{ type: "text", text: handleApiError(error) }],
-          isError: true,
-        };
-      }
-    }
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Time-tracking created successfully.\n\n${JSON.stringify(time, null, 2)}`,
+          },
+        ],
+        structuredContent: toStructuredContent(time),
+      };
+    })
   );
 
   // Update Time Tracking
@@ -302,32 +278,25 @@ Returns:
         openWorldHint: true,
       },
     },
-    async (params: UpdateTimeTrackingInput) => {
-      try {
-        const { time_id, startTmp, endTmp } = params;
-        const time = await makeApiRequest<TimeTracking>(
-          "team",
-          `employees/times/${time_id}`,
-          "PUT",
-          { startTmp, endTmp }
-        );
+    withErrorHandling(async (params) => {
+      const { time_id, startTmp, endTmp } = params as unknown as UpdateTimeTrackingInput;
+      const time = await makeApiRequest<TimeTracking>(
+        "team",
+        `employees/times/${time_id}`,
+        "PUT",
+        { startTmp, endTmp }
+      );
 
-        return {
-          content: [
-            {
-              type: "text",
-              text: `Time-tracking updated successfully.\n\n${JSON.stringify(time, null, 2)}`,
-            },
-          ],
-          structuredContent: toStructuredContent(time),
-        };
-      } catch (error) {
-        return {
-          content: [{ type: "text", text: handleApiError(error) }],
-          isError: true,
-        };
-      }
-    }
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Time-tracking updated successfully.\n\n${JSON.stringify(time, null, 2)}`,
+          },
+        ],
+        structuredContent: toStructuredContent(time),
+      };
+    })
   );
 
   // Delete Time Tracking
@@ -350,30 +319,24 @@ Returns:
         openWorldHint: true,
       },
     },
-    async (params: DeleteTimeTrackingInput) => {
-      try {
-        await makeApiRequest<void>(
-          "team",
-          `employees/times/${params.time_id}`,
-          "DELETE"
-        );
+    withErrorHandling(async (params) => {
+      const { time_id } = params as unknown as DeleteTimeTrackingInput;
+      await makeApiRequest<void>(
+        "team",
+        `employees/times/${time_id}`,
+        "DELETE"
+      );
 
-        return {
-          content: [
-            {
-              type: "text",
-              text: `Time-tracking ${params.time_id} deleted successfully.`,
-            },
-          ],
-          structuredContent: { deleted: true, id: params.time_id },
-        };
-      } catch (error) {
-        return {
-          content: [{ type: "text", text: handleApiError(error) }],
-          isError: true,
-        };
-      }
-    }
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Time-tracking ${time_id} deleted successfully.`,
+          },
+        ],
+        structuredContent: { deleted: true, id: time_id },
+      };
+    })
   );
 
   // Employee Clock In
@@ -397,36 +360,30 @@ Returns:
         openWorldHint: true,
       },
     },
-    async (params: EmployeeClockInInput) => {
-      try {
-        const requestData: Record<string, unknown> = {};
-        if (params.location) {
-          requestData.location = params.location;
-        }
-
-        const result = await makeApiRequest<{ status: number; info: string; id: string; [key: string]: unknown }>(
-          "team",
-          `employees/${params.employee_id}/times/clockin`,
-          "POST",
-          requestData
-        );
-
-        return {
-          content: [
-            {
-              type: "text",
-              text: `Employee clocked in successfully.\n\n${JSON.stringify(result, null, 2)}`,
-            },
-          ],
-          structuredContent: { clockedIn: true, employeeId: params.employee_id, ...result },
-        };
-      } catch (error) {
-        return {
-          content: [{ type: "text", text: handleApiError(error) }],
-          isError: true,
-        };
+    withErrorHandling(async (params) => {
+      const { employee_id, location } = params as unknown as EmployeeClockInInput;
+      const requestData: Record<string, unknown> = {};
+      if (location) {
+        requestData.location = location;
       }
-    }
+
+      const result = await makeApiRequest<{ status: number; info: string; id: string; [key: string]: unknown }>(
+        "team",
+        `employees/${employee_id}/times/clockin`,
+        "POST",
+        requestData
+      );
+
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Employee clocked in successfully.\n\n${JSON.stringify(result, null, 2)}`,
+          },
+        ],
+        structuredContent: { clockedIn: true, employeeId: employee_id, ...result },
+      };
+    })
   );
 
   // Employee Clock Out
@@ -451,39 +408,33 @@ Returns:
         openWorldHint: true,
       },
     },
-    async (params: EmployeeClockOutInput) => {
-      try {
-        const requestData: Record<string, unknown> = {};
-        if (params.latitude) {
-          requestData.latitude = params.latitude;
-        }
-        if (params.longitude) {
-          requestData.longitude = params.longitude;
-        }
-
-        const result = await makeApiRequest<{ status: number; info: string; id: string; [key: string]: unknown }>(
-          "team",
-          `employees/${params.employee_id}/times/clockout`,
-          "POST",
-          requestData
-        );
-
-        return {
-          content: [
-            {
-              type: "text",
-              text: `Employee clocked out successfully.\n\n${JSON.stringify(result, null, 2)}`,
-            },
-          ],
-          structuredContent: { clockedOut: true, employeeId: params.employee_id, ...result },
-        };
-      } catch (error) {
-        return {
-          content: [{ type: "text", text: handleApiError(error) }],
-          isError: true,
-        };
+    withErrorHandling(async (params) => {
+      const { employee_id, latitude, longitude } = params as unknown as EmployeeClockOutInput;
+      const requestData: Record<string, unknown> = {};
+      if (latitude) {
+        requestData.latitude = latitude;
       }
-    }
+      if (longitude) {
+        requestData.longitude = longitude;
+      }
+
+      const result = await makeApiRequest<{ status: number; info: string; id: string; [key: string]: unknown }>(
+        "team",
+        `employees/${employee_id}/times/clockout`,
+        "POST",
+        requestData
+      );
+
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Employee clocked out successfully.\n\n${JSON.stringify(result, null, 2)}`,
+          },
+        ],
+        structuredContent: { clockedOut: true, employeeId: employee_id, ...result },
+      };
+    })
   );
 
   // Employee Pause
@@ -508,39 +459,33 @@ Returns:
         openWorldHint: true,
       },
     },
-    async (params: EmployeePauseInput) => {
-      try {
-        const requestData: Record<string, unknown> = {};
-        if (params.latitude) {
-          requestData.latitude = params.latitude;
-        }
-        if (params.longitude) {
-          requestData.longitude = params.longitude;
-        }
-
-        const result = await makeApiRequest<{ status: number; info: string; id: string; [key: string]: unknown }>(
-          "team",
-          `employees/${params.employee_id}/times/pause`,
-          "POST",
-          requestData
-        );
-
-        return {
-          content: [
-            {
-              type: "text",
-              text: `Employee time-tracking paused successfully.\n\n${JSON.stringify(result, null, 2)}`,
-            },
-          ],
-          structuredContent: { paused: true, employeeId: params.employee_id, ...result },
-        };
-      } catch (error) {
-        return {
-          content: [{ type: "text", text: handleApiError(error) }],
-          isError: true,
-        };
+    withErrorHandling(async (params) => {
+      const { employee_id, latitude, longitude } = params as unknown as EmployeePauseInput;
+      const requestData: Record<string, unknown> = {};
+      if (latitude) {
+        requestData.latitude = latitude;
       }
-    }
+      if (longitude) {
+        requestData.longitude = longitude;
+      }
+
+      const result = await makeApiRequest<{ status: number; info: string; id: string; [key: string]: unknown }>(
+        "team",
+        `employees/${employee_id}/times/pause`,
+        "POST",
+        requestData
+      );
+
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Employee time-tracking paused successfully.\n\n${JSON.stringify(result, null, 2)}`,
+          },
+        ],
+        structuredContent: { paused: true, employeeId: employee_id, ...result },
+      };
+    })
   );
 
   // Employee Unpause
@@ -565,38 +510,32 @@ Returns:
         openWorldHint: true,
       },
     },
-    async (params: EmployeeUnpauseInput) => {
-      try {
-        const requestData: Record<string, unknown> = {};
-        if (params.latitude) {
-          requestData.latitude = params.latitude;
-        }
-        if (params.longitude) {
-          requestData.longitude = params.longitude;
-        }
-
-        const result = await makeApiRequest<{ status: number; info: string; id: string; [key: string]: unknown }>(
-          "team",
-          `employees/${params.employee_id}/times/unpause`,
-          "POST",
-          requestData
-        );
-
-        return {
-          content: [
-            {
-              type: "text",
-              text: `Employee time-tracking unpaused successfully.\n\n${JSON.stringify(result, null, 2)}`,
-            },
-          ],
-          structuredContent: { unpaused: true, employeeId: params.employee_id, ...result },
-        };
-      } catch (error) {
-        return {
-          content: [{ type: "text", text: handleApiError(error) }],
-          isError: true,
-        };
+    withErrorHandling(async (params) => {
+      const { employee_id, latitude, longitude } = params as unknown as EmployeeUnpauseInput;
+      const requestData: Record<string, unknown> = {};
+      if (latitude) {
+        requestData.latitude = latitude;
       }
-    }
+      if (longitude) {
+        requestData.longitude = longitude;
+      }
+
+      const result = await makeApiRequest<{ status: number; info: string; id: string; [key: string]: unknown }>(
+        "team",
+        `employees/${employee_id}/times/unpause`,
+        "POST",
+        requestData
+      );
+
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Employee time-tracking unpaused successfully.\n\n${JSON.stringify(result, null, 2)}`,
+          },
+        ],
+        structuredContent: { unpaused: true, employeeId: employee_id, ...result },
+      };
+    })
   );
 }

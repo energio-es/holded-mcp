@@ -7,9 +7,10 @@
  */
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { makeApiRequest, handleApiError } from "../../services/api.js";
+import { makeApiRequest } from "../../services/api.js";
 import { ResponseFormat } from "../../constants.js";
 import type { LedgerEntryLine, AccountBalance } from "../../types.js";
+import { withErrorHandling } from "../utilities.js";
 import {
   AccountBalancesInputSchema,
   AccountBalancesInput,
@@ -241,88 +242,83 @@ Returns:
         openWorldHint: true,
       },
     },
-    async (params: AccountBalancesInput) => {
-      try {
-        // 1. Fetch all ledger entries (auto-paginate)
-        const { entries, pagesFetched } = await fetchAllLedgerEntries(
-          params.starttmp,
-          params.endtmp,
-        );
+    withErrorHandling(async (params) => {
+      const { starttmp, endtmp, account_filter, include_opening, response_format } = params as unknown as AccountBalancesInput;
 
-        // 2. Filter leaked entries
-        const { filtered, leakedCount, openingExcluded } = filterLeakedEntries(
-          entries,
-          params.include_opening,
-        );
+      // 1. Fetch all ledger entries (auto-paginate)
+      const { entries, pagesFetched } = await fetchAllLedgerEntries(
+        starttmp,
+        endtmp,
+      );
 
-        // 3. Aggregate by account
-        const totals = aggregateByAccount(filtered);
+      // 2. Filter leaked entries
+      const { filtered, leakedCount, openingExcluded } = filterLeakedEntries(
+        entries,
+        include_opening,
+      );
 
-        // 4. Enrich with account metadata from list_accounts
-        const accountMeta = await makeApiRequest<AccountMetadata[]>(
-          "accounting",
-          "chartofaccounts",
-          "GET",
-          undefined,
-          { starttmp: params.starttmp, endtmp: params.endtmp, includeEmpty: 0 },
-        );
-        const metaByNum = new Map<number, AccountMetadata>();
-        for (const a of accountMeta) {
-          metaByNum.set(a.num, a);
-        }
+      // 3. Aggregate by account
+      const totals = aggregateByAccount(filtered);
 
-        // 5. Build result
-        let accounts: AccountBalance[] = [];
-        for (const [num, { debit, credit }] of totals) {
-          const meta = metaByNum.get(num);
-          accounts.push({
-            num,
-            name: meta?.name ?? String(num),
-            group: meta?.group ?? "",
-            debit: Math.round(debit * 100) / 100,
-            credit: Math.round(credit * 100) / 100,
-            balance: Math.round((debit - credit) * 100) / 100,
-          });
-        }
-
-        // 6. Apply account filter
-        if (params.account_filter && params.account_filter.length > 0) {
-          const filterSet = new Set(params.account_filter);
-          accounts = accounts.filter((a) => filterSet.has(a.num));
-        }
-
-        // Sort by account number
-        accounts.sort((a, b) => a.num - b.num);
-
-        const structured = {
-          accounts,
-          count: accounts.length,
-          period: {
-            starttmp: params.starttmp,
-            endtmp: params.endtmp,
-          },
-          filtered_entries: {
-            leaked_cross_year: leakedCount,
-            opening_balance_excluded: openingExcluded,
-          },
-          pages_fetched: pagesFetched,
-        };
-
-        const textContent =
-          params.response_format === ResponseFormat.MARKDOWN
-            ? formatAccountBalancesMarkdown(accounts)
-            : JSON.stringify(structured, null, 2);
-
-        return {
-          content: [{ type: "text", text: textContent }],
-          structuredContent: structured,
-        };
-      } catch (error) {
-        return {
-          content: [{ type: "text", text: handleApiError(error) }],
-          isError: true,
-        };
+      // 4. Enrich with account metadata from list_accounts
+      const accountMeta = await makeApiRequest<AccountMetadata[]>(
+        "accounting",
+        "chartofaccounts",
+        "GET",
+        undefined,
+        { starttmp, endtmp, includeEmpty: 0 },
+      );
+      const metaByNum = new Map<number, AccountMetadata>();
+      for (const a of accountMeta) {
+        metaByNum.set(a.num, a);
       }
-    },
+
+      // 5. Build result
+      let accounts: AccountBalance[] = [];
+      for (const [num, { debit, credit }] of totals) {
+        const meta = metaByNum.get(num);
+        accounts.push({
+          num,
+          name: meta?.name ?? String(num),
+          group: meta?.group ?? "",
+          debit: Math.round(debit * 100) / 100,
+          credit: Math.round(credit * 100) / 100,
+          balance: Math.round((debit - credit) * 100) / 100,
+        });
+      }
+
+      // 6. Apply account filter
+      if (account_filter && account_filter.length > 0) {
+        const filterSet = new Set(account_filter);
+        accounts = accounts.filter((a) => filterSet.has(a.num));
+      }
+
+      // Sort by account number
+      accounts.sort((a, b) => a.num - b.num);
+
+      const structured = {
+        accounts,
+        count: accounts.length,
+        period: {
+          starttmp,
+          endtmp,
+        },
+        filtered_entries: {
+          leaked_cross_year: leakedCount,
+          opening_balance_excluded: openingExcluded,
+        },
+        pages_fetched: pagesFetched,
+      };
+
+      const textContent =
+        response_format === ResponseFormat.MARKDOWN
+          ? formatAccountBalancesMarkdown(accounts)
+          : JSON.stringify(structured, null, 2);
+
+      return {
+        content: [{ type: "text", text: textContent }],
+        structuredContent: structured,
+      };
+    }),
   );
 }

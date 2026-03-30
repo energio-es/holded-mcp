@@ -3,9 +3,10 @@
  */
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { makeApiRequest, handleApiError, toStructuredContent } from "../../services/api.js";
+import { makeApiRequest, toStructuredContent } from "../../services/api.js";
 import { ResponseFormat } from "../../constants.js";
 import { Treasury } from "../../types.js";
+import { withErrorHandling } from "../utilities.js";
 import {
   CreateTreasuryInputSchema,
   ListPaymentMethodsInputSchema,
@@ -49,31 +50,25 @@ Returns:
         openWorldHint: true,
       },
     },
-    async (params: CreateTreasuryInput) => {
-      try {
-        const treasury = await makeApiRequest<Treasury>(
-          "invoicing",
-          "treasury",
-          "POST",
-          params
-        );
+    withErrorHandling(async (params) => {
+      const typedParams = params as unknown as CreateTreasuryInput;
+      const treasury = await makeApiRequest<Treasury>(
+        "invoicing",
+        "treasury",
+        "POST",
+        typedParams
+      );
 
-        return {
-          content: [
-            {
-              type: "text",
-              text: `Treasury account created successfully.\n\n${JSON.stringify(treasury, null, 2)}`,
-            },
-          ],
-          structuredContent: toStructuredContent(treasury),
-        };
-      } catch (error) {
-        return {
-          content: [{ type: "text", text: handleApiError(error) }],
-          isError: true,
-        };
-      }
-    }
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Treasury account created successfully.\n\n${JSON.stringify(treasury, null, 2)}`,
+          },
+        ],
+        structuredContent: toStructuredContent(treasury),
+      };
+    })
   );
 
   // List Payment Methods
@@ -96,40 +91,34 @@ Returns:
         openWorldHint: true,
       },
     },
-    async (params: ListPaymentMethodsInput) => {
-      try {
-        const paymentMethods = await makeApiRequest<Array<{ id: string; name: string; [key: string]: unknown }>>(
-          "invoicing",
-          "paymentmethods",
-          "GET"
-        );
+    withErrorHandling(async (params) => {
+      const { response_format } = params as unknown as ListPaymentMethodsInput;
+      const paymentMethods = await makeApiRequest<Array<{ id: string; name: string; [key: string]: unknown }>>(
+        "invoicing",
+        "paymentmethods",
+        "GET"
+      );
 
-        let textContent: string;
-        if (params.response_format === ResponseFormat.MARKDOWN) {
-          if (!paymentMethods.length) {
-            textContent = "No payment methods found.";
-          } else {
-            const lines = ["# Payment Methods", "", `Found ${paymentMethods.length} payment methods:`, ""];
-            for (const method of paymentMethods) {
-              lines.push(`- **${method.name}** (ID: ${method.id})`);
-            }
-            textContent = lines.join("\n");
-          }
+      let textContent: string;
+      if (response_format === ResponseFormat.MARKDOWN) {
+        if (!paymentMethods.length) {
+          textContent = "No payment methods found.";
         } else {
-          textContent = JSON.stringify(paymentMethods, null, 2);
+          const lines = ["# Payment Methods", "", `Found ${paymentMethods.length} payment methods:`, ""];
+          for (const method of paymentMethods) {
+            lines.push(`- **${method.name}** (ID: ${method.id})`);
+          }
+          textContent = lines.join("\n");
         }
-
-        return {
-          content: [{ type: "text", text: textContent }],
-          structuredContent: { paymentMethods, count: paymentMethods.length },
-        };
-      } catch (error) {
-        return {
-          content: [{ type: "text", text: handleApiError(error) }],
-          isError: true,
-        };
+      } else {
+        textContent = JSON.stringify(paymentMethods, null, 2);
       }
-    }
+
+      return {
+        content: [{ type: "text", text: textContent }],
+        structuredContent: { paymentMethods, count: paymentMethods.length },
+      };
+    })
   );
 
   // List Treasuries
@@ -152,48 +141,42 @@ Returns:
         openWorldHint: true,
       },
     },
-    async (params: ListTreasuriesInput) => {
-      try {
-        const treasuries = await makeApiRequest<Treasury[]>(
-          "invoicing",
-          "treasury",
-          "GET"
-        );
+    withErrorHandling(async (params) => {
+      const { response_format } = params as unknown as ListTreasuriesInput;
+      const treasuries = await makeApiRequest<Treasury[]>(
+        "invoicing",
+        "treasury",
+        "GET"
+      );
 
-        let textContent: string;
-        if (params.response_format === ResponseFormat.MARKDOWN) {
-          if (!treasuries.length) {
-            textContent = "No treasury accounts found.";
-          } else {
-            const lines = ["# Treasury Accounts", "", `Found ${treasuries.length} accounts:`, ""];
-            for (const t of treasuries) {
-              lines.push(`## ${t.name}`);
-              lines.push(`- **ID**: ${t.id}`);
-              lines.push(`- **Type**: ${t.type}`);
-              if (t.currency) lines.push(`- **Currency**: ${t.currency}`);
-              if (t.balance !== undefined) lines.push(`- **Balance**: ${t.balance}`);
-              if (t.accountNumber !== undefined) lines.push(`- **Account Number**: ${t.accountNumber}`);
-              if (t.iban) lines.push(`- **IBAN**: ${t.iban}`);
-              if (t.swift) lines.push(`- **SWIFT/BIC**: ${t.swift}`);
-              lines.push("");
-            }
-            textContent = lines.join("\n");
-          }
+      let textContent: string;
+      if (response_format === ResponseFormat.MARKDOWN) {
+        if (!treasuries.length) {
+          textContent = "No treasury accounts found.";
         } else {
-          textContent = JSON.stringify(treasuries, null, 2);
+          const lines = ["# Treasury Accounts", "", `Found ${treasuries.length} accounts:`, ""];
+          for (const t of treasuries) {
+            lines.push(`## ${t.name}`);
+            lines.push(`- **ID**: ${t.id}`);
+            lines.push(`- **Type**: ${t.type}`);
+            if (t.currency) lines.push(`- **Currency**: ${t.currency}`);
+            if (t.balance !== undefined) lines.push(`- **Balance**: ${t.balance}`);
+            if (t.accountNumber !== undefined) lines.push(`- **Account Number**: ${t.accountNumber}`);
+            if (t.iban) lines.push(`- **IBAN**: ${t.iban}`);
+            if (t.swift) lines.push(`- **SWIFT/BIC**: ${t.swift}`);
+            lines.push("");
+          }
+          textContent = lines.join("\n");
         }
-
-        return {
-          content: [{ type: "text", text: textContent }],
-          structuredContent: { treasuries, count: treasuries.length },
-        };
-      } catch (error) {
-        return {
-          content: [{ type: "text", text: handleApiError(error) }],
-          isError: true,
-        };
+      } else {
+        textContent = JSON.stringify(treasuries, null, 2);
       }
-    }
+
+      return {
+        content: [{ type: "text", text: textContent }],
+        structuredContent: { treasuries, count: treasuries.length },
+      };
+    })
   );
 
   // Get Treasury
@@ -217,41 +200,35 @@ Returns:
         openWorldHint: true,
       },
     },
-    async (params: GetTreasuryInput) => {
-      try {
-        const treasury = await makeApiRequest<Treasury>(
-          "invoicing",
-          `treasury/${params.treasury_id}`,
-          "GET"
-        );
+    withErrorHandling(async (params) => {
+      const { treasury_id, response_format } = params as unknown as GetTreasuryInput;
+      const treasury = await makeApiRequest<Treasury>(
+        "invoicing",
+        `treasury/${treasury_id}`,
+        "GET"
+      );
 
-        let textContent: string;
-        if (params.response_format === ResponseFormat.MARKDOWN) {
-          const lines = [`# ${treasury.name}`, ""];
-          lines.push(`- **ID**: ${treasury.id}`);
-          lines.push(`- **Type**: ${treasury.type}`);
-          if (treasury.currency) lines.push(`- **Currency**: ${treasury.currency}`);
-          if (treasury.balance !== undefined) lines.push(`- **Balance**: ${treasury.balance}`);
-          if (treasury.accountNumber !== undefined) lines.push(`- **Account Number**: ${treasury.accountNumber}`);
-          if (treasury.iban) lines.push(`- **IBAN**: ${treasury.iban}`);
-          if (treasury.swift) lines.push(`- **SWIFT/BIC**: ${treasury.swift}`);
-          if (treasury.bank) lines.push(`- **Bank**: ${treasury.bank}`);
-          if (treasury.bankname) lines.push(`- **Bank Name**: ${treasury.bankname}`);
-          textContent = lines.join("\n");
-        } else {
-          textContent = JSON.stringify(treasury, null, 2);
-        }
-
-        return {
-          content: [{ type: "text", text: textContent }],
-          structuredContent: toStructuredContent(treasury),
-        };
-      } catch (error) {
-        return {
-          content: [{ type: "text", text: handleApiError(error) }],
-          isError: true,
-        };
+      let textContent: string;
+      if (response_format === ResponseFormat.MARKDOWN) {
+        const lines = [`# ${treasury.name}`, ""];
+        lines.push(`- **ID**: ${treasury.id}`);
+        lines.push(`- **Type**: ${treasury.type}`);
+        if (treasury.currency) lines.push(`- **Currency**: ${treasury.currency}`);
+        if (treasury.balance !== undefined) lines.push(`- **Balance**: ${treasury.balance}`);
+        if (treasury.accountNumber !== undefined) lines.push(`- **Account Number**: ${treasury.accountNumber}`);
+        if (treasury.iban) lines.push(`- **IBAN**: ${treasury.iban}`);
+        if (treasury.swift) lines.push(`- **SWIFT/BIC**: ${treasury.swift}`);
+        if (treasury.bank) lines.push(`- **Bank**: ${treasury.bank}`);
+        if (treasury.bankname) lines.push(`- **Bank Name**: ${treasury.bankname}`);
+        textContent = lines.join("\n");
+      } else {
+        textContent = JSON.stringify(treasury, null, 2);
       }
-    }
+
+      return {
+        content: [{ type: "text", text: textContent }],
+        structuredContent: toStructuredContent(treasury),
+      };
+    })
   );
 }
