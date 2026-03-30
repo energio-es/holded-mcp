@@ -162,8 +162,8 @@ Current fields: `salesChannel`, `paymentMethod`, `paymentDay`, `dueDays`
 | `expensesAccountName` | `string` optional | Default expenses account name |
 | `salesAccountRecord` | `integer` optional | Default sales account record |
 | `salesAccountName` | `string` optional | Default sales account name |
-| `salesTax` | `integer` optional | Default sales tax percentage |
-| `purchasesTax` | `integer` optional | Default purchases tax percentage |
+| `salesTaxes` | `array(string)` optional | Default sales tax keys (e.g., `["s_iva_21"]`) |
+| `purchasesTaxes` | `array(string)` optional | Default purchase tax keys (e.g., `["p_iva_21"]`) |
 | `accumulateInForm347` | `enum("Yes","No")` optional | Accumulate in Form 347 |
 | `discount` | `integer` optional | Default discount percentage |
 | `currency` | `string` optional | ISO currency code lowercase |
