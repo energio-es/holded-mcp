@@ -158,6 +158,58 @@ describe("Lead sub-resource handlers", () => {
     });
   });
 
+  describe("holded_crm_update_lead_task", () => {
+    it("calls makeApiRequest with PUT to leads/{id}/tasks with snake_to_camel conversion", async () => {
+      const mockTask = { id: "task-1", name: "Updated task" };
+      mockMakeApiRequest.mockResolvedValueOnce(mockTask);
+
+      const handler = server.tools.get("holded_crm_update_lead_task")!.handler;
+      const result = await handler({
+        lead_id: "lead-abc",
+        task_id: "task-1",
+        name: "Updated task",
+        due_date: 1700000000,
+        assigned_to: "user-99",
+      });
+
+      expect(mockMakeApiRequest).toHaveBeenCalledWith(
+        "crm",
+        "leads/lead-abc/tasks",
+        "PUT",
+        expect.objectContaining({
+          taskId: "task-1",
+          name: "Updated task",
+          dueDate: 1700000000,
+          assignedTo: "user-99",
+        }),
+      );
+      expect(result.isError).toBeUndefined();
+      expect(result.content[0].text).toContain("Task updated successfully");
+    });
+  });
+
+  describe("holded_crm_delete_lead_task", () => {
+    it("calls makeApiRequest with DELETE to leads/{id}/tasks with taskId", async () => {
+      mockMakeApiRequest.mockResolvedValueOnce(undefined);
+
+      const handler = server.tools.get("holded_crm_delete_lead_task")!.handler;
+      const result = await handler({ lead_id: "lead-abc", task_id: "task-1" });
+
+      expect(mockMakeApiRequest).toHaveBeenCalledWith(
+        "crm",
+        "leads/lead-abc/tasks",
+        "DELETE",
+        { taskId: "task-1" },
+      );
+      expect(result.isError).toBeUndefined();
+      expect(result.structuredContent).toEqual({
+        deleted: true,
+        leadId: "lead-abc",
+        taskId: "task-1",
+      });
+    });
+  });
+
   describe("holded_crm_list_lead_tasks", () => {
     it("calls makeApiRequest with GET to leads/{id}/tasks", async () => {
       const mockTasks = [
