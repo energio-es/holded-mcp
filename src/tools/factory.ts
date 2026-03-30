@@ -6,6 +6,7 @@
  */
 
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import type { ZodType } from "zod";
 import { makeApiRequest, handleApiError, toStructuredContent } from "../services/api.js";
 import { ResponseFormat } from "../constants.js";
 import type { ApiModule } from "../services/api.js";
@@ -22,11 +23,11 @@ export interface CrudToolConfig<T> {
   listEndpoint?: string;
   idParam: string;
   schemas: {
-    list?: unknown;
-    get?: unknown;
-    create?: unknown;
-    update?: unknown;
-    delete?: unknown;
+    list?: ZodType;
+    get?: ZodType;
+    create?: ZodType;
+    update?: ZodType;
+    delete?: ZodType;
   };
   titles: {
     list?: string;
@@ -85,8 +86,9 @@ export function registerCrudTools<T>(server: McpServer, config: CrudToolConfig<T
           openWorldHint: true,
         },
       },
-      async (params: Record<string, unknown>) => {
+      async (input: unknown) => {
         try {
+          const params = input as Record<string, unknown>;
           const queryParams: Record<string, unknown> = {};
           if ((params.page as number) > 1) {
             queryParams.page = params.page;
@@ -141,8 +143,9 @@ export function registerCrudTools<T>(server: McpServer, config: CrudToolConfig<T
           openWorldHint: true,
         },
       },
-      async (params: Record<string, unknown>) => {
+      async (input: unknown) => {
         try {
+          const params = input as Record<string, unknown>;
           const id = params[idParam] as string;
           const item = await makeApiRequest<T>(
             module,
@@ -186,9 +189,9 @@ export function registerCrudTools<T>(server: McpServer, config: CrudToolConfig<T
           openWorldHint: true,
         },
       },
-      async (params: Record<string, unknown>) => {
+      async (input: unknown) => {
         try {
-          const { response_format, ...body } = params;
+          const { response_format, ...body } = input as Record<string, unknown>;
           const item = await makeApiRequest<T>(
             module,
             endpoint,
@@ -230,8 +233,9 @@ export function registerCrudTools<T>(server: McpServer, config: CrudToolConfig<T
           openWorldHint: true,
         },
       },
-      async (params: Record<string, unknown>) => {
+      async (input: unknown) => {
         try {
+          const params = input as Record<string, unknown>;
           const id = params[idParam] as string;
           const { [idParam]: _, response_format, ...updateData } = params;
           const item = await makeApiRequest<T>(
@@ -275,8 +279,9 @@ export function registerCrudTools<T>(server: McpServer, config: CrudToolConfig<T
           openWorldHint: true,
         },
       },
-      async (params: Record<string, unknown>) => {
+      async (input: unknown) => {
         try {
+          const params = input as Record<string, unknown>;
           const id = params[idParam] as string;
           await makeApiRequest<void>(
             module,
