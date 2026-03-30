@@ -1,0 +1,47 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.energio-es/holded-mcp-server",
+  "description": "MCP server for Holded — invoicing, CRM, projects, accounting, and team",
+  "repository": {
+    "url": "https://github.com/energio-es/holded-mcp-server",
+    "source": "github"
+  },
+  "version_detail": {
+    "version": "1.0.0"
+  },
+  "packages": [
+    {
+      "registry_name": "npm",
+      "name": "holded-mcp-server",
+      "version": "1.0.0",
+      "runtime": "node",
+      "runtime_arguments": [],
+      "package_arguments": [],
+      "environment_variables": [
+        {
+          "name": "HOLDED_API_KEY",
+          "description": "Your Holded API key. Get it from https://app.holded.com/api",
+          "required": true
+        },
+        {
+          "name": "HOLDED_MODULES",
+          "description": "Comma-separated list of modules to enable (invoicing, crm, projects, accounting, team). All enabled by default.",
+          "required": false
+        },
+        {
+          "name": "HOLDED_RATE_LIMIT_PER_SECOND",
+          "description": "API rate limit in requests per second. Default: 10.",
+          "required": false
+        },
+        {
+          "name": "HOLDED_DEBUG",
+          "description": "Set to 'true' to enable debug logging for API requests.",
+          "required": false
+        }
+      ],
+      "transport": {
+        "type": "stdio"
+      }
+    }
+  ]
+}
