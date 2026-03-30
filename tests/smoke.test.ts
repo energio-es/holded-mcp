@@ -38,8 +38,9 @@ describeSmoke("Smoke Tests (Real API)", () => {
 
   describe("team", () => {
     it("lists employees", async () => {
-      const employees = await makeApiRequest<unknown[]>("team", "employees", "GET");
-      expect(Array.isArray(employees)).toBe(true);
+      const result = await makeApiRequest<{ employees: unknown[] }>("team", "employees", "GET");
+      expect(result).toHaveProperty("employees");
+      expect(Array.isArray(result.employees)).toBe(true);
     });
   });
 
