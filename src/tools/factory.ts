@@ -48,6 +48,7 @@ export interface CrudToolConfig<T> {
     single: (item: T) => string;
   };
   listQueryParams?: (params: Record<string, unknown>) => Record<string, unknown>;
+  bodyTransform?: (body: Record<string, unknown>) => Record<string, unknown>;
 }
 
 /**
@@ -69,6 +70,7 @@ export function registerCrudTools<T>(server: McpServer, config: CrudToolConfig<T
     descriptions,
     formatters,
     listQueryParams,
+    bodyTransform,
   } = config;
 
   // ── List ───────────────────────────────────────────────
@@ -192,11 +194,12 @@ export function registerCrudTools<T>(server: McpServer, config: CrudToolConfig<T
       async (input: unknown) => {
         try {
           const { response_format, ...body } = input as Record<string, unknown>;
+          const requestBody = bodyTransform ? bodyTransform(body) : body;
           const item = await makeApiRequest<T>(
             module,
             endpoint,
             "POST",
-            body,
+            requestBody,
           );
 
           return {
@@ -238,11 +241,12 @@ export function registerCrudTools<T>(server: McpServer, config: CrudToolConfig<T
           const params = input as Record<string, unknown>;
           const id = params[idParam] as string;
           const { [idParam]: _, response_format, ...updateData } = params;
+          const requestBody = bodyTransform ? bodyTransform(updateData) : updateData;
           const item = await makeApiRequest<T>(
             module,
             `${endpoint}/${id}`,
             "PUT",
-            updateData,
+            requestBody,
           );
 
           return {
