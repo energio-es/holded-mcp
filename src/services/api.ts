@@ -3,6 +3,7 @@
  */
 
 import axios, { AxiosError, AxiosInstance, AxiosRequestConfig } from "axios";
+import FormDataLib from "form-data";
 import { API_ENDPOINTS } from "../constants.js";
 
 let apiKey: string | undefined;
@@ -338,15 +339,11 @@ export async function makeMultipartApiRequest<T>(
   const baseUrl = getBaseUrl(module);
   const url = `${baseUrl}/${endpoint}`;
 
-  // Use form-data package for Node.js compatibility
-  // Dynamic import to avoid requiring it at top level
-  const FormData = (await import("form-data")).default;
-  
   let lastError: unknown;
 
   for (let attempt = 0; attempt <= RETRY_CONFIG.maxRetries; attempt++) {
     // Create fresh FormData for each attempt (can't reuse after sending)
-    const formData = new FormData();
+    const formData = new FormDataLib();
     formData.append("file", fileBuffer, fileName);
     if (setMain !== undefined) {
       formData.append("setMain", String(setMain));

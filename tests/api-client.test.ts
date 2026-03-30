@@ -4,13 +4,13 @@
  * Tests for retry logic, error handling, and response formatting
  */
 
-import { describe, it, expect, jest, beforeEach, afterEach } from '@jest/globals';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import axios from 'axios';
 import type { AxiosError } from 'axios';
 
 // Mock axios before importing the API module
-jest.mock('axios');
-const mockedAxios = axios as jest.Mocked<typeof axios>;
+vi.mock('axios');
+const mockedAxios = axios as any;
 
 // Import after mocking
 import {
@@ -31,13 +31,13 @@ import {
 
 describe('API Client Tests', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     _resetForTesting();
 
     // Mock axios.create BEFORE initializing API
     const mockInstance = {
-      request: jest.fn(),
-      post: jest.fn(),
+      request: vi.fn(),
+      post: vi.fn(),
     };
     mockedAxios.create.mockReturnValue(mockInstance as any);
 
@@ -46,16 +46,16 @@ describe('API Client Tests', () => {
   });
 
   afterEach(() => {
-    jest.restoreAllMocks();
+    vi.restoreAllMocks();
   });
 
   describe('TokenBucket', () => {
     beforeEach(() => {
-      jest.useFakeTimers();
+      vi.useFakeTimers();
     });
 
     afterEach(() => {
-      jest.useRealTimers();
+      vi.useRealTimers();
     });
 
     it('should initialize with correct capacity and tokens', () => {
@@ -92,7 +92,7 @@ describe('API Client Tests', () => {
       expect(bucket.getTokens()).toBe(0);
       
       // Advance time by 500ms (should refill 5 tokens)
-      jest.advanceTimersByTime(500);
+      vi.advanceTimersByTime(500);
       
       // Consume should succeed now (after refill)
       await bucket.consume();
@@ -111,7 +111,7 @@ describe('API Client Tests', () => {
       const consumePromise = bucket.consume();
       
       // Advance timers to allow the sleep to complete
-      await jest.advanceTimersByTimeAsync(100);
+      await vi.advanceTimersByTimeAsync(100);
       
       await consumePromise;
       
@@ -127,7 +127,7 @@ describe('API Client Tests', () => {
       await bucket.consume();
       
       // Advance time by a lot (way more than needed to refill)
-      jest.advanceTimersByTime(10000);
+      vi.advanceTimersByTime(10000);
       
       // Force refill by consuming
       await bucket.consume();
@@ -167,7 +167,7 @@ describe('API Client Tests', () => {
       expect(bucket.getTokens()).toBe(0);
       
       // Advance by 100ms
-      await jest.advanceTimersByTimeAsync(100);
+      await vi.advanceTimersByTimeAsync(100);
       
       await consumePromise;
       
@@ -178,11 +178,11 @@ describe('API Client Tests', () => {
 
   describe('Retry Logic', () => {
     beforeEach(() => {
-      jest.useFakeTimers();
+      vi.useFakeTimers();
     });
 
     afterEach(() => {
-      jest.useRealTimers();
+      vi.useRealTimers();
     });
 
     it('should retry on 429 rate limit error', async () => {
@@ -200,7 +200,7 @@ describe('API Client Tests', () => {
       mockedAxios.isAxiosError.mockReturnValue(true);
 
       const resultPromise = makeApiRequest('invoicing', 'contacts', 'GET');
-      await jest.advanceTimersByTimeAsync(30000);
+      await vi.advanceTimersByTimeAsync(30000);
       const result = await resultPromise;
 
       expect(result).toEqual({ success: true });
@@ -221,7 +221,7 @@ describe('API Client Tests', () => {
       mockedAxios.isAxiosError.mockReturnValue(true);
 
       const resultPromise = makeApiRequest('invoicing', 'contacts', 'GET');
-      await jest.advanceTimersByTimeAsync(30000);
+      await vi.advanceTimersByTimeAsync(30000);
       const result = await resultPromise;
 
       expect(result).toEqual({ success: true });
@@ -245,7 +245,7 @@ describe('API Client Tests', () => {
       mockedAxios.isAxiosError.mockReturnValue(true);
 
       const requestPromise = makeApiRequest('invoicing', 'contacts', 'GET');
-      await jest.advanceTimersByTimeAsync(30000);
+      await vi.advanceTimersByTimeAsync(30000);
       const result = await requestPromise;
 
       expect(result).toEqual({ success: true });
@@ -265,7 +265,7 @@ describe('API Client Tests', () => {
       const resultPromise = makeApiRequest('invoicing', 'contacts/invalid-id', 'GET');
       // Attach rejection handler before advancing timers to avoid unhandled rejection
       const expectPromise = expect(resultPromise).rejects.toBeDefined();
-      await jest.advanceTimersByTimeAsync(1000);
+      await vi.advanceTimersByTimeAsync(1000);
       await expectPromise;
 
       expect(mockInstance.request).toHaveBeenCalledTimes(1);
@@ -283,7 +283,7 @@ describe('API Client Tests', () => {
 
       const resultPromise = makeApiRequest('invoicing', 'contacts', 'GET');
       const expectPromise = expect(resultPromise).rejects.toBeDefined();
-      await jest.advanceTimersByTimeAsync(30000);
+      await vi.advanceTimersByTimeAsync(30000);
       await expectPromise;
 
       expect(mockInstance.request).toHaveBeenCalledTimes(4);
@@ -884,7 +884,7 @@ describe('API Client Tests', () => {
 
     it('should construct multipart form data correctly', async () => {
       // @ts-expect-error - Mock function type inference issue
-      const mockPost = jest.fn().mockResolvedValue({ data: { success: true } });
+      const mockPost = vi.fn().mockResolvedValue({ data: { success: true } });
       const mockAxiosInstance = {
         post: mockPost,
       };
@@ -904,7 +904,7 @@ describe('API Client Tests', () => {
 
     it('should include setMain parameter when provided', async () => {
       // @ts-expect-error - Mock function type inference issue
-      const mockPost = jest.fn().mockResolvedValue({ data: { success: true } });
+      const mockPost = vi.fn().mockResolvedValue({ data: { success: true } });
       const mockAxiosInstance = {
         post: mockPost,
       };
@@ -921,7 +921,7 @@ describe('API Client Tests', () => {
 
     it('should use longer timeout (60s) for file uploads', async () => {
       // @ts-expect-error - Mock function type inference issue
-      const mockPost = jest.fn().mockResolvedValue({ data: { success: true } });
+      const mockPost = vi.fn().mockResolvedValue({ data: { success: true } });
       const mockAxiosInstance = {
         post: mockPost,
       };
@@ -941,13 +941,13 @@ describe('API Client Tests', () => {
     });
 
     it('should retry on transient errors', async () => {
-      jest.useFakeTimers();
+      vi.useFakeTimers();
       const serverError = {
         isAxiosError: true,
         response: { status: 500 },
       } as AxiosError;
 
-      const mockFn = jest.fn();
+      const mockFn = vi.fn();
       // @ts-expect-error - Mock function type inference issue with chained methods
       mockFn.mockRejectedValueOnce(serverError).mockResolvedValueOnce({ data: { success: true } });
       const mockAxiosInstance = {
@@ -960,22 +960,22 @@ describe('API Client Tests', () => {
       const fileName = 'test.jpg';
 
       const resultPromise = makeMultipartApiRequest('invoicing', 'contacts/123/attachment', fileBuffer, fileName);
-      await jest.advanceTimersByTimeAsync(30000);
+      await vi.advanceTimersByTimeAsync(30000);
       const result = await resultPromise;
 
       expect(result).toEqual({ success: true });
       expect(mockAxiosInstance.post).toHaveBeenCalledTimes(2);
-      jest.useRealTimers();
+      vi.useRealTimers();
     });
 
     it('should retry on rate limit (429)', async () => {
-      jest.useFakeTimers();
+      vi.useFakeTimers();
       const rateLimitError = {
         isAxiosError: true,
         response: { status: 429, headers: {} },
       } as AxiosError;
 
-      const mockFn = jest.fn();
+      const mockFn = vi.fn();
       // @ts-expect-error - Mock function type inference issue with chained methods
       mockFn.mockRejectedValueOnce(rateLimitError).mockResolvedValueOnce({ data: { success: true } });
       const mockAxiosInstance = {
@@ -988,23 +988,23 @@ describe('API Client Tests', () => {
       const fileName = 'test.jpg';
 
       const resultPromise = makeMultipartApiRequest('invoicing', 'contacts/123/attachment', fileBuffer, fileName);
-      await jest.advanceTimersByTimeAsync(30000);
+      await vi.advanceTimersByTimeAsync(30000);
       const result = await resultPromise;
 
       expect(result).toEqual({ success: true });
       expect(mockAxiosInstance.post).toHaveBeenCalledTimes(2);
-      jest.useRealTimers();
+      vi.useRealTimers();
     });
 
     it('should not retry on 404 error', async () => {
-      jest.useFakeTimers();
+      vi.useFakeTimers();
       const notFoundError = {
         isAxiosError: true,
         response: { status: 404 },
       } as AxiosError;
 
       // @ts-expect-error - Mock function type inference issue
-      const mockPost = jest.fn().mockRejectedValue(notFoundError);
+      const mockPost = vi.fn().mockRejectedValue(notFoundError);
       const mockAxiosInstance = {
         post: mockPost,
       };
@@ -1016,22 +1016,22 @@ describe('API Client Tests', () => {
 
       const resultPromise = makeMultipartApiRequest('invoicing', 'contacts/123/attachment', fileBuffer, fileName);
       const expectPromise = expect(resultPromise).rejects.toBeDefined();
-      await jest.advanceTimersByTimeAsync(1000);
+      await vi.advanceTimersByTimeAsync(1000);
       await expectPromise;
 
       expect(mockAxiosInstance.post).toHaveBeenCalledTimes(1);
-      jest.useRealTimers();
+      vi.useRealTimers();
     });
 
     it('should stop after max retries', async () => {
-      jest.useFakeTimers();
+      vi.useFakeTimers();
       const serverError = {
         isAxiosError: true,
         response: { status: 500 },
       } as AxiosError;
 
       // @ts-expect-error - Mock function type inference issue
-      const mockPost = jest.fn().mockRejectedValue(serverError);
+      const mockPost = vi.fn().mockRejectedValue(serverError);
       const mockAxiosInstance = {
         post: mockPost,
       };
@@ -1043,16 +1043,16 @@ describe('API Client Tests', () => {
 
       const resultPromise = makeMultipartApiRequest('invoicing', 'contacts/123/attachment', fileBuffer, fileName);
       const expectPromise = expect(resultPromise).rejects.toBeDefined();
-      await jest.advanceTimersByTimeAsync(30000);
+      await vi.advanceTimersByTimeAsync(30000);
       await expectPromise;
 
       expect(mockAxiosInstance.post).toHaveBeenCalledTimes(4);
-      jest.useRealTimers();
+      vi.useRealTimers();
     });
 
     it('should handle different modules correctly', async () => {
       // @ts-expect-error - Mock function type inference issue
-      const mockPost = jest.fn().mockResolvedValue({ data: { success: true } });
+      const mockPost = vi.fn().mockResolvedValue({ data: { success: true } });
       const mockAxiosInstance = {
         post: mockPost,
       };
