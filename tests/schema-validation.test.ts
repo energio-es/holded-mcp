@@ -410,7 +410,7 @@ describe('Schema Validation Against OpenAPI Specs', () => {
         numberingSeries: { invoice: 'series1', receipt: 'series2' },
         contactPersons: [{ name: 'John Doe', email: 'john@test.com' }],
         defaults: {
-          salesTax: 21,
+          salesTaxes: ["s_iva_21"],
           currency: 'eur',
           language: 'es' as const,
           showTradeNameOnDocs: true,
