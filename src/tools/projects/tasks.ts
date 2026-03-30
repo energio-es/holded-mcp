@@ -4,7 +4,6 @@
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { makeApiRequest, handleApiError, toStructuredContent } from "../../services/api.js";
-import { ResponseFormat } from "../../constants.js";
 import { Task } from "../../types.js";
 import {
   ListTasksInputSchema,
@@ -12,12 +11,9 @@ import {
   GetTaskInputSchema,
   UpdateTaskInputSchema,
   DeleteTaskInputSchema,
-  ListTasksInput,
   CreateTaskInput,
-  GetTaskInput,
-  UpdateTaskInput,
-  DeleteTaskInput,
 } from "../../schemas/projects/tasks.js";
+import { registerCrudTools } from "../factory.js";
 
 /**
  * Format tasks as markdown
@@ -45,15 +41,38 @@ function formatTasksMarkdown(tasks: Task[]): string {
 }
 
 /**
+ * Format a single task as markdown
+ */
+function formatTaskMarkdown(task: Task): string {
+  return formatTasksMarkdown([task]);
+}
+
+/**
  * Register all task-related tools
  */
 export function registerTaskTools(server: McpServer): void {
-  // List Tasks
-  server.registerTool(
-    "holded_projects_list_tasks",
-    {
-      title: "List Holded Tasks",
-      description: `List all tasks from Holded Projects.
+  // ── Standard CRUD via factory (list, get, update, delete) ─
+  registerCrudTools<Task>(server, {
+    module: "projects",
+    toolPrefix: "holded_projects",
+    resource: "task",
+    resourcePlural: "tasks",
+    endpoint: "tasks",
+    idParam: "task_id",
+    schemas: {
+      list: ListTasksInputSchema,
+      get: GetTaskInputSchema,
+      update: UpdateTaskInputSchema,
+      delete: DeleteTaskInputSchema,
+    },
+    titles: {
+      list: "List Holded Tasks",
+      get: "Get Holded Task",
+      update: "Update Holded Task",
+      delete: "Delete Holded Task",
+    },
+    descriptions: {
+      list: `List all tasks from Holded Projects.
 
 Args:
   - page (number): Page number for pagination (default: 1, max 500 items per page)
@@ -62,49 +81,46 @@ Args:
 
 Returns:
   Array of tasks with id, name, status, priority, due date, and assignee.`,
-      inputSchema: ListTasksInputSchema,
-      annotations: {
-        readOnlyHint: true,
-        destructiveHint: false,
-        idempotentHint: true,
-        openWorldHint: true,
-      },
+      get: `Get a specific task by ID from Holded Projects.
+
+Args:
+  - task_id (string): The task ID to retrieve (required)
+  - response_format ('json' | 'markdown'): Output format (default: 'json')
+
+Returns:
+  Task details including name, status, priority, due date, and assignee.`,
+      update: `Update an existing task in Holded Projects.
+
+Note: The Holded API documentation does not explicitly document task updates.
+This tool supports updating the task name. Additional fields may be supported
+but are not officially documented.
+
+Args:
+  - task_id (string): The task ID to update (required)
+  - name (string): Task name (optional)
+
+Returns:
+  The updated task.`,
+      delete: `Delete a task from Holded Projects.
+
+Args:
+  - task_id (string): The task ID to delete (required)
+
+Returns:
+  Confirmation of deletion.`,
     },
-    async (params: ListTasksInput) => {
-      try {
-        const queryParams: Record<string, unknown> = {};
-        if (params.page > 1) {
-          queryParams.page = params.page;
-        }
-        if (params.project_id) {
-          queryParams.projectId = params.project_id;
-        }
+    formatters: {
+      list: formatTasksMarkdown,
+      single: formatTaskMarkdown,
+    },
+    listQueryParams: (params) => {
+      const qp: Record<string, unknown> = {};
+      if (params.project_id) qp.projectId = params.project_id;
+      return qp;
+    },
+  });
 
-        const tasks = await makeApiRequest<Task[]>(
-          "projects",
-          "tasks",
-          "GET",
-          undefined,
-          queryParams
-        );
-
-        const textContent =
-          params.response_format === ResponseFormat.MARKDOWN
-            ? formatTasksMarkdown(tasks)
-            : JSON.stringify(tasks, null, 2);
-
-        return {
-          content: [{ type: "text", text: textContent }],
-          structuredContent: { tasks, count: tasks.length, page: params.page },
-        };
-      } catch (error) {
-        return {
-          content: [{ type: "text", text: handleApiError(error) }],
-          isError: true,
-        };
-      }
-    }
-  );
+  // ── Manual tool (needs snake_to_camel conversion) ───────
 
   // Create Task
   server.registerTool(
@@ -153,155 +169,6 @@ Returns:
             },
           ],
           structuredContent: toStructuredContent(task),
-        };
-      } catch (error) {
-        return {
-          content: [{ type: "text", text: handleApiError(error) }],
-          isError: true,
-        };
-      }
-    }
-  );
-
-  // Get Task
-  server.registerTool(
-    "holded_projects_get_task",
-    {
-      title: "Get Holded Task",
-      description: `Get a specific task by ID from Holded Projects.
-
-Args:
-  - task_id (string): The task ID to retrieve (required)
-  - response_format ('json' | 'markdown'): Output format (default: 'json')
-
-Returns:
-  Task details including name, status, priority, due date, and assignee.`,
-      inputSchema: GetTaskInputSchema,
-      annotations: {
-        readOnlyHint: true,
-        destructiveHint: false,
-        idempotentHint: true,
-        openWorldHint: true,
-      },
-    },
-    async (params: GetTaskInput) => {
-      try {
-        const task = await makeApiRequest<Task>(
-          "projects",
-          `tasks/${params.task_id}`,
-          "GET"
-        );
-
-        const textContent =
-          params.response_format === ResponseFormat.MARKDOWN
-            ? formatTasksMarkdown([task])
-            : JSON.stringify(task, null, 2);
-
-        return {
-          content: [{ type: "text", text: textContent }],
-          structuredContent: toStructuredContent(task),
-        };
-      } catch (error) {
-        return {
-          content: [{ type: "text", text: handleApiError(error) }],
-          isError: true,
-        };
-      }
-    }
-  );
-
-  // Update Task
-  server.registerTool(
-    "holded_projects_update_task",
-    {
-      title: "Update Holded Task",
-      description: `Update an existing task in Holded Projects.
-
-Note: The Holded API documentation does not explicitly document task updates.
-This tool supports updating the task name. Additional fields may be supported
-but are not officially documented.
-
-Args:
-  - task_id (string): The task ID to update (required)
-  - name (string): Task name (optional)
-
-Returns:
-  The updated task.`,
-      inputSchema: UpdateTaskInputSchema,
-      annotations: {
-        readOnlyHint: false,
-        destructiveHint: false,
-        idempotentHint: true,
-        openWorldHint: true,
-      },
-    },
-    async (params: UpdateTaskInput) => {
-      try {
-        const { task_id, name } = params;
-        const requestData: Record<string, unknown> = {};
-        if (name) requestData.name = name;
-
-        const task = await makeApiRequest<Task>(
-          "projects",
-          `tasks/${task_id}`,
-          "PUT",
-          requestData
-        );
-
-        return {
-          content: [
-            {
-              type: "text",
-              text: `Task updated successfully.\n\n${JSON.stringify(task, null, 2)}`,
-            },
-          ],
-          structuredContent: toStructuredContent(task),
-        };
-      } catch (error) {
-        return {
-          content: [{ type: "text", text: handleApiError(error) }],
-          isError: true,
-        };
-      }
-    }
-  );
-
-  // Delete Task
-  server.registerTool(
-    "holded_projects_delete_task",
-    {
-      title: "Delete Holded Task",
-      description: `Delete a task from Holded Projects.
-
-Args:
-  - task_id (string): The task ID to delete (required)
-
-Returns:
-  Confirmation of deletion.`,
-      inputSchema: DeleteTaskInputSchema,
-      annotations: {
-        readOnlyHint: false,
-        destructiveHint: true,
-        idempotentHint: true,
-        openWorldHint: true,
-      },
-    },
-    async (params: DeleteTaskInput) => {
-      try {
-        await makeApiRequest<void>(
-          "projects",
-          `tasks/${params.task_id}`,
-          "DELETE"
-        );
-
-        return {
-          content: [
-            {
-              type: "text",
-              text: `Task ${params.task_id} deleted successfully.`,
-            },
-          ],
-          structuredContent: { deleted: true, id: params.task_id },
         };
       } catch (error) {
         return {

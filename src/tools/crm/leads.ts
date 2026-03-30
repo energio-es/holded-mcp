@@ -22,11 +22,6 @@ import {
   ListLeadNotesInputSchema,
   ListLeadTasksInputSchema,
   DeleteLeadNoteInputSchema,
-  ListLeadsInput,
-  GetLeadInput,
-  CreateLeadInput,
-  UpdateLeadInput,
-  DeleteLeadInput,
   UpdateLeadStageInput,
   CreateLeadNoteInput,
   UpdateLeadNoteInput,
@@ -38,6 +33,8 @@ import {
   ListLeadTasksInput,
   DeleteLeadNoteInput,
 } from "../../schemas/crm/leads.js";
+import { registerCrudTools } from "../factory.js";
+import { snakeToCamel } from "../utilities.js";
 
 /**
  * Format leads as markdown
@@ -92,12 +89,30 @@ function formatLeadMarkdown(lead: Lead): string {
  * Register all lead-related tools
  */
 export function registerLeadTools(server: McpServer): void {
-  // List Leads
-  server.registerTool(
-    "holded_crm_list_leads",
-    {
-      title: "List Holded Leads",
-      description: `List all leads from Holded CRM.
+  // ── Standard CRUD via factory ───────────────────────────
+  registerCrudTools<Lead>(server, {
+    module: "crm",
+    toolPrefix: "holded_crm",
+    resource: "lead",
+    resourcePlural: "leads",
+    endpoint: "leads",
+    idParam: "lead_id",
+    schemas: {
+      list: ListLeadsInputSchema,
+      get: GetLeadInputSchema,
+      create: CreateLeadInputSchema,
+      update: UpdateLeadInputSchema,
+      delete: DeleteLeadInputSchema,
+    },
+    titles: {
+      list: "List Holded Leads",
+      get: "Get Holded Lead",
+      create: "Create Holded Lead",
+      update: "Update Holded Lead",
+      delete: "Delete Holded Lead",
+    },
+    descriptions: {
+      list: `List all leads from Holded CRM.
 
 Args:
   - page (number): Page number for pagination (default: 1, max 500 items per page)
@@ -106,56 +121,7 @@ Args:
 
 Returns:
   Array of leads with id, name, contact, potential, probability, and status.`,
-      inputSchema: ListLeadsInputSchema,
-      annotations: {
-        readOnlyHint: true,
-        destructiveHint: false,
-        idempotentHint: true,
-        openWorldHint: true,
-      },
-    },
-    async (params: ListLeadsInput) => {
-      try {
-        const queryParams: Record<string, unknown> = {};
-        if (params.page > 1) {
-          queryParams.page = params.page;
-        }
-        if (params.funnel_id) {
-          queryParams.funnelId = params.funnel_id;
-        }
-
-        const leads = await makeApiRequest<Lead[]>(
-          "crm",
-          "leads",
-          "GET",
-          undefined,
-          queryParams
-        );
-
-        const textContent =
-          params.response_format === ResponseFormat.MARKDOWN
-            ? formatLeadsMarkdown(leads)
-            : JSON.stringify(leads, null, 2);
-
-        return {
-          content: [{ type: "text", text: textContent }],
-          structuredContent: { leads, count: leads.length, page: params.page },
-        };
-      } catch (error) {
-        return {
-          content: [{ type: "text", text: handleApiError(error) }],
-          isError: true,
-        };
-      }
-    }
-  );
-
-  // Get Lead
-  server.registerTool(
-    "holded_crm_get_lead",
-    {
-      title: "Get Holded Lead",
-      description: `Get a specific lead by ID from Holded CRM.
+      get: `Get a specific lead by ID from Holded CRM.
 
 Args:
   - lead_id (string): The lead ID to retrieve (required)
@@ -163,46 +129,7 @@ Args:
 
 Returns:
   Lead details including contact, potential, stage, and custom fields.`,
-      inputSchema: GetLeadInputSchema,
-      annotations: {
-        readOnlyHint: true,
-        destructiveHint: false,
-        idempotentHint: true,
-        openWorldHint: true,
-      },
-    },
-    async (params: GetLeadInput) => {
-      try {
-        const lead = await makeApiRequest<Lead>(
-          "crm",
-          `leads/${params.lead_id}`,
-          "GET"
-        );
-
-        const textContent =
-          params.response_format === ResponseFormat.MARKDOWN
-            ? formatLeadMarkdown(lead)
-            : JSON.stringify(lead, null, 2);
-
-        return {
-          content: [{ type: "text", text: textContent }],
-          structuredContent: toStructuredContent(lead),
-        };
-      } catch (error) {
-        return {
-          content: [{ type: "text", text: handleApiError(error) }],
-          isError: true,
-        };
-      }
-    }
-  );
-
-  // Create Lead
-  server.registerTool(
-    "holded_crm_create_lead",
-    {
-      title: "Create Holded Lead",
-      description: `Create a new lead in Holded CRM.
+      create: `Create a new lead in Holded CRM.
 
 Args:
   - name (string): Lead name (required)
@@ -215,58 +142,7 @@ Args:
 
 Returns:
   The created lead with its assigned ID.`,
-      inputSchema: CreateLeadInputSchema,
-      annotations: {
-        readOnlyHint: false,
-        destructiveHint: false,
-        idempotentHint: false,
-        openWorldHint: true,
-      },
-    },
-    async (params: CreateLeadInput) => {
-      try {
-        // Map snake_case to camelCase for API
-        const requestData: Record<string, unknown> = {
-          name: params.name,
-          funnelId: params.funnel_id,
-          contactId: params.contact_id,
-        };
-        if (params.stage_id) requestData.stageId = params.stage_id;
-        if (params.contact_name) requestData.contactName = params.contact_name;
-        if (params.value !== undefined) requestData.value = params.value;
-        if (params.due_date) requestData.dueDate = params.due_date;
-
-        const lead = await makeApiRequest<Lead>(
-          "crm",
-          "leads",
-          "POST",
-          requestData
-        );
-
-        return {
-          content: [
-            {
-              type: "text",
-              text: `Lead created successfully.\n\n${JSON.stringify(lead, null, 2)}`,
-            },
-          ],
-          structuredContent: toStructuredContent(lead),
-        };
-      } catch (error) {
-        return {
-          content: [{ type: "text", text: handleApiError(error) }],
-          isError: true,
-        };
-      }
-    }
-  );
-
-  // Update Lead
-  server.registerTool(
-    "holded_crm_update_lead",
-    {
-      title: "Update Holded Lead",
-      description: `Update an existing lead in Holded CRM.
+      update: `Update an existing lead in Holded CRM.
 
 Args:
   - lead_id (string): The lead ID to update (required)
@@ -278,90 +154,27 @@ Args:
 
 Returns:
   The updated lead.`,
-      inputSchema: UpdateLeadInputSchema,
-      annotations: {
-        readOnlyHint: false,
-        destructiveHint: false,
-        idempotentHint: true,
-        openWorldHint: true,
-      },
-    },
-    async (params: UpdateLeadInput) => {
-      try {
-        const { lead_id, due_date, ...rest } = params;
-        const requestData: Record<string, unknown> = { ...rest };
-        if (due_date) requestData.dueDate = due_date;
-
-        const lead = await makeApiRequest<Lead>(
-          "crm",
-          `leads/${lead_id}`,
-          "PUT",
-          requestData
-        );
-
-        return {
-          content: [
-            {
-              type: "text",
-              text: `Lead updated successfully.\n\n${JSON.stringify(lead, null, 2)}`,
-            },
-          ],
-          structuredContent: toStructuredContent(lead),
-        };
-      } catch (error) {
-        return {
-          content: [{ type: "text", text: handleApiError(error) }],
-          isError: true,
-        };
-      }
-    }
-  );
-
-  // Delete Lead
-  server.registerTool(
-    "holded_crm_delete_lead",
-    {
-      title: "Delete Holded Lead",
-      description: `Delete a lead from Holded CRM.
+      delete: `Delete a lead from Holded CRM.
 
 Args:
   - lead_id (string): The lead ID to delete (required)
 
 Returns:
   Confirmation of deletion.`,
-      inputSchema: DeleteLeadInputSchema,
-      annotations: {
-        readOnlyHint: false,
-        destructiveHint: true,
-        idempotentHint: true,
-        openWorldHint: true,
-      },
     },
-    async (params: DeleteLeadInput) => {
-      try {
-        await makeApiRequest<void>(
-          "crm",
-          `leads/${params.lead_id}`,
-          "DELETE"
-        );
+    formatters: {
+      list: formatLeadsMarkdown,
+      single: formatLeadMarkdown,
+    },
+    listQueryParams: (params) => {
+      const qp: Record<string, unknown> = {};
+      if (params.funnel_id) qp.funnelId = params.funnel_id;
+      return qp;
+    },
+    bodyTransform: snakeToCamel,
+  });
 
-        return {
-          content: [
-            {
-              type: "text",
-              text: `Lead ${params.lead_id} deleted successfully.`,
-            },
-          ],
-          structuredContent: { deleted: true, id: params.lead_id },
-        };
-      } catch (error) {
-        return {
-          content: [{ type: "text", text: handleApiError(error) }],
-          isError: true,
-        };
-      }
-    }
-  );
+  // ── Manual tools (sub-resource endpoints) ───────────────
 
   // Update Lead Stage
   server.registerTool(
