@@ -34,6 +34,7 @@ export function buildToolResponse<T>(
  * Tool result type returned by MCP tool handlers.
  */
 export interface ToolResult {
+  // Index signature required for MCP SDK CallToolResult compatibility
   [key: string]: unknown;
   content: { type: "text"; text: string }[];
   structuredContent?: Record<string, unknown>;
