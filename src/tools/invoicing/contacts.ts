@@ -3,7 +3,7 @@
  */
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { makeApiRequest, makeMultipartApiRequest, handleApiError } from "../../services/api.js";
+import { makeApiRequest, makeMultipartApiRequest } from "../../services/api.js";
 import { ResponseFormat } from "../../constants.js";
 import { Contact, ContactGroup } from "../../types.js";
 import {
@@ -25,6 +25,7 @@ import {
   UploadContactAttachmentInput,
 } from "../../schemas/invoicing/contacts.js";
 import { registerCrudTools } from "../factory.js";
+import { withErrorHandling } from "../utilities.js";
 
 /**
  * Format contacts as markdown
@@ -276,40 +277,34 @@ Returns:
         openWorldHint: true,
       },
     },
-    async (params: ListContactAttachmentsInput) => {
-      try {
-        const attachments = await makeApiRequest<Array<string>>(
-          "invoicing",
-          `contacts/${params.contact_id}/attachments/list`,
-          "GET"
-        );
+    withErrorHandling(async (params) => {
+      const typedParams = params as unknown as ListContactAttachmentsInput;
+      const attachments = await makeApiRequest<Array<string>>(
+        "invoicing",
+        `contacts/${typedParams.contact_id}/attachments/list`,
+        "GET"
+      );
 
-        let textContent: string;
-        if (params.response_format === ResponseFormat.MARKDOWN) {
-          if (!attachments.length) {
-            textContent = `No attachments found for contact ${params.contact_id}.`;
-          } else {
-            const lines = ["# Contact Attachments", "", `Found ${attachments.length} attachments:`, ""];
-            for (const attachment of attachments) {
-              lines.push(`- ${attachment}`);
-            }
-            textContent = lines.join("\n");
-          }
+      let textContent: string;
+      if (typedParams.response_format === ResponseFormat.MARKDOWN) {
+        if (!attachments.length) {
+          textContent = `No attachments found for contact ${typedParams.contact_id}.`;
         } else {
-          textContent = JSON.stringify(attachments, null, 2);
+          const lines = ["# Contact Attachments", "", `Found ${attachments.length} attachments:`, ""];
+          for (const attachment of attachments) {
+            lines.push(`- ${attachment}`);
+          }
+          textContent = lines.join("\n");
         }
-
-        return {
-          content: [{ type: "text", text: textContent }],
-          structuredContent: { attachments, count: attachments.length, contactId: params.contact_id },
-        };
-      } catch (error) {
-        return {
-          content: [{ type: "text", text: handleApiError(error) }],
-          isError: true,
-        };
+      } else {
+        textContent = JSON.stringify(attachments, null, 2);
       }
-    }
+
+      return {
+        content: [{ type: "text", text: textContent }],
+        structuredContent: { attachments, count: attachments.length, contactId: typedParams.contact_id },
+      };
+    })
   );
 
   // Get Contact Attachment
@@ -334,40 +329,34 @@ Returns:
         openWorldHint: true,
       },
     },
-    async (params: GetContactAttachmentInput) => {
-      try {
-        const result = await makeApiRequest<string | { url?: string; data?: string; [key: string]: unknown }>(
-          "invoicing",
-          `contacts/${params.contact_id}/attachments/get`,
-          "GET",
-          undefined,
-          { filename: params.filename }
-        );
+    withErrorHandling(async (params) => {
+      const typedParams = params as unknown as GetContactAttachmentInput;
+      const result = await makeApiRequest<string | { url?: string; data?: string; [key: string]: unknown }>(
+        "invoicing",
+        `contacts/${typedParams.contact_id}/attachments/get`,
+        "GET",
+        undefined,
+        { filename: typedParams.filename }
+      );
 
-        let textContent: string;
-        if (params.response_format === ResponseFormat.MARKDOWN) {
-          if (typeof result === "string") {
-            textContent = `# Contact Attachment\n\n**File**: ${params.filename}\n**Data**: ${result.substring(0, 100)}...`;
-          } else {
-            textContent = result.url
-              ? `# Contact Attachment\n\n**File**: ${params.filename}\n**URL**: ${result.url}`
-              : `# Contact Attachment\n\n**File**: ${params.filename}\nAttachment data available.`;
-          }
+      let textContent: string;
+      if (typedParams.response_format === ResponseFormat.MARKDOWN) {
+        if (typeof result === "string") {
+          textContent = `# Contact Attachment\n\n**File**: ${typedParams.filename}\n**Data**: ${result.substring(0, 100)}...`;
         } else {
-          textContent = JSON.stringify(result, null, 2);
+          textContent = result.url
+            ? `# Contact Attachment\n\n**File**: ${typedParams.filename}\n**URL**: ${result.url}`
+            : `# Contact Attachment\n\n**File**: ${typedParams.filename}\nAttachment data available.`;
         }
-
-        return {
-          content: [{ type: "text", text: textContent }],
-          structuredContent: { contactId: params.contact_id, filename: params.filename, data: result },
-        };
-      } catch (error) {
-        return {
-          content: [{ type: "text", text: handleApiError(error) }],
-          isError: true,
-        };
+      } else {
+        textContent = JSON.stringify(result, null, 2);
       }
-    }
+
+      return {
+        content: [{ type: "text", text: textContent }],
+        structuredContent: { contactId: typedParams.contact_id, filename: typedParams.filename, data: result },
+      };
+    })
   );
 
   // Upload Contact Attachment
@@ -392,35 +381,28 @@ Returns:
         openWorldHint: true,
       },
     },
-    async (params: UploadContactAttachmentInput) => {
-      try {
-        const { contact_id, file_content, file_name } = params;
+    withErrorHandling(async (params) => {
+      const { contact_id, file_content, file_name } = params as unknown as UploadContactAttachmentInput;
 
-        // Convert base64 to buffer
-        const fileBuffer = Buffer.from(file_content, "base64");
+      // Convert base64 to buffer
+      const fileBuffer = Buffer.from(file_content, "base64");
 
-        const result = await makeMultipartApiRequest<{ status: number; info: string; [key: string]: unknown }>(
-          "invoicing",
-          `contacts/${contact_id}/attachments`,
-          fileBuffer,
-          file_name
-        );
+      const result = await makeMultipartApiRequest<{ status: number; info: string; [key: string]: unknown }>(
+        "invoicing",
+        `contacts/${contact_id}/attachments`,
+        fileBuffer,
+        file_name
+      );
 
-        return {
-          content: [
-            {
-              type: "text",
-              text: `Contact attachment uploaded successfully.\n\n${JSON.stringify(result, null, 2)}`,
-            },
-          ],
-          structuredContent: { uploaded: true, contactId: contact_id, fileName: file_name, ...result },
-        };
-      } catch (error) {
-        return {
-          content: [{ type: "text", text: handleApiError(error) }],
-          isError: true,
-        };
-      }
-    }
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Contact attachment uploaded successfully.\n\n${JSON.stringify(result, null, 2)}`,
+          },
+        ],
+        structuredContent: { uploaded: true, contactId: contact_id, fileName: file_name, ...result },
+      };
+    })
   );
 }

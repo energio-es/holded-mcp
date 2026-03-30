@@ -15,7 +15,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
-    "test:smoke": "HOLDED_TEST_API_KEY=1 vitest run tests/smoke.test.ts",
+    "test:smoke": "vitest run tests/smoke.test.ts",
     "prepublishOnly": "npm run build",
     "scrape-docs": "tsx scripts/scrape-all-docs.ts"
   },

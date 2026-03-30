@@ -492,3 +492,66 @@ describe("registerCrudTools — delete", () => {
     expect(mockHandleApiError).toHaveBeenCalledWith(error);
   });
 });
+
+// ============================================================
+// bodyTransform option
+// ============================================================
+
+describe("registerCrudTools — bodyTransform", () => {
+  let server: ReturnType<typeof createMockServer>;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    server = createMockServer();
+  });
+
+  it("applies bodyTransform to create request body", async () => {
+    const created: TestItem = { id: "new-1", name: "Transformed Widget" };
+    mockMakeApiRequest.mockResolvedValue(created);
+
+    const transform = (body: Record<string, unknown>) => {
+      const result: Record<string, unknown> = {};
+      for (const key of Object.keys(body)) {
+        const camelKey = key.replace(/_([a-z])/g, (_, c: string) => c.toUpperCase());
+        result[camelKey] = body[key];
+      }
+      return result;
+    };
+
+    registerCrudTools(server as any, createFullCrudConfig({ bodyTransform: transform }));
+    const handler = server.tools.get("holded_invoicing_create_widget")!.handler;
+    await handler({ name: "Test", some_field: "value", response_format: ResponseFormat.JSON });
+
+    expect(mockMakeApiRequest).toHaveBeenCalledWith(
+      "invoicing",
+      "widgets",
+      "POST",
+      { name: "Test", someField: "value" },
+    );
+  });
+
+  it("applies bodyTransform to update request body", async () => {
+    const updated: TestItem = { id: "abc123", name: "Transformed Widget" };
+    mockMakeApiRequest.mockResolvedValue(updated);
+
+    const transform = (body: Record<string, unknown>) => {
+      const result: Record<string, unknown> = {};
+      for (const key of Object.keys(body)) {
+        const camelKey = key.replace(/_([a-z])/g, (_, c: string) => c.toUpperCase());
+        result[camelKey] = body[key];
+      }
+      return result;
+    };
+
+    registerCrudTools(server as any, createFullCrudConfig({ bodyTransform: transform }));
+    const handler = server.tools.get("holded_invoicing_update_widget")!.handler;
+    await handler({ widget_id: "abc123", due_date: 12345, response_format: ResponseFormat.JSON });
+
+    expect(mockMakeApiRequest).toHaveBeenCalledWith(
+      "invoicing",
+      "widgets/abc123",
+      "PUT",
+      { dueDate: 12345 },
+    );
+  });
+});

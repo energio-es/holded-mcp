@@ -3,7 +3,7 @@
  */
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { makeApiRequest, handleApiError } from "../../services/api.js";
+import { makeApiRequest } from "../../services/api.js";
 import { ResponseFormat } from "../../constants.js";
 import { Booking, BookingLocation, BookingAmount } from "../../types.js";
 import {
@@ -18,6 +18,7 @@ import {
   GetAvailableSlotsInput,
 } from "../../schemas/crm/bookings.js";
 import { registerCrudTools } from "../factory.js";
+import { withErrorHandling } from "../utilities.js";
 
 /**
  * Format bookings as markdown
@@ -201,50 +202,44 @@ Returns:
         openWorldHint: true,
       },
     },
-    async (params: ListBookingLocationsInput) => {
-      try {
-        const locations = await makeApiRequest<BookingLocation[]>(
-          "crm",
-          "bookings/locations",
-          "GET"
-        );
+    withErrorHandling(async (params) => {
+      const typedParams = params as unknown as ListBookingLocationsInput;
+      const locations = await makeApiRequest<BookingLocation[]>(
+        "crm",
+        "bookings/locations",
+        "GET"
+      );
 
-        let textContent: string;
-        if (params.response_format === ResponseFormat.MARKDOWN) {
-          if (!locations.length) {
-            textContent = "No booking locations found.";
-          } else {
-            const lines = ["# Booking Locations", "", `Found ${locations.length} locations:`, ""];
-            for (const loc of locations) {
-              lines.push(`## ${loc.name}`);
-              lines.push(`- **ID**: ${loc.id}`);
-              if (loc.description) lines.push(`- **Description**: ${loc.description}`);
-              lines.push(`- **Active**: ${loc.active ? "Yes" : "No"}`);
-              if (loc.availableServices?.length) {
-                lines.push(`- **Available Services**: ${loc.availableServices.length} service(s)`);
-                for (const serviceId of loc.availableServices) {
-                  lines.push(`  - ${serviceId}`);
-                }
-              }
-              lines.push("");
-            }
-            textContent = lines.join("\n");
-          }
+      let textContent: string;
+      if (typedParams.response_format === ResponseFormat.MARKDOWN) {
+        if (!locations.length) {
+          textContent = "No booking locations found.";
         } else {
-          textContent = JSON.stringify(locations, null, 2);
+          const lines = ["# Booking Locations", "", `Found ${locations.length} locations:`, ""];
+          for (const loc of locations) {
+            lines.push(`## ${loc.name}`);
+            lines.push(`- **ID**: ${loc.id}`);
+            if (loc.description) lines.push(`- **Description**: ${loc.description}`);
+            lines.push(`- **Active**: ${loc.active ? "Yes" : "No"}`);
+            if (loc.availableServices?.length) {
+              lines.push(`- **Available Services**: ${loc.availableServices.length} service(s)`);
+              for (const serviceId of loc.availableServices) {
+                lines.push(`  - ${serviceId}`);
+              }
+            }
+            lines.push("");
+          }
+          textContent = lines.join("\n");
         }
-
-        return {
-          content: [{ type: "text", text: textContent }],
-          structuredContent: { locations, count: locations.length },
-        };
-      } catch (error) {
-        return {
-          content: [{ type: "text", text: handleApiError(error) }],
-          isError: true,
-        };
+      } else {
+        textContent = JSON.stringify(locations, null, 2);
       }
-    }
+
+      return {
+        content: [{ type: "text", text: textContent }],
+        structuredContent: { locations, count: locations.length },
+      };
+    })
   );
 
   // Get Available Slots
@@ -270,47 +265,41 @@ Returns:
         openWorldHint: true,
       },
     },
-    async (params: GetAvailableSlotsInput) => {
-      try {
-        // API requires serviceId and day as query parameters
-        const queryParams: Record<string, unknown> = {
-          serviceId: params.serviceId,
-          day: params.day,
-        };
+    withErrorHandling(async (params) => {
+      const typedParams = params as unknown as GetAvailableSlotsInput;
+      // API requires serviceId and day as query parameters
+      const queryParams: Record<string, unknown> = {
+        serviceId: typedParams.serviceId,
+        day: typedParams.day,
+      };
 
-        const slots = await makeApiRequest<Array<{ dateTime: number; from: string; to: string; duration: number; [key: string]: unknown }>>(
-          "crm",
-          `bookings/locations/${params.location_id}/slots`,
-          "GET",
-          undefined,
-          queryParams
-        );
+      const slots = await makeApiRequest<Array<{ dateTime: number; from: string; to: string; duration: number; [key: string]: unknown }>>(
+        "crm",
+        `bookings/locations/${typedParams.location_id}/slots`,
+        "GET",
+        undefined,
+        queryParams
+      );
 
-        let textContent: string;
-        if (params.response_format === ResponseFormat.MARKDOWN) {
-          if (!slots.length) {
-            textContent = "No available slots found for this location.";
-          } else {
-            const lines = ["# Available Booking Slots", "", `Found ${slots.length} slots:`, ""];
-            for (const slot of slots) {
-              lines.push(`- **${slot.from}** to **${slot.to}** (${Math.round(slot.duration / 60)} min)`);
-            }
-            textContent = lines.join("\n");
-          }
+      let textContent: string;
+      if (typedParams.response_format === ResponseFormat.MARKDOWN) {
+        if (!slots.length) {
+          textContent = "No available slots found for this location.";
         } else {
-          textContent = JSON.stringify(slots, null, 2);
+          const lines = ["# Available Booking Slots", "", `Found ${slots.length} slots:`, ""];
+          for (const slot of slots) {
+            lines.push(`- **${slot.from}** to **${slot.to}** (${Math.round(slot.duration / 60)} min)`);
+          }
+          textContent = lines.join("\n");
         }
-
-        return {
-          content: [{ type: "text", text: textContent }],
-          structuredContent: { slots, count: slots.length, locationId: params.location_id },
-        };
-      } catch (error) {
-        return {
-          content: [{ type: "text", text: handleApiError(error) }],
-          isError: true,
-        };
+      } else {
+        textContent = JSON.stringify(slots, null, 2);
       }
-    }
+
+      return {
+        content: [{ type: "text", text: textContent }],
+        structuredContent: { slots, count: slots.length, locationId: typedParams.location_id },
+      };
+    })
   );
 }

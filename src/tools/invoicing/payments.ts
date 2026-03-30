@@ -3,7 +3,7 @@
  */
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { makeApiRequest, handleApiError, toStructuredContent } from "../../services/api.js";
+import { makeApiRequest, toStructuredContent } from "../../services/api.js";
 import { ResponseFormat } from "../../constants.js";
 import { Payment } from "../../types.js";
 import {
@@ -16,6 +16,7 @@ import {
   UpdatePaymentInput,
 } from "../../schemas/invoicing/payments.js";
 import { registerCrudTools } from "../factory.js";
+import { withErrorHandling } from "../utilities.js";
 
 /**
  * Format payments as markdown
@@ -134,37 +135,30 @@ Returns:
         openWorldHint: true,
       },
     },
-    async (params: CreatePaymentInput) => {
-      try {
-        const { doc_id, account_id, ...paymentData } = params;
-        const requestData = {
-          ...paymentData,
-          ...(account_id ? { accountId: account_id } : {}),
-        };
+    withErrorHandling(async (params) => {
+      const { doc_id, account_id, ...paymentData } = params as unknown as CreatePaymentInput;
+      const requestData = {
+        ...paymentData,
+        ...(account_id ? { accountId: account_id } : {}),
+      };
 
-        const payment = await makeApiRequest<Payment>(
-          "invoicing",
-          "payments",
-          "POST",
-          { docId: doc_id, ...requestData }
-        );
+      const payment = await makeApiRequest<Payment>(
+        "invoicing",
+        "payments",
+        "POST",
+        { docId: doc_id, ...requestData }
+      );
 
-        return {
-          content: [
-            {
-              type: "text",
-              text: `Payment created successfully.\n\n${JSON.stringify(payment, null, 2)}`,
-            },
-          ],
-          structuredContent: toStructuredContent(payment),
-        };
-      } catch (error) {
-        return {
-          content: [{ type: "text", text: handleApiError(error) }],
-          isError: true,
-        };
-      }
-    }
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Payment created successfully.\n\n${JSON.stringify(payment, null, 2)}`,
+          },
+        ],
+        structuredContent: toStructuredContent(payment),
+      };
+    })
   );
 
   // Update Payment
@@ -191,36 +185,29 @@ Returns:
         openWorldHint: true,
       },
     },
-    async (params: UpdatePaymentInput) => {
-      try {
-        const { payment_id, account_id, ...updateData } = params;
-        const requestData = {
-          ...updateData,
-          ...(account_id ? { accountId: account_id } : {}),
-        };
+    withErrorHandling(async (params) => {
+      const { payment_id, account_id, ...updateData } = params as unknown as UpdatePaymentInput;
+      const requestData = {
+        ...updateData,
+        ...(account_id ? { accountId: account_id } : {}),
+      };
 
-        const payment = await makeApiRequest<Payment>(
-          "invoicing",
-          `payments/${payment_id}`,
-          "PUT",
-          requestData
-        );
+      const payment = await makeApiRequest<Payment>(
+        "invoicing",
+        `payments/${payment_id}`,
+        "PUT",
+        requestData
+      );
 
-        return {
-          content: [
-            {
-              type: "text",
-              text: `Payment updated successfully.\n\n${JSON.stringify(payment, null, 2)}`,
-            },
-          ],
-          structuredContent: toStructuredContent(payment),
-        };
-      } catch (error) {
-        return {
-          content: [{ type: "text", text: handleApiError(error) }],
-          isError: true,
-        };
-      }
-    }
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Payment updated successfully.\n\n${JSON.stringify(payment, null, 2)}`,
+          },
+        ],
+        structuredContent: toStructuredContent(payment),
+      };
+    })
   );
 }

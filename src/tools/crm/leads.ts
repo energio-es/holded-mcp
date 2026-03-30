@@ -3,7 +3,7 @@
  */
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { makeApiRequest, handleApiError, toStructuredContent } from "../../services/api.js";
+import { makeApiRequest, toStructuredContent } from "../../services/api.js";
 import { ResponseFormat } from "../../constants.js";
 import { Lead, LeadNote, LeadTask } from "../../types.js";
 import {
@@ -34,7 +34,7 @@ import {
   DeleteLeadNoteInput,
 } from "../../schemas/crm/leads.js";
 import { registerCrudTools } from "../factory.js";
-import { snakeToCamel } from "../utilities.js";
+import { snakeToCamel, withErrorHandling } from "../utilities.js";
 
 /**
  * Format leads as markdown
@@ -197,31 +197,25 @@ Returns:
         openWorldHint: true,
       },
     },
-    async (params: UpdateLeadStageInput) => {
-      try {
-        const result = await makeApiRequest<{ status: string }>(
-          "crm",
-          `leads/${params.lead_id}/stages`,
-          "PUT",
-          { stageId: params.stage_id }
-        );
+    withErrorHandling(async (params) => {
+      const typedParams = params as unknown as UpdateLeadStageInput;
+      const result = await makeApiRequest<{ status: string }>(
+        "crm",
+        `leads/${typedParams.lead_id}/stages`,
+        "PUT",
+        { stageId: typedParams.stage_id }
+      );
 
-        return {
-          content: [
-            {
-              type: "text",
-              text: `Lead stage updated successfully.\n\n${JSON.stringify(result, null, 2)}`,
-            },
-          ],
-          structuredContent: { updated: true, leadId: params.lead_id, stageId: params.stage_id },
-        };
-      } catch (error) {
-        return {
-          content: [{ type: "text", text: handleApiError(error) }],
-          isError: true,
-        };
-      }
-    }
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Lead stage updated successfully.\n\n${JSON.stringify(result, null, 2)}`,
+          },
+        ],
+        structuredContent: { updated: true, leadId: typedParams.lead_id, stageId: typedParams.stage_id },
+      };
+    })
   );
 
   // Create Lead Note
@@ -245,31 +239,25 @@ Returns:
         openWorldHint: true,
       },
     },
-    async (params: CreateLeadNoteInput) => {
-      try {
-        const note = await makeApiRequest<LeadNote>(
-          "crm",
-          `leads/${params.lead_id}/notes`,
-          "POST",
-          { content: params.content }
-        );
+    withErrorHandling(async (params) => {
+      const typedParams = params as unknown as CreateLeadNoteInput;
+      const note = await makeApiRequest<LeadNote>(
+        "crm",
+        `leads/${typedParams.lead_id}/notes`,
+        "POST",
+        { content: typedParams.content }
+      );
 
-        return {
-          content: [
-            {
-              type: "text",
-              text: `Note added successfully.\n\n${JSON.stringify(note, null, 2)}`,
-            },
-          ],
-          structuredContent: toStructuredContent(note),
-        };
-      } catch (error) {
-        return {
-          content: [{ type: "text", text: handleApiError(error) }],
-          isError: true,
-        };
-      }
-    }
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Note added successfully.\n\n${JSON.stringify(note, null, 2)}`,
+          },
+        ],
+        structuredContent: toStructuredContent(note),
+      };
+    })
   );
 
   // Update Lead Task
@@ -298,36 +286,29 @@ Returns:
         openWorldHint: true,
       },
     },
-    async (params: UpdateLeadTaskInput) => {
-      try {
-        const { lead_id, task_id, due_date, assigned_to, ...rest } = params;
-        const requestData: Record<string, unknown> = { ...rest };
-        if (due_date) requestData.dueDate = due_date;
-        if (assigned_to) requestData.assignedTo = assigned_to;
+    withErrorHandling(async (params) => {
+      const { lead_id, task_id, due_date, assigned_to, ...rest } = params as unknown as UpdateLeadTaskInput;
+      const requestData: Record<string, unknown> = { ...rest };
+      if (due_date) requestData.dueDate = due_date;
+      if (assigned_to) requestData.assignedTo = assigned_to;
 
-        const task = await makeApiRequest<{ id: string; name: string }>(
-          "crm",
-          `leads/${lead_id}/tasks`,
-          "PUT",
-          { taskId: task_id, ...requestData }
-        );
+      const task = await makeApiRequest<{ id: string; name: string }>(
+        "crm",
+        `leads/${lead_id}/tasks`,
+        "PUT",
+        { taskId: task_id, ...requestData }
+      );
 
-        return {
-          content: [
-            {
-              type: "text",
-              text: `Task updated successfully.\n\n${JSON.stringify(task, null, 2)}`,
-            },
-          ],
-          structuredContent: toStructuredContent(task),
-        };
-      } catch (error) {
-        return {
-          content: [{ type: "text", text: handleApiError(error) }],
-          isError: true,
-        };
-      }
-    }
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Task updated successfully.\n\n${JSON.stringify(task, null, 2)}`,
+          },
+        ],
+        structuredContent: toStructuredContent(task),
+      };
+    })
   );
 
   // Update Lead Note
@@ -352,32 +333,25 @@ Returns:
         openWorldHint: true,
       },
     },
-    async (params: UpdateLeadNoteInput) => {
-      try {
-        const { lead_id, note_id, content } = params;
-        const note = await makeApiRequest<LeadNote>(
-          "crm",
-          `leads/${lead_id}/notes`,
-          "PUT",
-          { noteId: note_id, content }
-        );
+    withErrorHandling(async (params) => {
+      const { lead_id, note_id, content } = params as unknown as UpdateLeadNoteInput;
+      const note = await makeApiRequest<LeadNote>(
+        "crm",
+        `leads/${lead_id}/notes`,
+        "PUT",
+        { noteId: note_id, content }
+      );
 
-        return {
-          content: [
-            {
-              type: "text",
-              text: `Note updated successfully.\n\n${JSON.stringify(note, null, 2)}`,
-            },
-          ],
-          structuredContent: toStructuredContent(note),
-        };
-      } catch (error) {
-        return {
-          content: [{ type: "text", text: handleApiError(error) }],
-          isError: true,
-        };
-      }
-    }
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Note updated successfully.\n\n${JSON.stringify(note, null, 2)}`,
+          },
+        ],
+        structuredContent: toStructuredContent(note),
+      };
+    })
   );
 
   // Delete Lead Task
@@ -401,32 +375,25 @@ Returns:
         openWorldHint: true,
       },
     },
-    async (params: DeleteLeadTaskInput) => {
-      try {
-        const { lead_id, task_id } = params;
-        await makeApiRequest<void>(
-          "crm",
-          `leads/${lead_id}/tasks`,
-          "DELETE",
-          { taskId: task_id }
-        );
+    withErrorHandling(async (params) => {
+      const { lead_id, task_id } = params as unknown as DeleteLeadTaskInput;
+      await makeApiRequest<void>(
+        "crm",
+        `leads/${lead_id}/tasks`,
+        "DELETE",
+        { taskId: task_id }
+      );
 
-        return {
-          content: [
-            {
-              type: "text",
-              text: `Task ${task_id} deleted successfully from lead ${lead_id}.`,
-            },
-          ],
-          structuredContent: { deleted: true, leadId: lead_id, taskId: task_id },
-        };
-      } catch (error) {
-        return {
-          content: [{ type: "text", text: handleApiError(error) }],
-          isError: true,
-        };
-      }
-    }
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Task ${task_id} deleted successfully from lead ${lead_id}.`,
+          },
+        ],
+        structuredContent: { deleted: true, leadId: lead_id, taskId: task_id },
+      };
+    })
   );
 
   // Update Lead Dates
@@ -450,32 +417,25 @@ Returns:
         openWorldHint: true,
       },
     },
-    async (params: UpdateLeadDatesInput) => {
-      try {
-        const { lead_id, creation_date } = params;
-        const result = await makeApiRequest<{ status: string; [key: string]: unknown }>(
-          "crm",
-          `leads/${lead_id}/dates`,
-          "PUT",
-          { creationDate: creation_date }
-        );
+    withErrorHandling(async (params) => {
+      const { lead_id, creation_date } = params as unknown as UpdateLeadDatesInput;
+      const result = await makeApiRequest<{ status: string; [key: string]: unknown }>(
+        "crm",
+        `leads/${lead_id}/dates`,
+        "PUT",
+        { creationDate: creation_date }
+      );
 
-        return {
-          content: [
-            {
-              type: "text",
-              text: `Lead dates updated successfully.\n\n${JSON.stringify(result, null, 2)}`,
-            },
-          ],
-          structuredContent: { updated: true, leadId: lead_id, creationDate: creation_date, ...result },
-        };
-      } catch (error) {
-        return {
-          content: [{ type: "text", text: handleApiError(error) }],
-          isError: true,
-        };
-      }
-    }
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Lead dates updated successfully.\n\n${JSON.stringify(result, null, 2)}`,
+          },
+        ],
+        structuredContent: { updated: true, leadId: lead_id, creationDate: creation_date, ...result },
+      };
+    })
   );
 
   // Create Lead Task
@@ -502,36 +462,29 @@ Returns:
         openWorldHint: true,
       },
     },
-    async (params: CreateLeadTaskInput) => {
-      try {
-        const { lead_id, due_date, assigned_to, ...rest } = params;
-        const requestData: Record<string, unknown> = { ...rest };
-        if (due_date) requestData.dueDate = due_date;
-        if (assigned_to) requestData.assignedTo = assigned_to;
+    withErrorHandling(async (params) => {
+      const { lead_id, due_date, assigned_to, ...rest } = params as unknown as CreateLeadTaskInput;
+      const requestData: Record<string, unknown> = { ...rest };
+      if (due_date) requestData.dueDate = due_date;
+      if (assigned_to) requestData.assignedTo = assigned_to;
 
-        const task = await makeApiRequest<LeadTask>(
-          "crm",
-          `leads/${lead_id}/tasks`,
-          "POST",
-          requestData
-        );
+      const task = await makeApiRequest<LeadTask>(
+        "crm",
+        `leads/${lead_id}/tasks`,
+        "POST",
+        requestData
+      );
 
-        return {
-          content: [
-            {
-              type: "text",
-              text: `Task created successfully.\n\n${JSON.stringify(task, null, 2)}`,
-            },
-          ],
-          structuredContent: toStructuredContent(task),
-        };
-      } catch (error) {
-        return {
-          content: [{ type: "text", text: handleApiError(error) }],
-          isError: true,
-        };
-      }
-    }
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Task created successfully.\n\n${JSON.stringify(task, null, 2)}`,
+          },
+        ],
+        structuredContent: toStructuredContent(task),
+      };
+    })
   );
 
   // List Lead Notes
@@ -555,44 +508,38 @@ Returns:
         openWorldHint: true,
       },
     },
-    async (params: ListLeadNotesInput) => {
-      try {
-        const notes = await makeApiRequest<LeadNote[]>(
-          "crm",
-          `leads/${params.lead_id}/notes`,
-          "GET"
-        );
+    withErrorHandling(async (params) => {
+      const typedParams = params as unknown as ListLeadNotesInput;
+      const notes = await makeApiRequest<LeadNote[]>(
+        "crm",
+        `leads/${typedParams.lead_id}/notes`,
+        "GET"
+      );
 
-        let textContent: string;
-        if (params.response_format === ResponseFormat.MARKDOWN) {
-          if (!notes.length) {
-            textContent = `No notes found for lead ${params.lead_id}.`;
-          } else {
-            const lines = ["# Lead Notes", "", `Found ${notes.length} notes:`, ""];
-            for (const note of notes) {
-              lines.push(`## Note ${note.id}`);
-              lines.push(`- **Content**: ${note.content}`);
-              if (note.createdAt) lines.push(`- **Created**: ${new Date(note.createdAt * 1000).toLocaleDateString()}`);
-              if (note.createdBy) lines.push(`- **Created By**: ${note.createdBy}`);
-              lines.push("");
-            }
-            textContent = lines.join("\n");
-          }
+      let textContent: string;
+      if (typedParams.response_format === ResponseFormat.MARKDOWN) {
+        if (!notes.length) {
+          textContent = `No notes found for lead ${typedParams.lead_id}.`;
         } else {
-          textContent = JSON.stringify(notes, null, 2);
+          const lines = ["# Lead Notes", "", `Found ${notes.length} notes:`, ""];
+          for (const note of notes) {
+            lines.push(`## Note ${note.id}`);
+            lines.push(`- **Content**: ${note.content}`);
+            if (note.createdAt) lines.push(`- **Created**: ${new Date(note.createdAt * 1000).toLocaleDateString()}`);
+            if (note.createdBy) lines.push(`- **Created By**: ${note.createdBy}`);
+            lines.push("");
+          }
+          textContent = lines.join("\n");
         }
-
-        return {
-          content: [{ type: "text", text: textContent }],
-          structuredContent: { notes, count: notes.length, leadId: params.lead_id },
-        };
-      } catch (error) {
-        return {
-          content: [{ type: "text", text: handleApiError(error) }],
-          isError: true,
-        };
+      } else {
+        textContent = JSON.stringify(notes, null, 2);
       }
-    }
+
+      return {
+        content: [{ type: "text", text: textContent }],
+        structuredContent: { notes, count: notes.length, leadId: typedParams.lead_id },
+      };
+    })
   );
 
   // List Lead Tasks
@@ -616,46 +563,40 @@ Returns:
         openWorldHint: true,
       },
     },
-    async (params: ListLeadTasksInput) => {
-      try {
-        const tasks = await makeApiRequest<LeadTask[]>(
-          "crm",
-          `leads/${params.lead_id}/tasks`,
-          "GET"
-        );
+    withErrorHandling(async (params) => {
+      const typedParams = params as unknown as ListLeadTasksInput;
+      const tasks = await makeApiRequest<LeadTask[]>(
+        "crm",
+        `leads/${typedParams.lead_id}/tasks`,
+        "GET"
+      );
 
-        let textContent: string;
-        if (params.response_format === ResponseFormat.MARKDOWN) {
-          if (!tasks.length) {
-            textContent = `No tasks found for lead ${params.lead_id}.`;
-          } else {
-            const lines = ["# Lead Tasks", "", `Found ${tasks.length} tasks:`, ""];
-            for (const task of tasks) {
-              lines.push(`## ${task.name}`);
-              lines.push(`- **ID**: ${task.id}`);
-              if (task.description) lines.push(`- **Description**: ${task.description}`);
-              if (task.dueDate) lines.push(`- **Due Date**: ${new Date(task.dueDate * 1000).toLocaleDateString()}`);
-              if (task.completed !== undefined) lines.push(`- **Completed**: ${task.completed ? "Yes" : "No"}`);
-              if (task.assignedTo) lines.push(`- **Assigned To**: ${task.assignedTo}`);
-              lines.push("");
-            }
-            textContent = lines.join("\n");
-          }
+      let textContent: string;
+      if (typedParams.response_format === ResponseFormat.MARKDOWN) {
+        if (!tasks.length) {
+          textContent = `No tasks found for lead ${typedParams.lead_id}.`;
         } else {
-          textContent = JSON.stringify(tasks, null, 2);
+          const lines = ["# Lead Tasks", "", `Found ${tasks.length} tasks:`, ""];
+          for (const task of tasks) {
+            lines.push(`## ${task.name}`);
+            lines.push(`- **ID**: ${task.id}`);
+            if (task.description) lines.push(`- **Description**: ${task.description}`);
+            if (task.dueDate) lines.push(`- **Due Date**: ${new Date(task.dueDate * 1000).toLocaleDateString()}`);
+            if (task.completed !== undefined) lines.push(`- **Completed**: ${task.completed ? "Yes" : "No"}`);
+            if (task.assignedTo) lines.push(`- **Assigned To**: ${task.assignedTo}`);
+            lines.push("");
+          }
+          textContent = lines.join("\n");
         }
-
-        return {
-          content: [{ type: "text", text: textContent }],
-          structuredContent: { tasks, count: tasks.length, leadId: params.lead_id },
-        };
-      } catch (error) {
-        return {
-          content: [{ type: "text", text: handleApiError(error) }],
-          isError: true,
-        };
+      } else {
+        textContent = JSON.stringify(tasks, null, 2);
       }
-    }
+
+      return {
+        content: [{ type: "text", text: textContent }],
+        structuredContent: { tasks, count: tasks.length, leadId: typedParams.lead_id },
+      };
+    })
   );
 
   // Delete Lead Note
@@ -679,31 +620,24 @@ Returns:
         openWorldHint: true,
       },
     },
-    async (params: DeleteLeadNoteInput) => {
-      try {
-        const { lead_id, note_id } = params;
-        await makeApiRequest<void>(
-          "crm",
-          `leads/${lead_id}/notes`,
-          "DELETE",
-          { noteId: note_id }
-        );
+    withErrorHandling(async (params) => {
+      const { lead_id, note_id } = params as unknown as DeleteLeadNoteInput;
+      await makeApiRequest<void>(
+        "crm",
+        `leads/${lead_id}/notes`,
+        "DELETE",
+        { noteId: note_id }
+      );
 
-        return {
-          content: [
-            {
-              type: "text",
-              text: `Note ${note_id} deleted successfully from lead ${lead_id}.`,
-            },
-          ],
-          structuredContent: { deleted: true, leadId: lead_id, noteId: note_id },
-        };
-      } catch (error) {
-        return {
-          content: [{ type: "text", text: handleApiError(error) }],
-          isError: true,
-        };
-      }
-    }
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Note ${note_id} deleted successfully from lead ${lead_id}.`,
+          },
+        ],
+        structuredContent: { deleted: true, leadId: lead_id, noteId: note_id },
+      };
+    })
   );
 }
