@@ -16,7 +16,7 @@ import { registerCrudTools } from "../factory.js";
 /**
  * Format accounting accounts as markdown
  */
-function formatAccountingAccountsMarkdown(accounts: AccountingAccount[]): string {
+export function formatAccountingAccountsMarkdown(accounts: AccountingAccount[]): string {
   if (!accounts.length) {
     return "No accounting accounts found.";
   }
@@ -38,7 +38,7 @@ function formatAccountingAccountsMarkdown(accounts: AccountingAccount[]): string
 /**
  * Format a single accounting account as markdown
  */
-function formatAccountingAccountMarkdown(account: AccountingAccount): string {
+export function formatAccountingAccountMarkdown(account: AccountingAccount): string {
   const lines = [`# ${account.name}`, "", `**ID**: ${account.id}`, ""];
   lines.push(`- **Code**: ${account.code}`);
   if (account.type) lines.push(`- **Type**: ${account.type}`);
