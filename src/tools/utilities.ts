@@ -17,6 +17,7 @@ export function buildToolResponse<T>(
   data: T,
   format: ResponseFormat,
   formatter: (data: T) => string,
+  structuredContent?: Record<string, unknown>,
 ): { content: { type: "text"; text: string }[]; structuredContent: Record<string, unknown> } {
   const text =
     format === ResponseFormat.MARKDOWN
@@ -25,7 +26,7 @@ export function buildToolResponse<T>(
 
   return {
     content: [{ type: "text", text }],
-    structuredContent: toStructuredContent(data),
+    structuredContent: structuredContent ?? (toStructuredContent(data) as Record<string, unknown>),
   };
 }
 
@@ -47,10 +48,10 @@ export interface ToolResult {
  */
 export function withErrorHandling(
   handler: (params: Record<string, unknown>) => Promise<ToolResult>,
-): (params: Record<string, unknown>) => Promise<ToolResult> {
-  return async (params: Record<string, unknown>): Promise<ToolResult> => {
+): (input: unknown) => Promise<ToolResult> {
+  return async (input: unknown): Promise<ToolResult> => {
     try {
-      return await handler(params);
+      return await handler(input as Record<string, unknown>);
     } catch (error) {
       return {
         content: [{ type: "text", text: handleApiError(error) }],

@@ -7,9 +7,10 @@
 
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { ZodType } from "zod";
-import { makeApiRequest, handleApiError, toStructuredContent } from "../services/api.js";
+import { makeApiRequest, toStructuredContent } from "../services/api.js";
 import { ResponseFormat } from "../constants.js";
 import type { ApiModule } from "../services/api.js";
+import { buildToolResponse, withErrorHandling } from "./utilities.js";
 
 /**
  * Configuration for registering CRUD tools for a resource.
@@ -88,45 +89,29 @@ export function registerCrudTools<T>(server: McpServer, config: CrudToolConfig<T
           openWorldHint: true,
         },
       },
-      async (input: unknown) => {
-        try {
-          const params = input as Record<string, unknown>;
-          const queryParams: Record<string, unknown> = {};
-          if ((params.page as number) > 1) {
-            queryParams.page = params.page;
-          }
-          if (listQueryParams) {
-            Object.assign(queryParams, listQueryParams(params));
-          }
-
-          const items = await makeApiRequest<T[]>(
-            module,
-            listEndpoint ?? endpoint,
-            "GET",
-            undefined,
-            queryParams,
-          );
-
-          const text =
-            params.response_format === ResponseFormat.MARKDOWN
-              ? formatters.list(items)
-              : JSON.stringify(items, null, 2);
-
-          return {
-            content: [{ type: "text", text }],
-            structuredContent: {
-              [resourcePlural]: items,
-              count: items.length,
-              page: params.page,
-            },
-          };
-        } catch (error) {
-          return {
-            content: [{ type: "text", text: handleApiError(error) }],
-            isError: true,
-          };
+      withErrorHandling(async (params) => {
+        const queryParams: Record<string, unknown> = {};
+        if ((params.page as number) > 1) {
+          queryParams.page = params.page;
         }
-      },
+        if (listQueryParams) {
+          Object.assign(queryParams, listQueryParams(params));
+        }
+
+        const items = await makeApiRequest<T[]>(
+          module,
+          listEndpoint ?? endpoint,
+          "GET",
+          undefined,
+          queryParams,
+        );
+
+        return buildToolResponse(items, params.response_format as ResponseFormat, formatters.list, {
+          [resourcePlural]: items,
+          count: items.length,
+          page: params.page,
+        });
+      }),
     );
   }
 
@@ -145,32 +130,16 @@ export function registerCrudTools<T>(server: McpServer, config: CrudToolConfig<T
           openWorldHint: true,
         },
       },
-      async (input: unknown) => {
-        try {
-          const params = input as Record<string, unknown>;
-          const id = params[idParam] as string;
-          const item = await makeApiRequest<T>(
-            module,
-            `${endpoint}/${id}`,
-            "GET",
-          );
+      withErrorHandling(async (params) => {
+        const id = params[idParam] as string;
+        const item = await makeApiRequest<T>(
+          module,
+          `${endpoint}/${id}`,
+          "GET",
+        );
 
-          const text =
-            params.response_format === ResponseFormat.MARKDOWN
-              ? formatters.single(item)
-              : JSON.stringify(item, null, 2);
-
-          return {
-            content: [{ type: "text", text }],
-            structuredContent: toStructuredContent(item),
-          };
-        } catch (error) {
-          return {
-            content: [{ type: "text", text: handleApiError(error) }],
-            isError: true,
-          };
-        }
-      },
+        return buildToolResponse(item, params.response_format as ResponseFormat, formatters.single);
+      }),
     );
   }
 
@@ -191,33 +160,26 @@ export function registerCrudTools<T>(server: McpServer, config: CrudToolConfig<T
           openWorldHint: true,
         },
       },
-      async (input: unknown) => {
-        try {
-          const { response_format, ...body } = input as Record<string, unknown>;
-          const requestBody = bodyTransform ? bodyTransform(body) : body;
-          const item = await makeApiRequest<T>(
-            module,
-            endpoint,
-            "POST",
-            requestBody,
-          );
+      withErrorHandling(async (params) => {
+        const { response_format, ...body } = params;
+        const requestBody = bodyTransform ? bodyTransform(body) : body;
+        const item = await makeApiRequest<T>(
+          module,
+          endpoint,
+          "POST",
+          requestBody,
+        );
 
-          return {
-            content: [
-              {
-                type: "text",
-                text: `${Resource} created successfully.\n\n${JSON.stringify(item, null, 2)}`,
-              },
-            ],
-            structuredContent: toStructuredContent(item),
-          };
-        } catch (error) {
-          return {
-            content: [{ type: "text", text: handleApiError(error) }],
-            isError: true,
-          };
-        }
-      },
+        return {
+          content: [
+            {
+              type: "text" as const,
+              text: `${Resource} created successfully.\n\n${JSON.stringify(item, null, 2)}`,
+            },
+          ],
+          structuredContent: toStructuredContent(item) as Record<string, unknown>,
+        };
+      }),
     );
   }
 
@@ -236,35 +198,27 @@ export function registerCrudTools<T>(server: McpServer, config: CrudToolConfig<T
           openWorldHint: true,
         },
       },
-      async (input: unknown) => {
-        try {
-          const params = input as Record<string, unknown>;
-          const id = params[idParam] as string;
-          const { [idParam]: _, response_format, ...updateData } = params;
-          const requestBody = bodyTransform ? bodyTransform(updateData) : updateData;
-          const item = await makeApiRequest<T>(
-            module,
-            `${endpoint}/${id}`,
-            "PUT",
-            requestBody,
-          );
+      withErrorHandling(async (params) => {
+        const id = params[idParam] as string;
+        const { [idParam]: _, response_format, ...updateData } = params;
+        const requestBody = bodyTransform ? bodyTransform(updateData) : updateData;
+        const item = await makeApiRequest<T>(
+          module,
+          `${endpoint}/${id}`,
+          "PUT",
+          requestBody,
+        );
 
-          return {
-            content: [
-              {
-                type: "text",
-                text: `${Resource} updated successfully.\n\n${JSON.stringify(item, null, 2)}`,
-              },
-            ],
-            structuredContent: toStructuredContent(item),
-          };
-        } catch (error) {
-          return {
-            content: [{ type: "text", text: handleApiError(error) }],
-            isError: true,
-          };
-        }
-      },
+        return {
+          content: [
+            {
+              type: "text" as const,
+              text: `${Resource} updated successfully.\n\n${JSON.stringify(item, null, 2)}`,
+            },
+          ],
+          structuredContent: toStructuredContent(item) as Record<string, unknown>,
+        };
+      }),
     );
   }
 
@@ -283,32 +237,24 @@ export function registerCrudTools<T>(server: McpServer, config: CrudToolConfig<T
           openWorldHint: true,
         },
       },
-      async (input: unknown) => {
-        try {
-          const params = input as Record<string, unknown>;
-          const id = params[idParam] as string;
-          await makeApiRequest<void>(
-            module,
-            `${endpoint}/${id}`,
-            "DELETE",
-          );
+      withErrorHandling(async (params) => {
+        const id = params[idParam] as string;
+        await makeApiRequest<void>(
+          module,
+          `${endpoint}/${id}`,
+          "DELETE",
+        );
 
-          return {
-            content: [
-              {
-                type: "text",
-                text: `${Resource} ${id} deleted successfully.`,
-              },
-            ],
-            structuredContent: { deleted: true, id },
-          };
-        } catch (error) {
-          return {
-            content: [{ type: "text", text: handleApiError(error) }],
-            isError: true,
-          };
-        }
-      },
+        return {
+          content: [
+            {
+              type: "text" as const,
+              text: `${Resource} ${id} deleted successfully.`,
+            },
+          ],
+          structuredContent: { deleted: true, id },
+        };
+      }),
     );
   }
 }
