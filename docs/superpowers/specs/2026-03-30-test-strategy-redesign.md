@@ -84,7 +84,7 @@ interface CrudToolConfig<T> {
     list: (items: T[]) => string;
     single: (item: T) => string;
   };
-  listQueryParams?: (params: any) => Record<string, unknown>;  // optional custom query building
+  listQueryParams?: (params: Record<string, unknown>) => Record<string, unknown>;  // optional custom query building for filters beyond pagination
 }
 ```
 
