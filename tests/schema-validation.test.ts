@@ -411,6 +411,7 @@ describe('Schema Validation Against OpenAPI Specs', () => {
         contactPersons: [{ name: 'John Doe', email: 'john@test.com' }],
         defaults: {
           salesTaxes: ["s_iva_21"],
+          purchasesTaxes: ["p_iva_21"],
           currency: 'eur',
           language: 'es' as const,
           showTradeNameOnDocs: true,
