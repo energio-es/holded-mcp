@@ -25,10 +25,12 @@ export function registerDailyLedgerTools(server: McpServer): void {
       description: `List daily ledger entries from Holded Accounting.
 
 Args:
-  - starttmp (number): Starting timestamp as Unix timestamp (optional, filters entries from this date)
-  - endtmp (number): Ending timestamp as Unix timestamp (optional, filters entries until this date)
+  - starttmp (number): Starting timestamp as Unix timestamp (required, filters entries from this date)
+  - endtmp (number): Ending timestamp as Unix timestamp (required, filters entries until this date)
   - page (number): Page number for pagination (default: 1, max 500 items per page)
   - response_format ('json' | 'markdown'): Output format (default: 'json')
+
+Note: The starttmp and endtmp parameters are required by the API. Results may include entries belonging to adjacent fiscal years whose timestamps fall near the period boundary. Pagination order is non-deterministic.
 
 Returns:
   Array of daily ledger entries with date, account, amount, and description.`,
@@ -42,13 +44,10 @@ Returns:
     },
     async (params: ListDailyLedgerInput) => {
       try {
-        const queryParams: Record<string, unknown> = {};
-        if (params.starttmp !== undefined) {
-          queryParams.starttmp = params.starttmp;
-        }
-        if (params.endtmp !== undefined) {
-          queryParams.endtmp = params.endtmp;
-        }
+        const queryParams: Record<string, unknown> = {
+          starttmp: params.starttmp,
+          endtmp: params.endtmp,
+        };
         if (params.page > 1) {
           queryParams.page = params.page;
         }

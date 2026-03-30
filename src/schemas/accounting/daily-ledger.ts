@@ -10,23 +10,16 @@ import {
 
 /**
  * List daily ledger entries input schema
- * 
- * Note: The API accepts starttmp and endtmp as optional string parameters,
- * but we use numbers (Unix timestamps) for consistency with other schemas.
+ *
+ * The API requires starttmp and endtmp (requests without them are rejected).
  */
 export const ListDailyLedgerInputSchema = z.strictObject({
-    starttmp: z.number().int().positive().optional().describe("Starting timestamp as Unix timestamp (optional, filters entries from this date)"),
-    endtmp: z.number().int().positive().optional().describe("Ending timestamp as Unix timestamp (optional, filters entries until this date)"),
+    starttmp: z.number().int().positive().describe("Starting timestamp as Unix timestamp (required, filters entries from this date)"),
+    endtmp: z.number().int().positive().describe("Ending timestamp as Unix timestamp (required, filters entries until this date)"),
     page: PaginationSchema.shape.page,
     response_format: ResponseFormatSchema,
   }).refine(
-    (data) => {
-      // Only validate if both are provided
-      if (data.starttmp !== undefined && data.endtmp !== undefined) {
-        return data.starttmp <= data.endtmp;
-      }
-      return true;
-    },
+    (data) => data.starttmp <= data.endtmp,
     {
       message: "starttmp must be less than or equal to endtmp (start date cannot be after end date)",
     }

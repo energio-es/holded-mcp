@@ -73,6 +73,8 @@ Args:
   - starttmp (number): Starting timestamp as Unix timestamp (optional, filters by account activity date)
   - endtmp (number): Ending timestamp as Unix timestamp (optional, filters by account activity date)
 
+Note: When using starttmp/endtmp, the returned debit/credit/balance totals may include entries from outside the requested date range due to a known Holded API limitation. For accurate date-scoped totals, use holded_accounting_account_balances instead.
+
 Returns:
   Array of accounting accounts with id, code, name, type, and parent account information.`,
       inputSchema: ListAccountingAccountsInputSchema,
