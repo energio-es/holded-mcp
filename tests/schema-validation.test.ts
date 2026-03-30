@@ -1120,26 +1120,6 @@ describe('Schema Validation Against OpenAPI Specs', () => {
   });
 
   describe('Accounting Account List', () => {
-    it('should validate timestamp range', () => {
-      const invalidData = {
-        starttmp: 1730196000,
-        endtmp: 1730109600, // End before start
-      };
-
-      const result = ListAccountingAccountsInputSchema.safeParse(invalidData);
-      expect(result.success).toBe(false);
-    });
-
-    it('should accept valid timestamp range', () => {
-      const validData = {
-        starttmp: 1730109600,
-        endtmp: 1730196000,
-      };
-
-      const result = ListAccountingAccountsInputSchema.safeParse(validData);
-      expect(result.success).toBe(true);
-    });
-
     it('should accept default include_empty', () => {
       const validData = {};
 
@@ -1148,6 +1128,16 @@ describe('Schema Validation Against OpenAPI Specs', () => {
       if (result.success) {
         expect(result.data.include_empty).toBe(true);
       }
+    });
+
+    it('should reject starttmp and endtmp as unknown fields', () => {
+      const data = {
+        starttmp: 1730109600,
+        endtmp: 1730196000,
+      };
+
+      const result = ListAccountingAccountsInputSchema.safeParse(data);
+      expect(result.success).toBe(false);
     });
   });
 
