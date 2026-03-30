@@ -45,3 +45,28 @@ export const invalidAccountingAccountListEndBeforeStart = {
   starttmp: 1730196000,
   endtmp: 1730109600, // End before start
 };
+
+export const validAccountBalances = {
+  starttmp: 1730109600,
+  endtmp: 1730196000,
+};
+
+export const accountBalancesWithFilter = {
+  starttmp: 1730109600,
+  endtmp: 1730196000,
+  account_filter: [62900001, 62900002],
+  include_opening: true,
+};
+
+export const invalidAccountBalancesEndBeforeStart = {
+  starttmp: 1730196000,
+  endtmp: 1730109600,
+};
+
+export const invalidAccountBalancesMissingStart = {
+  endtmp: 1730196000,
+};
+
+export const invalidAccountBalancesMissingEnd = {
+  starttmp: 1730109600,
+};
