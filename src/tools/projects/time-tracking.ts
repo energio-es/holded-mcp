@@ -25,7 +25,7 @@ import {
 /**
  * Format project time-trackings as markdown
  */
-function formatProjectTimeTrackingsMarkdown(times: TimeTracking[]): string {
+export function formatProjectTimeTrackingsMarkdown(times: TimeTracking[]): string {
   if (!times.length) {
     return "No time-trackings found for this project.";
   }

@@ -16,7 +16,7 @@ import { registerCrudTools } from "../factory.js";
 /**
  * Format funnels as markdown
  */
-function formatFunnelsMarkdown(funnels: Funnel[]): string {
+export function formatFunnelsMarkdown(funnels: Funnel[]): string {
   if (!funnels.length) {
     return "No funnels found.";
   }
@@ -41,7 +41,7 @@ function formatFunnelsMarkdown(funnels: Funnel[]): string {
 /**
  * Format a single funnel as markdown
  */
-function formatFunnelMarkdown(funnel: Funnel): string {
+export function formatFunnelMarkdown(funnel: Funnel): string {
   const lines = [`# ${funnel.name}`, ""];
   lines.push(`- **ID**: ${funnel.id}`);
   if (funnel.stages && funnel.stages.length > 0) {

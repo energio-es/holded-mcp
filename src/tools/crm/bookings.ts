@@ -23,7 +23,7 @@ import { withErrorHandling } from "../utilities.js";
 /**
  * Format bookings as markdown
  */
-function formatBookingsMarkdown(bookings: Booking[]): string {
+export function formatBookingsMarkdown(bookings: Booking[]): string {
   if (!bookings.length) {
     return "No bookings found.";
   }
@@ -54,7 +54,7 @@ function formatBookingsMarkdown(bookings: Booking[]): string {
 /**
  * Format a single booking as markdown
  */
-function formatBookingMarkdown(booking: Booking): string {
+export function formatBookingMarkdown(booking: Booking): string {
   // Get service name for display
   const serviceName = Array.isArray(booking.service)
     ? booking.service[0]?.name

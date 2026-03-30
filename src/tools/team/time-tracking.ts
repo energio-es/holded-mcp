@@ -33,7 +33,7 @@ import {
 /**
  * Format time-trackings as markdown
  */
-function formatTimeTrackingsMarkdown(times: TimeTracking[]): string {
+export function formatTimeTrackingsMarkdown(times: TimeTracking[]): string {
   if (!times.length) {
     return "No time-trackings found.";
   }
@@ -58,7 +58,7 @@ function formatTimeTrackingsMarkdown(times: TimeTracking[]): string {
 /**
  * Format a single time-tracking as markdown
  */
-function formatTimeTrackingMarkdown(time: TimeTracking): string {
+export function formatTimeTrackingMarkdown(time: TimeTracking): string {
   const lines = [`# Time Tracking Entry`, "", `**ID**: ${time.id}`, ""];
   lines.push(`- **Employee**: ${time.employeeName || time.employeeId}`);
   lines.push(`- **Date**: ${new Date(time.date * 1000).toLocaleDateString()}`);

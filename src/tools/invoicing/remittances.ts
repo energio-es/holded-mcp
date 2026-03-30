@@ -12,7 +12,7 @@ import { registerCrudTools } from "../factory.js";
 /**
  * Format remittances as markdown
  */
-function formatRemittancesMarkdown(remittances: Record<string, unknown>[]): string {
+export function formatRemittancesMarkdown(remittances: Record<string, unknown>[]): string {
   if (!remittances.length) {
     return "No remittances found.";
   }
@@ -31,7 +31,7 @@ function formatRemittancesMarkdown(remittances: Record<string, unknown>[]): stri
 /**
  * Format a single remittance as markdown
  */
-function formatRemittanceMarkdown(remittance: Record<string, unknown>): string {
+export function formatRemittanceMarkdown(remittance: Record<string, unknown>): string {
   const lines = [`# Remittance ${remittance.id || "Unknown"}`, ""];
 
   for (const [key, value] of Object.entries(remittance)) {

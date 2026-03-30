@@ -188,7 +188,7 @@ export function aggregateByAccount(
 /**
  * Format account balances as markdown
  */
-function formatAccountBalancesMarkdown(accounts: AccountBalance[]): string {
+export function formatAccountBalancesMarkdown(accounts: AccountBalance[]): string {
   if (!accounts.length) {
     return "No account balances found for the requested period.";
   }

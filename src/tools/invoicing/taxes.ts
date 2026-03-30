@@ -14,7 +14,7 @@ import {
 /**
  * Format taxes as markdown
  */
-function formatTaxesMarkdown(taxes: Array<{ id: string; name: string; rate?: number; [key: string]: unknown }>): string {
+export function formatTaxesMarkdown(taxes: Array<{ id: string; name: string; rate?: number; [key: string]: unknown }>): string {
   if (!taxes.length) {
     return "No taxes found.";
   }

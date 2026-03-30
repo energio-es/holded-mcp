@@ -85,7 +85,7 @@ export function formatContactMarkdown(contact: Contact): string {
 /**
  * Format contact groups as markdown
  */
-function formatContactGroupsMarkdown(groups: ContactGroup[]): string {
+export function formatContactGroupsMarkdown(groups: ContactGroup[]): string {
   if (!groups.length) {
     return "No contact groups found.";
   }
@@ -100,7 +100,7 @@ function formatContactGroupsMarkdown(groups: ContactGroup[]): string {
 /**
  * Format a single contact group as markdown
  */
-function formatContactGroupMarkdown(group: ContactGroup): string {
+export function formatContactGroupMarkdown(group: ContactGroup): string {
   return `# ${group.name}\n\n**ID**: ${group.id}`;
 }
 

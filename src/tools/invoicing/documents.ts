@@ -41,7 +41,7 @@ import {
 /**
  * Format documents as markdown
  */
-function formatDocumentsMarkdown(documents: Document[], docType: string): string {
+export function formatDocumentsMarkdown(documents: Document[], docType: string): string {
   if (!documents.length) {
     return `No ${docType} documents found.`;
   }
@@ -65,7 +65,7 @@ function formatDocumentsMarkdown(documents: Document[], docType: string): string
 /**
  * Format a single document as markdown
  */
-function formatDocumentMarkdown(doc: Document): string {
+export function formatDocumentMarkdown(doc: Document): string {
   const lines = [`# ${doc.docType?.toUpperCase() || "Document"}: ${doc.docNumber || doc.id}`, ""];
 
   lines.push(`**ID**: ${doc.id}`);

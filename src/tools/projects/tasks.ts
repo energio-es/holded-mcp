@@ -19,7 +19,7 @@ import { withErrorHandling } from "../utilities.js";
 /**
  * Format tasks as markdown
  */
-function formatTasksMarkdown(tasks: Task[]): string {
+export function formatTasksMarkdown(tasks: Task[]): string {
   if (!tasks.length) {
     return "No tasks found.";
   }
@@ -44,7 +44,7 @@ function formatTasksMarkdown(tasks: Task[]): string {
 /**
  * Format a single task as markdown
  */
-function formatTaskMarkdown(task: Task): string {
+export function formatTaskMarkdown(task: Task): string {
   return formatTasksMarkdown([task]);
 }
 
