@@ -39,7 +39,7 @@ import { snakeToCamel, withErrorHandling } from "../utilities.js";
 /**
  * Format leads as markdown
  */
-function formatLeadsMarkdown(leads: Lead[]): string {
+export function formatLeadsMarkdown(leads: Lead[]): string {
   if (!leads.length) {
     return "No leads found.";
   }
@@ -62,7 +62,7 @@ function formatLeadsMarkdown(leads: Lead[]): string {
 /**
  * Format a single lead as markdown
  */
-function formatLeadMarkdown(lead: Lead): string {
+export function formatLeadMarkdown(lead: Lead): string {
   const lines = [`# ${lead.name}`, "", `**ID**: ${lead.id}`, ""];
 
   if (lead.contactName) lines.push(`- **Contact**: ${lead.contactName} (${lead.contactId || "N/A"})`);

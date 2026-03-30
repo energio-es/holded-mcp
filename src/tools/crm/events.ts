@@ -16,7 +16,7 @@ import { registerCrudTools } from "../factory.js";
 /**
  * Format events as markdown
  */
-function formatEventsMarkdown(events: CrmEvent[]): string {
+export function formatEventsMarkdown(events: CrmEvent[]): string {
   if (!events.length) {
     return "No events found.";
   }
@@ -39,7 +39,7 @@ function formatEventsMarkdown(events: CrmEvent[]): string {
 /**
  * Format a single event as markdown
  */
-function formatEventMarkdown(event: CrmEvent): string {
+export function formatEventMarkdown(event: CrmEvent): string {
   const lines = [`# ${event.name}`, ""];
   lines.push(`- **ID**: ${event.id}`);
   lines.push(`- **Start**: ${new Date(event.start * 1000).toLocaleString()}`);

@@ -21,7 +21,7 @@ import { withErrorHandling } from "../utilities.js";
 /**
  * Format payments as markdown
  */
-function formatPaymentsMarkdown(payments: Payment[]): string {
+export function formatPaymentsMarkdown(payments: Payment[]): string {
   if (!payments.length) {
     return "No payments found.";
   }
@@ -45,7 +45,7 @@ function formatPaymentsMarkdown(payments: Payment[]): string {
 /**
  * Format a single payment as markdown
  */
-function formatPaymentMarkdown(payment: Payment): string {
+export function formatPaymentMarkdown(payment: Payment): string {
   const lines = [`# Payment ${payment.id}`, ""];
   lines.push(`- **ID**: ${payment.id}`);
   lines.push(`- **Document ID**: ${payment.docId}`);

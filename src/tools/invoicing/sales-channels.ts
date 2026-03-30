@@ -22,7 +22,7 @@ interface SalesChannel {
 /**
  * Format sales channels as markdown
  */
-function formatSalesChannelsMarkdown(channels: SalesChannel[]): string {
+export function formatSalesChannelsMarkdown(channels: SalesChannel[]): string {
   if (!channels.length) {
     return "No sales channels found.";
   }
@@ -42,7 +42,7 @@ function formatSalesChannelsMarkdown(channels: SalesChannel[]): string {
 /**
  * Format a single sales channel as markdown
  */
-function formatSalesChannelMarkdown(channel: SalesChannel): string {
+export function formatSalesChannelMarkdown(channel: SalesChannel): string {
   const lines = [`# ${channel.name}`, "", `**ID**: ${channel.id}`, ""];
   if (channel.description) lines.push(`- **Description**: ${channel.description}`);
 

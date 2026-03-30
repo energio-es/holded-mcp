@@ -31,7 +31,7 @@ import { withErrorHandling } from "../utilities.js";
 /**
  * Format products as markdown
  */
-function formatProductsMarkdown(products: Product[]): string {
+export function formatProductsMarkdown(products: Product[]): string {
   if (!products.length) {
     return "No products found.";
   }
@@ -54,7 +54,7 @@ function formatProductsMarkdown(products: Product[]): string {
 /**
  * Format a single product as markdown
  */
-function formatProductMarkdown(product: Product): string {
+export function formatProductMarkdown(product: Product): string {
   const lines = [`# ${product.name}`, "", `**ID**: ${product.id}`, ""];
 
   if (product.sku) lines.push(`- **SKU**: ${product.sku}`);

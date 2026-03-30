@@ -23,7 +23,7 @@ interface ExpensesAccount {
 /**
  * Format expenses accounts as markdown
  */
-function formatExpensesAccountsMarkdown(accounts: ExpensesAccount[]): string {
+export function formatExpensesAccountsMarkdown(accounts: ExpensesAccount[]): string {
   if (!accounts.length) {
     return "No expenses accounts found.";
   }
@@ -44,7 +44,7 @@ function formatExpensesAccountsMarkdown(accounts: ExpensesAccount[]): string {
 /**
  * Format a single expenses account as markdown
  */
-function formatExpensesAccountMarkdown(account: ExpensesAccount): string {
+export function formatExpensesAccountMarkdown(account: ExpensesAccount): string {
   const lines = [`# ${account.name}`, "", `**ID**: ${account.id}`, ""];
   if (account.code) lines.push(`- **Code**: ${account.code}`);
   if (account.description) lines.push(`- **Description**: ${account.description}`);

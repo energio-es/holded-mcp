@@ -1,0 +1,391 @@
+/**
+ * Domain-specific handler tests for non-standard tool handlers
+ * (leads sub-resources, bookings custom endpoints, documents custom endpoints)
+ */
+
+import { describe, it, expect, vi, beforeEach } from "vitest";
+
+vi.mock("../src/services/api.js", () => ({
+  makeApiRequest: vi.fn(),
+  makeMultipartApiRequest: vi.fn(),
+  handleApiError: vi.fn((e: Error) => `Error: ${e.message}`),
+  toStructuredContent: vi.fn((data: unknown) => data),
+  initializeApi: vi.fn(),
+  getApiKey: vi.fn(() => "test-key"),
+}));
+
+import { makeApiRequest } from "../src/services/api.js";
+const mockMakeApiRequest = vi.mocked(makeApiRequest);
+
+import { registerLeadTools } from "../src/tools/crm/leads.js";
+import { registerBookingTools } from "../src/tools/crm/bookings.js";
+import { registerDocumentTools } from "../src/tools/invoicing/documents.js";
+
+function createMockServer() {
+  const tools = new Map<string, { config: any; handler: Function }>();
+  return {
+    registerTool: vi.fn((name: string, config: any, handler: Function) => {
+      tools.set(name, { config, handler });
+      return { enable: vi.fn(), disable: vi.fn(), update: vi.fn(), remove: vi.fn() };
+    }),
+    tools,
+  };
+}
+
+// ============================================================
+// Lead sub-resource handler tests
+// ============================================================
+
+describe("Lead sub-resource handlers", () => {
+  let server: ReturnType<typeof createMockServer>;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    server = createMockServer();
+    registerLeadTools(server as any);
+  });
+
+  describe("holded_crm_create_lead_note", () => {
+    it("calls makeApiRequest with POST to leads/{id}/notes", async () => {
+      const mockNote = { id: "note-1", content: "Test note" };
+      mockMakeApiRequest.mockResolvedValueOnce(mockNote);
+
+      const handler = server.tools.get("holded_crm_create_lead_note")!.handler;
+      const result = await handler({ lead_id: "lead-abc", content: "Test note" });
+
+      expect(mockMakeApiRequest).toHaveBeenCalledWith(
+        "crm",
+        "leads/lead-abc/notes",
+        "POST",
+        { content: "Test note" },
+      );
+      expect(result.isError).toBeUndefined();
+      expect(result.content[0].text).toContain("Note added successfully");
+    });
+  });
+
+  describe("holded_crm_list_lead_notes", () => {
+    it("calls makeApiRequest with GET to leads/{id}/notes", async () => {
+      const mockNotes = [
+        { id: "note-1", content: "First note" },
+        { id: "note-2", content: "Second note" },
+      ];
+      mockMakeApiRequest.mockResolvedValueOnce(mockNotes);
+
+      const handler = server.tools.get("holded_crm_list_lead_notes")!.handler;
+      const result = await handler({ lead_id: "lead-abc" });
+
+      expect(mockMakeApiRequest).toHaveBeenCalledWith(
+        "crm",
+        "leads/lead-abc/notes",
+        "GET",
+      );
+      expect(result.isError).toBeUndefined();
+      expect(result.structuredContent).toEqual({
+        notes: mockNotes,
+        count: 2,
+        leadId: "lead-abc",
+      });
+    });
+  });
+
+  describe("holded_crm_update_lead_note", () => {
+    it("calls makeApiRequest with PUT to leads/{id}/notes with noteId and content", async () => {
+      const mockNote = { id: "note-1", content: "Updated note" };
+      mockMakeApiRequest.mockResolvedValueOnce(mockNote);
+
+      const handler = server.tools.get("holded_crm_update_lead_note")!.handler;
+      const result = await handler({
+        lead_id: "lead-abc",
+        note_id: "note-1",
+        content: "Updated note",
+      });
+
+      expect(mockMakeApiRequest).toHaveBeenCalledWith(
+        "crm",
+        "leads/lead-abc/notes",
+        "PUT",
+        { noteId: "note-1", content: "Updated note" },
+      );
+      expect(result.isError).toBeUndefined();
+      expect(result.content[0].text).toContain("Note updated successfully");
+    });
+  });
+
+  describe("holded_crm_delete_lead_note", () => {
+    it("calls makeApiRequest with DELETE to leads/{id}/notes with noteId", async () => {
+      mockMakeApiRequest.mockResolvedValueOnce(undefined);
+
+      const handler = server.tools.get("holded_crm_delete_lead_note")!.handler;
+      const result = await handler({ lead_id: "lead-abc", note_id: "note-1" });
+
+      expect(mockMakeApiRequest).toHaveBeenCalledWith(
+        "crm",
+        "leads/lead-abc/notes",
+        "DELETE",
+        { noteId: "note-1" },
+      );
+      expect(result.isError).toBeUndefined();
+      expect(result.structuredContent).toEqual({
+        deleted: true,
+        leadId: "lead-abc",
+        noteId: "note-1",
+      });
+    });
+  });
+
+  describe("holded_crm_create_lead_task", () => {
+    it("calls makeApiRequest with POST to leads/{id}/tasks", async () => {
+      const mockTask = { id: "task-1", name: "Follow up" };
+      mockMakeApiRequest.mockResolvedValueOnce(mockTask);
+
+      const handler = server.tools.get("holded_crm_create_lead_task")!.handler;
+      const result = await handler({
+        lead_id: "lead-abc",
+        name: "Follow up",
+        due_date: 1700000000,
+        assigned_to: "user-42",
+      });
+
+      expect(mockMakeApiRequest).toHaveBeenCalledWith(
+        "crm",
+        "leads/lead-abc/tasks",
+        "POST",
+        { name: "Follow up", dueDate: 1700000000, assignedTo: "user-42" },
+      );
+      expect(result.isError).toBeUndefined();
+      expect(result.content[0].text).toContain("Task created successfully");
+    });
+  });
+
+  describe("holded_crm_list_lead_tasks", () => {
+    it("calls makeApiRequest with GET to leads/{id}/tasks", async () => {
+      const mockTasks = [
+        { id: "task-1", name: "Follow up" },
+        { id: "task-2", name: "Review proposal" },
+      ];
+      mockMakeApiRequest.mockResolvedValueOnce(mockTasks);
+
+      const handler = server.tools.get("holded_crm_list_lead_tasks")!.handler;
+      const result = await handler({ lead_id: "lead-abc" });
+
+      expect(mockMakeApiRequest).toHaveBeenCalledWith(
+        "crm",
+        "leads/lead-abc/tasks",
+        "GET",
+      );
+      expect(result.isError).toBeUndefined();
+      expect(result.structuredContent).toEqual({
+        tasks: mockTasks,
+        count: 2,
+        leadId: "lead-abc",
+      });
+    });
+  });
+
+  describe("holded_crm_update_lead_stage", () => {
+    it("calls makeApiRequest with PUT to leads/{id}/stages with stageId", async () => {
+      mockMakeApiRequest.mockResolvedValueOnce({ status: "ok" });
+
+      const handler = server.tools.get("holded_crm_update_lead_stage")!.handler;
+      const result = await handler({ lead_id: "lead-abc", stage_id: "stage-2" });
+
+      expect(mockMakeApiRequest).toHaveBeenCalledWith(
+        "crm",
+        "leads/lead-abc/stages",
+        "PUT",
+        { stageId: "stage-2" },
+      );
+      expect(result.isError).toBeUndefined();
+      expect(result.structuredContent).toEqual({
+        updated: true,
+        leadId: "lead-abc",
+        stageId: "stage-2",
+      });
+    });
+  });
+});
+
+// ============================================================
+// Booking custom handler tests
+// ============================================================
+
+describe("Booking custom handlers", () => {
+  let server: ReturnType<typeof createMockServer>;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    server = createMockServer();
+    registerBookingTools(server as any);
+  });
+
+  describe("holded_crm_list_booking_locations", () => {
+    it("calls makeApiRequest with GET to bookings/locations", async () => {
+      const mockLocations = [
+        { id: "loc-1", name: "Main Office", active: true, availableServices: ["svc-1"] },
+      ];
+      mockMakeApiRequest.mockResolvedValueOnce(mockLocations);
+
+      const handler = server.tools.get("holded_crm_list_booking_locations")!.handler;
+      const result = await handler({});
+
+      expect(mockMakeApiRequest).toHaveBeenCalledWith(
+        "crm",
+        "bookings/locations",
+        "GET",
+      );
+      expect(result.isError).toBeUndefined();
+      expect(result.structuredContent).toEqual({
+        locations: mockLocations,
+        count: 1,
+      });
+    });
+  });
+
+  describe("holded_crm_get_available_slots", () => {
+    it("calls makeApiRequest with GET to bookings/locations/{id}/slots with query params", async () => {
+      const mockSlots = [
+        { dateTime: 1700000000, from: "09:00", to: "10:00", duration: 3600 },
+      ];
+      mockMakeApiRequest.mockResolvedValueOnce(mockSlots);
+
+      const handler = server.tools.get("holded_crm_get_available_slots")!.handler;
+      const result = await handler({
+        location_id: "loc-1",
+        serviceId: "svc-1",
+        day: "2025-01-15",
+      });
+
+      expect(mockMakeApiRequest).toHaveBeenCalledWith(
+        "crm",
+        "bookings/locations/loc-1/slots",
+        "GET",
+        undefined,
+        { serviceId: "svc-1", day: "2025-01-15" },
+      );
+      expect(result.isError).toBeUndefined();
+      expect(result.structuredContent).toEqual({
+        slots: mockSlots,
+        count: 1,
+        locationId: "loc-1",
+      });
+    });
+  });
+});
+
+// ============================================================
+// Document custom handler tests
+// ============================================================
+
+describe("Document custom handlers", () => {
+  let server: ReturnType<typeof createMockServer>;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    server = createMockServer();
+    registerDocumentTools(server as any);
+  });
+
+  describe("holded_invoicing_pay_document", () => {
+    it("calls makeApiRequest with POST to documents/{type}/{id}/pay", async () => {
+      mockMakeApiRequest.mockResolvedValueOnce({ status: "ok" });
+
+      const handler = server.tools.get("holded_invoicing_pay_document")!.handler;
+      const result = await handler({
+        doc_type: "invoice",
+        document_id: "doc-123",
+        amount: 100.5,
+        date: 1700000000,
+      });
+
+      expect(mockMakeApiRequest).toHaveBeenCalledWith(
+        "invoicing",
+        "documents/invoice/doc-123/pay",
+        "POST",
+        { amount: 100.5, date: 1700000000 },
+      );
+      expect(result.isError).toBeUndefined();
+      expect(result.content[0].text).toContain("Payment recorded successfully");
+    });
+
+    it("converts account_id to accountId in the request body", async () => {
+      mockMakeApiRequest.mockResolvedValueOnce({ status: "ok" });
+
+      const handler = server.tools.get("holded_invoicing_pay_document")!.handler;
+      await handler({
+        doc_type: "invoice",
+        document_id: "doc-123",
+        account_id: "acct-456",
+        amount: 50,
+      });
+
+      expect(mockMakeApiRequest).toHaveBeenCalledWith(
+        "invoicing",
+        "documents/invoice/doc-123/pay",
+        "POST",
+        { amount: 50, accountId: "acct-456" },
+      );
+    });
+  });
+
+  describe("holded_invoicing_send_document", () => {
+    it("calls makeApiRequest with POST to documents/{type}/{id}/send", async () => {
+      mockMakeApiRequest.mockResolvedValueOnce({ status: "ok" });
+
+      const handler = server.tools.get("holded_invoicing_send_document")!.handler;
+      const result = await handler({
+        doc_type: "estimate",
+        document_id: "doc-456",
+        email: "client@example.com",
+        subject: "Your estimate",
+        message: "Please review",
+      });
+
+      expect(mockMakeApiRequest).toHaveBeenCalledWith(
+        "invoicing",
+        "documents/estimate/doc-456/send",
+        "POST",
+        { email: "client@example.com", subject: "Your estimate", message: "Please review" },
+      );
+      expect(result.isError).toBeUndefined();
+      expect(result.content[0].text).toContain("Document sent successfully");
+    });
+  });
+
+  describe("holded_invoicing_get_document_pdf", () => {
+    it("calls makeApiRequest with GET to documents/{type}/{id}/pdf", async () => {
+      mockMakeApiRequest.mockResolvedValueOnce({ url: "https://example.com/doc.pdf" });
+
+      const handler = server.tools.get("holded_invoicing_get_document_pdf")!.handler;
+      const result = await handler({
+        doc_type: "invoice",
+        document_id: "doc-789",
+      });
+
+      expect(mockMakeApiRequest).toHaveBeenCalledWith(
+        "invoicing",
+        "documents/invoice/doc-789/pdf",
+        "GET",
+      );
+      expect(result.isError).toBeUndefined();
+      expect(result.content[0].text).toContain("https://example.com/doc.pdf");
+    });
+  });
+
+  describe("holded_invoicing_ship_all_items", () => {
+    it("calls makeApiRequest with POST to documents/salesorder/{id}/shipall", async () => {
+      mockMakeApiRequest.mockResolvedValueOnce({ status: 1, info: "shipped" });
+
+      const handler = server.tools.get("holded_invoicing_ship_all_items")!.handler;
+      const result = await handler({ document_id: "order-100" });
+
+      expect(mockMakeApiRequest).toHaveBeenCalledWith(
+        "invoicing",
+        "documents/salesorder/order-100/shipall",
+        "POST",
+      );
+      expect(result.isError).toBeUndefined();
+      expect(result.content[0].text).toContain("Items shipped successfully");
+    });
+  });
+});

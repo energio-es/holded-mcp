@@ -27,7 +27,7 @@ interface Service {
 /**
  * Format services as markdown
  */
-function formatServicesMarkdown(services: Service[]): string {
+export function formatServicesMarkdown(services: Service[]): string {
   if (!services.length) {
     return "No services found.";
   }
@@ -46,7 +46,7 @@ function formatServicesMarkdown(services: Service[]): string {
 /**
  * Format a single service as markdown
  */
-function formatServiceMarkdown(service: Service): string {
+export function formatServiceMarkdown(service: Service): string {
   const lines = [`# ${service.name || "Service"}`, "", `**ID**: ${service.id}`, ""];
 
   if (service.desc) lines.push(`- **Description**: ${service.desc}`);

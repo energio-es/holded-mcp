@@ -21,7 +21,7 @@ import { withErrorHandling } from "../utilities.js";
 /**
  * Format projects as markdown
  */
-function formatProjectsMarkdown(projects: Project[]): string {
+export function formatProjectsMarkdown(projects: Project[]): string {
   if (!projects.length) {
     return "No projects found.";
   }
@@ -49,7 +49,7 @@ function formatProjectsMarkdown(projects: Project[]): string {
 /**
  * Format a single project as markdown
  */
-function formatProjectMarkdown(project: Project): string {
+export function formatProjectMarkdown(project: Project): string {
   const lines = [`# ${project.name}`, ""];
   lines.push(`- **ID**: ${project.id}`);
   // Use desc (API field) or description (legacy)

@@ -16,7 +16,7 @@ import { registerCrudTools } from "../factory.js";
 /**
  * Format warehouses as markdown
  */
-function formatWarehousesMarkdown(warehouses: Warehouse[]): string {
+export function formatWarehousesMarkdown(warehouses: Warehouse[]): string {
   if (!warehouses.length) {
     return "No warehouses found.";
   }
@@ -43,7 +43,7 @@ function formatWarehousesMarkdown(warehouses: Warehouse[]): string {
 /**
  * Format a single warehouse as markdown
  */
-function formatWarehouseMarkdown(warehouse: Warehouse): string {
+export function formatWarehouseMarkdown(warehouse: Warehouse): string {
   const lines = [`# ${warehouse.name}`, "", `**ID**: ${warehouse.id}`, ""];
 
   if (warehouse.address) {
