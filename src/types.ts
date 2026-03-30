@@ -617,6 +617,37 @@ export interface DailyLedgerEntry {
 }
 
 /**
+ * What the daily ledger API actually returns per entry line.
+ * Unlike DailyLedgerEntry (which was typed from docs), this matches the real API response.
+ */
+export interface LedgerEntryLine {
+  entryNumber: number;
+  line: number;
+  timestamp: number;
+  type: string;
+  description: string;
+  docDescription: string;
+  account: number;
+  debit: number;
+  credit: number;
+  tags: string[];
+  checked: string;
+}
+
+/**
+ * Aggregated account balance computed from ledger entries.
+ * Output of holded_accounting_account_balances tool.
+ */
+export interface AccountBalance {
+  num: number;
+  name: string;
+  group: string;
+  debit: number;
+  credit: number;
+  balance: number;
+}
+
+/**
  * Create accounting entry API response type
  * Per holded_docs/createentry.md
  */
