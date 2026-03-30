@@ -216,14 +216,14 @@ export function formatAccountBalancesMarkdown(accounts: AccountBalance[]): strin
  */
 export function registerAccountBalancesTools(server: McpServer): void {
   server.registerTool(
-    "holded_accounting_account_balances",
+    "holded_accounting_list_account_balances",
     {
       title: "Holded Accounting Account Balances",
       description: `Compute accurate, date-scoped per-account debit/credit/balance totals.
 
-Unlike list_accounts (which may include entries from outside the requested date range due to a Holded API limitation), this tool aggregates from individual daily ledger entries and filters out cross-fiscal-year leakage.
+Aggregates from individual daily ledger entries and filters out cross-fiscal-year leakage to produce correct period-scoped balances.
 
-Use this tool when you need correct account totals for a specific period (P&L, trial balance).
+Use this tool when you need account totals for a specific period (P&L, trial balance, balance sheet).
 
 Args:
   - starttmp (number): Period start as Unix timestamp (required)
