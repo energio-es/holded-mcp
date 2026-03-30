@@ -62,6 +62,33 @@ function createTestConfig(overrides?: Partial<CrudToolConfig<TestItem>>): CrudTo
   };
 }
 
+function createFullCrudConfig(overrides?: Partial<CrudToolConfig<TestItem>>): CrudToolConfig<TestItem> {
+  return createTestConfig({
+    schemas: {
+      list: { type: "object" },
+      get: { type: "object" },
+      create: { type: "object" },
+      update: { type: "object" },
+      delete: { type: "object" },
+    },
+    titles: {
+      list: "List Widgets",
+      get: "Get Widget",
+      create: "Create Widget",
+      update: "Update Widget",
+      delete: "Delete Widget",
+    },
+    descriptions: {
+      list: "List all widgets",
+      get: "Get a single widget",
+      create: "Create a new widget",
+      update: "Update an existing widget",
+      delete: "Delete a widget",
+    },
+    ...overrides,
+  });
+}
+
 // ============================================================
 // Task 7: List and Get operations
 // ============================================================
@@ -268,5 +295,189 @@ describe("registerCrudTools — get", () => {
 
     expect(result.isError).toBe(true);
     expect(result.content[0].text).toBe("Error: not found");
+  });
+});
+
+// ============================================================
+// Task 8: Create, Update, Delete operations
+// ============================================================
+
+describe("registerCrudTools — create", () => {
+  let server: ReturnType<typeof createMockServer>;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    server = createMockServer();
+  });
+
+  it("calls makeApiRequest with POST and request body", async () => {
+    const created: TestItem = { id: "new-1", name: "New Widget" };
+    mockMakeApiRequest.mockResolvedValue(created);
+
+    registerCrudTools(server as any, createFullCrudConfig());
+    const handler = server.tools.get("holded_invoicing_create_widget")!.handler;
+    const result = await handler({ name: "New Widget", response_format: ResponseFormat.JSON });
+
+    expect(mockMakeApiRequest).toHaveBeenCalledWith(
+      "invoicing",
+      "widgets",
+      "POST",
+      { name: "New Widget" },
+    );
+    expect(result.content[0].text).toContain("Widget created successfully.");
+    expect(result.content[0].text).toContain(JSON.stringify(created, null, 2));
+    expect(mockToStructuredContent).toHaveBeenCalledWith(created);
+  });
+
+  it("strips response_format from request body", async () => {
+    const created: TestItem = { id: "new-1", name: "New Widget" };
+    mockMakeApiRequest.mockResolvedValue(created);
+
+    registerCrudTools(server as any, createFullCrudConfig());
+    const handler = server.tools.get("holded_invoicing_create_widget")!.handler;
+    await handler({ name: "New Widget", response_format: ResponseFormat.MARKDOWN });
+
+    expect(mockMakeApiRequest).toHaveBeenCalledWith(
+      "invoicing",
+      "widgets",
+      "POST",
+      { name: "New Widget" },
+    );
+  });
+
+  it("sets correct annotations (not readOnly, not destructive)", () => {
+    registerCrudTools(server as any, createFullCrudConfig());
+    const tool = server.tools.get("holded_invoicing_create_widget")!;
+    expect(tool.config.annotations).toEqual({
+      readOnlyHint: false,
+      destructiveHint: false,
+      idempotentHint: false,
+      openWorldHint: true,
+    });
+  });
+
+  it("handles API errors", async () => {
+    const error = new Error("validation failed");
+    mockMakeApiRequest.mockRejectedValue(error);
+
+    registerCrudTools(server as any, createFullCrudConfig());
+    const handler = server.tools.get("holded_invoicing_create_widget")!.handler;
+    const result = await handler({ name: "Bad Widget", response_format: ResponseFormat.JSON });
+
+    expect(result.isError).toBe(true);
+    expect(result.content[0].text).toBe("Error: validation failed");
+    expect(mockHandleApiError).toHaveBeenCalledWith(error);
+  });
+});
+
+describe("registerCrudTools — update", () => {
+  let server: ReturnType<typeof createMockServer>;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    server = createMockServer();
+  });
+
+  it("calls makeApiRequest with PUT, extracting ID from params", async () => {
+    const updated: TestItem = { id: "abc123", name: "Updated Widget" };
+    mockMakeApiRequest.mockResolvedValue(updated);
+
+    registerCrudTools(server as any, createFullCrudConfig());
+    const handler = server.tools.get("holded_invoicing_update_widget")!.handler;
+    const result = await handler({
+      widget_id: "abc123",
+      name: "Updated Widget",
+      response_format: ResponseFormat.JSON,
+    });
+
+    expect(mockMakeApiRequest).toHaveBeenCalledWith(
+      "invoicing",
+      "widgets/abc123",
+      "PUT",
+      { name: "Updated Widget" },
+    );
+    expect(result.content[0].text).toContain("Widget updated successfully.");
+    expect(result.content[0].text).toContain(JSON.stringify(updated, null, 2));
+    expect(mockToStructuredContent).toHaveBeenCalledWith(updated);
+  });
+
+  it("strips idParam and response_format from request body", async () => {
+    const updated: TestItem = { id: "abc123", name: "Updated Widget" };
+    mockMakeApiRequest.mockResolvedValue(updated);
+
+    registerCrudTools(server as any, createFullCrudConfig());
+    const handler = server.tools.get("holded_invoicing_update_widget")!.handler;
+    await handler({
+      widget_id: "abc123",
+      name: "Updated Widget",
+      response_format: ResponseFormat.MARKDOWN,
+    });
+
+    expect(mockMakeApiRequest).toHaveBeenCalledWith(
+      "invoicing",
+      "widgets/abc123",
+      "PUT",
+      { name: "Updated Widget" },
+    );
+  });
+
+  it("sets correct annotations (idempotent)", () => {
+    registerCrudTools(server as any, createFullCrudConfig());
+    const tool = server.tools.get("holded_invoicing_update_widget")!;
+    expect(tool.config.annotations).toEqual({
+      readOnlyHint: false,
+      destructiveHint: false,
+      idempotentHint: true,
+      openWorldHint: true,
+    });
+  });
+});
+
+describe("registerCrudTools — delete", () => {
+  let server: ReturnType<typeof createMockServer>;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    server = createMockServer();
+  });
+
+  it("calls makeApiRequest with DELETE and returns confirmation", async () => {
+    mockMakeApiRequest.mockResolvedValue(undefined);
+
+    registerCrudTools(server as any, createFullCrudConfig());
+    const handler = server.tools.get("holded_invoicing_delete_widget")!.handler;
+    const result = await handler({ widget_id: "abc123", response_format: ResponseFormat.JSON });
+
+    expect(mockMakeApiRequest).toHaveBeenCalledWith(
+      "invoicing",
+      "widgets/abc123",
+      "DELETE",
+    );
+    expect(result.content[0].text).toBe("Widget abc123 deleted successfully.");
+    expect(result.structuredContent).toEqual({ deleted: true, id: "abc123" });
+  });
+
+  it("sets correct annotations (destructive)", () => {
+    registerCrudTools(server as any, createFullCrudConfig());
+    const tool = server.tools.get("holded_invoicing_delete_widget")!;
+    expect(tool.config.annotations).toEqual({
+      readOnlyHint: false,
+      destructiveHint: true,
+      idempotentHint: true,
+      openWorldHint: true,
+    });
+  });
+
+  it("handles API errors", async () => {
+    const error = new Error("forbidden");
+    mockMakeApiRequest.mockRejectedValue(error);
+
+    registerCrudTools(server as any, createFullCrudConfig());
+    const handler = server.tools.get("holded_invoicing_delete_widget")!.handler;
+    const result = await handler({ widget_id: "abc123", response_format: ResponseFormat.JSON });
+
+    expect(result.isError).toBe(true);
+    expect(result.content[0].text).toBe("Error: forbidden");
+    expect(mockHandleApiError).toHaveBeenCalledWith(error);
   });
 });

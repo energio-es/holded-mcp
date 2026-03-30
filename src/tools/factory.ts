@@ -168,4 +168,138 @@ export function registerCrudTools<T>(server: McpServer, config: CrudToolConfig<T
       },
     );
   }
+
+  const Resource = resource.charAt(0).toUpperCase() + resource.slice(1);
+
+  // ── Create ─────────────────────────────────────────────
+  if (schemas.create) {
+    server.registerTool(
+      `${toolPrefix}_create_${resource}`,
+      {
+        title: titles.create,
+        description: descriptions.create,
+        inputSchema: schemas.create,
+        annotations: {
+          readOnlyHint: false,
+          destructiveHint: false,
+          idempotentHint: false,
+          openWorldHint: true,
+        },
+      },
+      async (params: Record<string, unknown>) => {
+        try {
+          const { response_format, ...body } = params;
+          const item = await makeApiRequest<T>(
+            module,
+            endpoint,
+            "POST",
+            body,
+          );
+
+          return {
+            content: [
+              {
+                type: "text",
+                text: `${Resource} created successfully.\n\n${JSON.stringify(item, null, 2)}`,
+              },
+            ],
+            structuredContent: toStructuredContent(item),
+          };
+        } catch (error) {
+          return {
+            content: [{ type: "text", text: handleApiError(error) }],
+            isError: true,
+          };
+        }
+      },
+    );
+  }
+
+  // ── Update ─────────────────────────────────────────────
+  if (schemas.update) {
+    server.registerTool(
+      `${toolPrefix}_update_${resource}`,
+      {
+        title: titles.update,
+        description: descriptions.update,
+        inputSchema: schemas.update,
+        annotations: {
+          readOnlyHint: false,
+          destructiveHint: false,
+          idempotentHint: true,
+          openWorldHint: true,
+        },
+      },
+      async (params: Record<string, unknown>) => {
+        try {
+          const id = params[idParam] as string;
+          const { [idParam]: _, response_format, ...updateData } = params;
+          const item = await makeApiRequest<T>(
+            module,
+            `${endpoint}/${id}`,
+            "PUT",
+            updateData,
+          );
+
+          return {
+            content: [
+              {
+                type: "text",
+                text: `${Resource} updated successfully.\n\n${JSON.stringify(item, null, 2)}`,
+              },
+            ],
+            structuredContent: toStructuredContent(item),
+          };
+        } catch (error) {
+          return {
+            content: [{ type: "text", text: handleApiError(error) }],
+            isError: true,
+          };
+        }
+      },
+    );
+  }
+
+  // ── Delete ─────────────────────────────────────────────
+  if (schemas.delete) {
+    server.registerTool(
+      `${toolPrefix}_delete_${resource}`,
+      {
+        title: titles.delete,
+        description: descriptions.delete,
+        inputSchema: schemas.delete,
+        annotations: {
+          readOnlyHint: false,
+          destructiveHint: true,
+          idempotentHint: true,
+          openWorldHint: true,
+        },
+      },
+      async (params: Record<string, unknown>) => {
+        try {
+          const id = params[idParam] as string;
+          await makeApiRequest<void>(
+            module,
+            `${endpoint}/${id}`,
+            "DELETE",
+          );
+
+          return {
+            content: [
+              {
+                type: "text",
+                text: `${Resource} ${id} deleted successfully.`,
+              },
+            ],
+            structuredContent: { deleted: true, id },
+          };
+        } catch (error) {
+          return {
+            content: [{ type: "text", text: handleApiError(error) }],
+            isError: true,
+          };
+        }
+      },
+    );
+  }
 }
