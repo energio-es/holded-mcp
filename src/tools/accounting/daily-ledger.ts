@@ -3,9 +3,10 @@
  */
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { makeApiRequest, handleApiError, toStructuredContent } from "../../services/api.js";
+import { makeApiRequest, toStructuredContent } from "../../services/api.js";
 import { ResponseFormat } from "../../constants.js";
 import { DailyLedgerEntry } from "../../types.js";
+import { withErrorHandling } from "../utilities.js";
 import {
   ListDailyLedgerInputSchema,
   CreateEntryInputSchema,
@@ -42,56 +43,50 @@ Returns:
         openWorldHint: true,
       },
     },
-    async (params: ListDailyLedgerInput) => {
-      try {
-        const queryParams: Record<string, unknown> = {
-          starttmp: params.starttmp,
-          endtmp: params.endtmp,
-        };
-        if (params.page > 1) {
-          queryParams.page = params.page;
-        }
-
-        const entries = await makeApiRequest<DailyLedgerEntry[]>(
-          "accounting",
-          "dailyledger",
-          "GET",
-          undefined,
-          queryParams
-        );
-
-        let textContent: string;
-        if (params.response_format === ResponseFormat.MARKDOWN) {
-          if (!entries.length) {
-            textContent = "No daily ledger entries found.";
-          } else {
-            const lines = ["# Daily Ledger Entries", "", `Found ${entries.length} entries:`, ""];
-            for (const entry of entries) {
-              lines.push(`## Entry ${entry.id}`);
-              lines.push(`- **ID**: ${entry.id}`);
-              lines.push(`- **Date**: ${new Date(entry.date * 1000).toLocaleDateString()}`);
-              lines.push(`- **Account**: ${entry.account}`);
-              lines.push(`- **Amount**: ${entry.amount}`);
-              if (entry.description) lines.push(`- **Description**: ${entry.description}`);
-              lines.push("");
-            }
-            textContent = lines.join("\n");
-          }
-        } else {
-          textContent = JSON.stringify(entries, null, 2);
-        }
-
-        return {
-          content: [{ type: "text", text: textContent }],
-          structuredContent: { entries, count: entries.length, page: params.page },
-        };
-      } catch (error) {
-        return {
-          content: [{ type: "text", text: handleApiError(error) }],
-          isError: true,
-        };
+    withErrorHandling(async (params) => {
+      const { starttmp, endtmp, page, response_format } = params as unknown as ListDailyLedgerInput;
+      const queryParams: Record<string, unknown> = {
+        starttmp,
+        endtmp,
+      };
+      if (page > 1) {
+        queryParams.page = page;
       }
-    }
+
+      const entries = await makeApiRequest<DailyLedgerEntry[]>(
+        "accounting",
+        "dailyledger",
+        "GET",
+        undefined,
+        queryParams
+      );
+
+      let textContent: string;
+      if (response_format === ResponseFormat.MARKDOWN) {
+        if (!entries.length) {
+          textContent = "No daily ledger entries found.";
+        } else {
+          const lines = ["# Daily Ledger Entries", "", `Found ${entries.length} entries:`, ""];
+          for (const entry of entries) {
+            lines.push(`## Entry ${entry.id}`);
+            lines.push(`- **ID**: ${entry.id}`);
+            lines.push(`- **Date**: ${new Date(entry.date * 1000).toLocaleDateString()}`);
+            lines.push(`- **Account**: ${entry.account}`);
+            lines.push(`- **Amount**: ${entry.amount}`);
+            if (entry.description) lines.push(`- **Description**: ${entry.description}`);
+            lines.push("");
+          }
+          textContent = lines.join("\n");
+        }
+      } else {
+        textContent = JSON.stringify(entries, null, 2);
+      }
+
+      return {
+        content: [{ type: "text", text: textContent }],
+        structuredContent: { entries, count: entries.length, page },
+      };
+    })
   );
 
   // Create Daily Ledger Entry
@@ -128,30 +123,24 @@ Returns:
         openWorldHint: true,
       },
     },
-    async (params: CreateEntryInput) => {
-      try {
-        const response = await makeApiRequest<unknown>(
-          "accounting",
-          "entry",
-          "POST",
-          params
-        );
+    withErrorHandling(async (params) => {
+      const typedParams = params as unknown as CreateEntryInput;
+      const response = await makeApiRequest<unknown>(
+        "accounting",
+        "entry",
+        "POST",
+        typedParams
+      );
 
-        return {
-          content: [
-            {
-              type: "text",
-              text: `Daily ledger entry created successfully.\n\n${JSON.stringify(response, null, 2)}`,
-            },
-          ],
-          structuredContent: toStructuredContent(response),
-        };
-      } catch (error) {
-        return {
-          content: [{ type: "text", text: handleApiError(error) }],
-          isError: true,
-        };
-      }
-    }
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Daily ledger entry created successfully.\n\n${JSON.stringify(response, null, 2)}`,
+          },
+        ],
+        structuredContent: toStructuredContent(response),
+      };
+    })
   );
 }

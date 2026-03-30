@@ -3,9 +3,10 @@
  */
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { makeApiRequest, makeMultipartApiRequest, handleApiError, toStructuredContent } from "../../services/api.js";
+import { makeApiRequest, makeMultipartApiRequest, toStructuredContent } from "../../services/api.js";
 import { ResponseFormat } from "../../constants.js";
 import { Document } from "../../types.js";
+import { withErrorHandling } from "../utilities.js";
 import {
   ListDocumentsInputSchema,
   GetDocumentInputSchema,
@@ -139,37 +140,31 @@ Returns:
         openWorldHint: true,
       },
     },
-    async (params: ListDocumentsInput) => {
-      try {
-        const queryParams: Record<string, unknown> = {};
-        if (params.page > 1) {
-          queryParams.page = params.page;
-        }
-
-        const documents = await makeApiRequest<Document[]>(
-          "invoicing",
-          `documents/${params.doc_type}`,
-          "GET",
-          undefined,
-          queryParams
-        );
-
-        const textContent =
-          params.response_format === ResponseFormat.MARKDOWN
-            ? formatDocumentsMarkdown(documents, params.doc_type)
-            : JSON.stringify(documents, null, 2);
-
-        return {
-          content: [{ type: "text", text: textContent }],
-          structuredContent: { documents, count: documents.length, page: params.page, docType: params.doc_type },
-        };
-      } catch (error) {
-        return {
-          content: [{ type: "text", text: handleApiError(error) }],
-          isError: true,
-        };
+    withErrorHandling(async (params) => {
+      const { doc_type, page, response_format } = params as unknown as ListDocumentsInput;
+      const queryParams: Record<string, unknown> = {};
+      if (page > 1) {
+        queryParams.page = page;
       }
-    }
+
+      const documents = await makeApiRequest<Document[]>(
+        "invoicing",
+        `documents/${doc_type}`,
+        "GET",
+        undefined,
+        queryParams
+      );
+
+      const textContent =
+        response_format === ResponseFormat.MARKDOWN
+          ? formatDocumentsMarkdown(documents, doc_type)
+          : JSON.stringify(documents, null, 2);
+
+      return {
+        content: [{ type: "text", text: textContent }],
+        structuredContent: { documents, count: documents.length, page, docType: doc_type },
+      };
+    })
   );
 
   // Get Document
@@ -194,30 +189,24 @@ Returns:
         openWorldHint: true,
       },
     },
-    async (params: GetDocumentInput) => {
-      try {
-        const document = await makeApiRequest<Document>(
-          "invoicing",
-          `documents/${params.doc_type}/${params.document_id}`,
-          "GET"
-        );
+    withErrorHandling(async (params) => {
+      const { doc_type, document_id, response_format } = params as unknown as GetDocumentInput;
+      const document = await makeApiRequest<Document>(
+        "invoicing",
+        `documents/${doc_type}/${document_id}`,
+        "GET"
+      );
 
-        const textContent =
-          params.response_format === ResponseFormat.MARKDOWN
-            ? formatDocumentMarkdown(document)
-            : JSON.stringify(document, null, 2);
+      const textContent =
+        response_format === ResponseFormat.MARKDOWN
+          ? formatDocumentMarkdown(document)
+          : JSON.stringify(document, null, 2);
 
-        return {
-          content: [{ type: "text", text: textContent }],
-          structuredContent: toStructuredContent(document),
-        };
-      } catch (error) {
-        return {
-          content: [{ type: "text", text: handleApiError(error) }],
-          isError: true,
-        };
-      }
-    }
+      return {
+        content: [{ type: "text", text: textContent }],
+        structuredContent: toStructuredContent(document),
+      };
+    })
   );
 
   // Create Document
@@ -246,32 +235,25 @@ Returns:
         openWorldHint: true,
       },
     },
-    async (params: CreateDocumentInput) => {
-      try {
-        const { doc_type, ...documentData } = params;
-        const document = await makeApiRequest<Document>(
-          "invoicing",
-          `documents/${doc_type}`,
-          "POST",
-          documentData
-        );
+    withErrorHandling(async (params) => {
+      const { doc_type, ...documentData } = params as unknown as CreateDocumentInput;
+      const document = await makeApiRequest<Document>(
+        "invoicing",
+        `documents/${doc_type}`,
+        "POST",
+        documentData
+      );
 
-        return {
-          content: [
-            {
-              type: "text",
-              text: `Document created successfully.\n\n${JSON.stringify(document, null, 2)}`,
-            },
-          ],
-          structuredContent: toStructuredContent(document),
-        };
-      } catch (error) {
-        return {
-          content: [{ type: "text", text: handleApiError(error) }],
-          isError: true,
-        };
-      }
-    }
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Document created successfully.\n\n${JSON.stringify(document, null, 2)}`,
+          },
+        ],
+        structuredContent: toStructuredContent(document),
+      };
+    })
   );
 
   // Update Document
@@ -296,32 +278,25 @@ Returns:
         openWorldHint: true,
       },
     },
-    async (params: UpdateDocumentInput) => {
-      try {
-        const { doc_type, document_id, ...updateData } = params;
-        const document = await makeApiRequest<Document>(
-          "invoicing",
-          `documents/${doc_type}/${document_id}`,
-          "PUT",
-          updateData
-        );
+    withErrorHandling(async (params) => {
+      const { doc_type, document_id, ...updateData } = params as unknown as UpdateDocumentInput;
+      const document = await makeApiRequest<Document>(
+        "invoicing",
+        `documents/${doc_type}/${document_id}`,
+        "PUT",
+        updateData
+      );
 
-        return {
-          content: [
-            {
-              type: "text",
-              text: `Document updated successfully.\n\n${JSON.stringify(document, null, 2)}`,
-            },
-          ],
-          structuredContent: toStructuredContent(document),
-        };
-      } catch (error) {
-        return {
-          content: [{ type: "text", text: handleApiError(error) }],
-          isError: true,
-        };
-      }
-    }
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Document updated successfully.\n\n${JSON.stringify(document, null, 2)}`,
+          },
+        ],
+        structuredContent: toStructuredContent(document),
+      };
+    })
   );
 
   // Delete Document
@@ -345,30 +320,24 @@ Returns:
         openWorldHint: true,
       },
     },
-    async (params: DeleteDocumentInput) => {
-      try {
-        await makeApiRequest<void>(
-          "invoicing",
-          `documents/${params.doc_type}/${params.document_id}`,
-          "DELETE"
-        );
+    withErrorHandling(async (params) => {
+      const { doc_type, document_id } = params as unknown as DeleteDocumentInput;
+      await makeApiRequest<void>(
+        "invoicing",
+        `documents/${doc_type}/${document_id}`,
+        "DELETE"
+      );
 
-        return {
-          content: [
-            {
-              type: "text",
-              text: `Document ${params.document_id} deleted successfully.`,
-            },
-          ],
-          structuredContent: { deleted: true, id: params.document_id, docType: params.doc_type },
-        };
-      } catch (error) {
-        return {
-          content: [{ type: "text", text: handleApiError(error) }],
-          isError: true,
-        };
-      }
-    }
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Document ${document_id} deleted successfully.`,
+          },
+        ],
+        structuredContent: { deleted: true, id: document_id, docType: doc_type },
+      };
+    })
   );
 
   // Pay Document
@@ -395,37 +364,30 @@ Returns:
         openWorldHint: true,
       },
     },
-    async (params: PayDocumentInput) => {
-      try {
-        const { doc_type, document_id, account_id, ...paymentData } = params;
-        const requestData = {
-          ...paymentData,
-          ...(account_id ? { accountId: account_id } : {}),
-        };
+    withErrorHandling(async (params) => {
+      const { doc_type, document_id, account_id, ...paymentData } = params as unknown as PayDocumentInput;
+      const requestData = {
+        ...paymentData,
+        ...(account_id ? { accountId: account_id } : {}),
+      };
 
-        const result = await makeApiRequest<{ status: string; [key: string]: unknown }>(
-          "invoicing",
-          `documents/${doc_type}/${document_id}/pay`,
-          "POST",
-          requestData
-        );
+      const result = await makeApiRequest<{ status: string; [key: string]: unknown }>(
+        "invoicing",
+        `documents/${doc_type}/${document_id}/pay`,
+        "POST",
+        requestData
+      );
 
-        return {
-          content: [
-            {
-              type: "text",
-              text: `Payment recorded successfully.\n\n${JSON.stringify(result, null, 2)}`,
-            },
-          ],
-          structuredContent: { paid: true, documentId: document_id, docType: doc_type, ...result },
-        };
-      } catch (error) {
-        return {
-          content: [{ type: "text", text: handleApiError(error) }],
-          isError: true,
-        };
-      }
-    }
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Payment recorded successfully.\n\n${JSON.stringify(result, null, 2)}`,
+          },
+        ],
+        structuredContent: { paid: true, documentId: document_id, docType: doc_type, ...result },
+      };
+    })
   );
 
   // Send Document
@@ -452,32 +414,25 @@ Returns:
         openWorldHint: true,
       },
     },
-    async (params: SendDocumentInput) => {
-      try {
-        const { doc_type, document_id, ...sendData } = params;
-        const result = await makeApiRequest<{ status: string; [key: string]: unknown }>(
-          "invoicing",
-          `documents/${doc_type}/${document_id}/send`,
-          "POST",
-          sendData
-        );
+    withErrorHandling(async (params) => {
+      const { doc_type, document_id, ...sendData } = params as unknown as SendDocumentInput;
+      const result = await makeApiRequest<{ status: string; [key: string]: unknown }>(
+        "invoicing",
+        `documents/${doc_type}/${document_id}/send`,
+        "POST",
+        sendData
+      );
 
-        return {
-          content: [
-            {
-              type: "text",
-              text: `Document sent successfully.\n\n${JSON.stringify(result, null, 2)}`,
-            },
-          ],
-          structuredContent: { sent: true, documentId: document_id, docType: doc_type, ...result },
-        };
-      } catch (error) {
-        return {
-          content: [{ type: "text", text: handleApiError(error) }],
-          isError: true,
-        };
-      }
-    }
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Document sent successfully.\n\n${JSON.stringify(result, null, 2)}`,
+          },
+        ],
+        structuredContent: { sent: true, documentId: document_id, docType: doc_type, ...result },
+      };
+    })
   );
 
   // Get Document PDF
@@ -501,32 +456,26 @@ Returns:
         openWorldHint: true,
       },
     },
-    async (params: GetDocumentPdfInput) => {
-      try {
-        const result = await makeApiRequest<{ url?: string; data?: string; [key: string]: unknown }>(
-          "invoicing",
-          `documents/${params.doc_type}/${params.document_id}/pdf`,
-          "GET"
-        );
+    withErrorHandling(async (params) => {
+      const { doc_type, document_id } = params as unknown as GetDocumentPdfInput;
+      const result = await makeApiRequest<{ url?: string; data?: string; [key: string]: unknown }>(
+        "invoicing",
+        `documents/${doc_type}/${document_id}/pdf`,
+        "GET"
+      );
 
-        return {
-          content: [
-            {
-              type: "text",
-              text: result.url
-                ? `PDF URL: ${result.url}\n\n${JSON.stringify(result, null, 2)}`
-                : JSON.stringify(result, null, 2),
-            },
-          ],
-          structuredContent: { documentId: params.document_id, docType: params.doc_type, ...result },
-        };
-      } catch (error) {
-        return {
-          content: [{ type: "text", text: handleApiError(error) }],
-          isError: true,
-        };
-      }
-    }
+      return {
+        content: [
+          {
+            type: "text",
+            text: result.url
+              ? `PDF URL: ${result.url}\n\n${JSON.stringify(result, null, 2)}`
+              : JSON.stringify(result, null, 2),
+          },
+        ],
+        structuredContent: { documentId: document_id, docType: doc_type, ...result },
+      };
+    })
   );
 
   // Update Document Tracking
@@ -558,32 +507,25 @@ Returns:
         openWorldHint: true,
       },
     },
-    async (params: UpdateDocumentTrackingInput) => {
-      try {
-        const { doc_type, document_id, ...trackingData } = params;
-        const result = await makeApiRequest<{ status: number; info?: string; data?: string; [key: string]: unknown }>(
-          "invoicing",
-          `documents/${doc_type}/${document_id}/updatetracking`,
-          "POST",
-          trackingData
-        );
+    withErrorHandling(async (params) => {
+      const { doc_type, document_id, ...trackingData } = params as unknown as UpdateDocumentTrackingInput;
+      const result = await makeApiRequest<{ status: number; info?: string; data?: string; [key: string]: unknown }>(
+        "invoicing",
+        `documents/${doc_type}/${document_id}/updatetracking`,
+        "POST",
+        trackingData
+      );
 
-        return {
-          content: [
-            {
-              type: "text",
-              text: `Tracking information updated successfully.\n\n${JSON.stringify(result, null, 2)}`,
-            },
-          ],
-          structuredContent: { updated: true, documentId: document_id, docType: doc_type, ...result },
-        };
-      } catch (error) {
-        return {
-          content: [{ type: "text", text: handleApiError(error) }],
-          isError: true,
-        };
-      }
-    }
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Tracking information updated successfully.\n\n${JSON.stringify(result, null, 2)}`,
+          },
+        ],
+        structuredContent: { updated: true, documentId: document_id, docType: doc_type, ...result },
+      };
+    })
   );
 
   // Update Document Pipeline
@@ -610,32 +552,25 @@ Returns:
         openWorldHint: true,
       },
     },
-    async (params: UpdateDocumentPipelineInput) => {
-      try {
-        const { doc_type, document_id, pipeline } = params;
-        const result = await makeApiRequest<{ status: number; info?: string; [key: string]: unknown }>(
-          "invoicing",
-          `documents/${doc_type}/${document_id}/pipeline/set`,
-          "POST",
-          { pipeline }
-        );
+    withErrorHandling(async (params) => {
+      const { doc_type, document_id, pipeline } = params as unknown as UpdateDocumentPipelineInput;
+      const result = await makeApiRequest<{ status: number; info?: string; [key: string]: unknown }>(
+        "invoicing",
+        `documents/${doc_type}/${document_id}/pipeline/set`,
+        "POST",
+        { pipeline }
+      );
 
-        return {
-          content: [
-            {
-              type: "text",
-              text: `Pipeline updated successfully.\n\n${JSON.stringify(result, null, 2)}`,
-            },
-          ],
-          structuredContent: { updated: true, documentId: document_id, docType: doc_type, ...result },
-        };
-      } catch (error) {
-        return {
-          content: [{ type: "text", text: handleApiError(error) }],
-          isError: true,
-        };
-      }
-    }
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Pipeline updated successfully.\n\n${JSON.stringify(result, null, 2)}`,
+          },
+        ],
+        structuredContent: { updated: true, documentId: document_id, docType: doc_type, ...result },
+      };
+    })
   );
 
   // Ship All Items
@@ -658,30 +593,24 @@ Returns:
         openWorldHint: true,
       },
     },
-    async (params: ShipAllItemsInput) => {
-      try {
-        const result = await makeApiRequest<{ status: number; info: string; [key: string]: unknown }>(
-          "invoicing",
-          `documents/salesorder/${params.document_id}/shipall`,
-          "POST"
-        );
+    withErrorHandling(async (params) => {
+      const { document_id } = params as unknown as ShipAllItemsInput;
+      const result = await makeApiRequest<{ status: number; info: string; [key: string]: unknown }>(
+        "invoicing",
+        `documents/salesorder/${document_id}/shipall`,
+        "POST"
+      );
 
-        return {
-          content: [
-            {
-              type: "text",
-              text: `Items shipped successfully.\n\n${JSON.stringify(result, null, 2)}`,
-            },
-          ],
-          structuredContent: { shipped: true, documentId: params.document_id, ...result },
-        };
-      } catch (error) {
-        return {
-          content: [{ type: "text", text: handleApiError(error) }],
-          isError: true,
-        };
-      }
-    }
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Items shipped successfully.\n\n${JSON.stringify(result, null, 2)}`,
+          },
+        ],
+        structuredContent: { shipped: true, documentId: document_id, ...result },
+      };
+    })
   );
 
   // Ship Items By Line
@@ -707,32 +636,25 @@ Returns:
         openWorldHint: true,
       },
     },
-    async (params: ShipItemsByLineInput) => {
-      try {
-        const { document_id, lines } = params;
-        const result = await makeApiRequest<{ status: number; info: string; [key: string]: unknown }>(
-          "invoicing",
-          `documents/salesorder/${document_id}/shipbylines`,
-          "POST",
-          { lines }
-        );
+    withErrorHandling(async (params) => {
+      const { document_id, lines } = params as unknown as ShipItemsByLineInput;
+      const result = await makeApiRequest<{ status: number; info: string; [key: string]: unknown }>(
+        "invoicing",
+        `documents/salesorder/${document_id}/shipbylines`,
+        "POST",
+        { lines }
+      );
 
-        return {
-          content: [
-            {
-              type: "text",
-              text: `Items shipped successfully.\n\n${JSON.stringify(result, null, 2)}`,
-            },
-          ],
-          structuredContent: { shipped: true, documentId: document_id, lines, ...result },
-        };
-      } catch (error) {
-        return {
-          content: [{ type: "text", text: handleApiError(error) }],
-          isError: true,
-        };
-      }
-    }
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Items shipped successfully.\n\n${JSON.stringify(result, null, 2)}`,
+          },
+        ],
+        structuredContent: { shipped: true, documentId: document_id, lines, ...result },
+      };
+    })
   );
 
   // Get Shipped Items
@@ -757,48 +679,42 @@ Returns:
         openWorldHint: true,
       },
     },
-    async (params: GetShippedItemsInput) => {
-      try {
-        const shippedItems = await makeApiRequest<Array<{
-          name: string;
-          sku: string;
-          total: number;
-          sent: number;
-          pending: number;
-        }>>(
-          "invoicing",
-          `documents/${params.doc_type}/${params.document_id}/shippeditems`,
-          "GET"
-        );
+    withErrorHandling(async (params) => {
+      const { doc_type, document_id, response_format } = params as unknown as GetShippedItemsInput;
+      const shippedItems = await makeApiRequest<Array<{
+        name: string;
+        sku: string;
+        total: number;
+        sent: number;
+        pending: number;
+      }>>(
+        "invoicing",
+        `documents/${doc_type}/${document_id}/shippeditems`,
+        "GET"
+      );
 
-        let textContent: string;
-        if (params.response_format === ResponseFormat.MARKDOWN) {
-          if (!shippedItems.length) {
-            textContent = `No shipped items found for document ${params.document_id}.`;
-          } else {
-            const lines = ["# Shipped Items", "", `Found ${shippedItems.length} items:`, ""];
-            lines.push("| Item | SKU | Total | Sent | Pending |");
-            lines.push("|------|-----|-------|------|---------|");
-            for (const item of shippedItems) {
-              lines.push(`| ${item.name} | ${item.sku || "-"} | ${item.total} | ${item.sent} | ${item.pending} |`);
-            }
-            textContent = lines.join("\n");
-          }
+      let textContent: string;
+      if (response_format === ResponseFormat.MARKDOWN) {
+        if (!shippedItems.length) {
+          textContent = `No shipped items found for document ${document_id}.`;
         } else {
-          textContent = JSON.stringify(shippedItems, null, 2);
+          const lines = ["# Shipped Items", "", `Found ${shippedItems.length} items:`, ""];
+          lines.push("| Item | SKU | Total | Sent | Pending |");
+          lines.push("|------|-----|-------|------|---------|");
+          for (const item of shippedItems) {
+            lines.push(`| ${item.name} | ${item.sku || "-"} | ${item.total} | ${item.sent} | ${item.pending} |`);
+          }
+          textContent = lines.join("\n");
         }
-
-        return {
-          content: [{ type: "text", text: textContent }],
-          structuredContent: { shippedItems, count: shippedItems.length, documentId: params.document_id, docType: params.doc_type },
-        };
-      } catch (error) {
-        return {
-          content: [{ type: "text", text: handleApiError(error) }],
-          isError: true,
-        };
+      } else {
+        textContent = JSON.stringify(shippedItems, null, 2);
       }
-    }
+
+      return {
+        content: [{ type: "text", text: textContent }],
+        structuredContent: { shippedItems, count: shippedItems.length, documentId: document_id, docType: doc_type },
+      };
+    })
   );
 
   // Attach File to Document
@@ -825,36 +741,29 @@ Returns:
         openWorldHint: true,
       },
     },
-    async (params: AttachDocumentFileInput) => {
-      try {
-        const { doc_type, document_id, file_content, file_name, set_main } = params;
+    withErrorHandling(async (params) => {
+      const { doc_type, document_id, file_content, file_name, set_main } = params as unknown as AttachDocumentFileInput;
 
-        // Convert base64 to buffer
-        const fileBuffer = Buffer.from(file_content, "base64");
+      // Convert base64 to buffer
+      const fileBuffer = Buffer.from(file_content, "base64");
 
-        const result = await makeMultipartApiRequest<{ status: number; info: string; [key: string]: unknown }>(
-          "invoicing",
-          `documents/${doc_type}/${document_id}/attach`,
-          fileBuffer,
-          file_name,
-          set_main
-        );
+      const result = await makeMultipartApiRequest<{ status: number; info: string; [key: string]: unknown }>(
+        "invoicing",
+        `documents/${doc_type}/${document_id}/attach`,
+        fileBuffer,
+        file_name,
+        set_main
+      );
 
-        return {
-          content: [
-            {
-              type: "text",
-              text: `File attached successfully.\n\n${JSON.stringify(result, null, 2)}`,
-            },
-          ],
-          structuredContent: { attached: true, documentId: document_id, docType: doc_type, fileName: file_name, ...result },
-        };
-      } catch (error) {
-        return {
-          content: [{ type: "text", text: handleApiError(error) }],
-          isError: true,
-        };
-      }
-    }
+      return {
+        content: [
+          {
+            type: "text",
+            text: `File attached successfully.\n\n${JSON.stringify(result, null, 2)}`,
+          },
+        ],
+        structuredContent: { attached: true, documentId: document_id, docType: doc_type, fileName: file_name, ...result },
+      };
+    })
   );
 }

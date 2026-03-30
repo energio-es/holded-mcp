@@ -17,7 +17,7 @@ export function buildToolResponse<T>(
   data: T,
   format: ResponseFormat,
   formatter: (data: T) => string,
-): { content: { type: string; text: string }[]; structuredContent: Record<string, unknown> } {
+): { content: { type: "text"; text: string }[]; structuredContent: Record<string, unknown> } {
   const text =
     format === ResponseFormat.MARKDOWN
       ? formatter(data)
@@ -33,7 +33,8 @@ export function buildToolResponse<T>(
  * Tool result type returned by MCP tool handlers.
  */
 export interface ToolResult {
-  content: { type: string; text: string }[];
+  [key: string]: unknown;
+  content: { type: "text"; text: string }[];
   structuredContent?: Record<string, unknown>;
   isError?: boolean;
 }
