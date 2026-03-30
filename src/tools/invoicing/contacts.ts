@@ -3,7 +3,7 @@
  */
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { makeApiRequest, makeMultipartApiRequest, handleApiError, toStructuredContent } from "../../services/api.js";
+import { makeApiRequest, makeMultipartApiRequest, handleApiError } from "../../services/api.js";
 import { ResponseFormat } from "../../constants.js";
 import { Contact, ContactGroup } from "../../types.js";
 import {
@@ -17,16 +17,6 @@ import {
   CreateContactGroupInputSchema,
   UpdateContactGroupInputSchema,
   DeleteContactGroupInputSchema,
-  ListContactsInput,
-  GetContactInput,
-  CreateContactInput,
-  UpdateContactInput,
-  DeleteContactInput,
-  ListContactGroupsInput,
-  GetContactGroupInput,
-  CreateContactGroupInput,
-  UpdateContactGroupInput,
-  DeleteContactGroupInput,
   ListContactAttachmentsInputSchema,
   GetContactAttachmentInputSchema,
   UploadContactAttachmentInputSchema,
@@ -34,6 +24,7 @@ import {
   GetContactAttachmentInput,
   UploadContactAttachmentInput,
 } from "../../schemas/invoicing/contacts.js";
+import { registerCrudTools } from "../factory.js";
 
 /**
  * Format contacts as markdown
@@ -91,15 +82,55 @@ function formatContactMarkdown(contact: Contact): string {
 }
 
 /**
+ * Format contact groups as markdown
+ */
+function formatContactGroupsMarkdown(groups: ContactGroup[]): string {
+  if (!groups.length) {
+    return "No contact groups found.";
+  }
+
+  const lines = ["# Contact Groups", "", `Found ${groups.length} groups:`, ""];
+  for (const group of groups) {
+    lines.push(`- **${group.name}** (ID: ${group.id})`);
+  }
+  return lines.join("\n");
+}
+
+/**
+ * Format a single contact group as markdown
+ */
+function formatContactGroupMarkdown(group: ContactGroup): string {
+  return `# ${group.name}\n\n**ID**: ${group.id}`;
+}
+
+/**
  * Register all contact-related tools
  */
 export function registerContactTools(server: McpServer): void {
-  // List Contacts
-  server.registerTool(
-    "holded_invoicing_list_contacts",
-    {
-      title: "List Holded Contacts",
-      description: `List all contacts from Holded (clients, suppliers, etc.).
+  // ── Contacts CRUD via factory ─────────────────────────
+  registerCrudTools<Contact>(server, {
+    module: "invoicing",
+    toolPrefix: "holded_invoicing",
+    resource: "contact",
+    resourcePlural: "contacts",
+    endpoint: "contacts",
+    idParam: "contact_id",
+    schemas: {
+      list: ListContactsInputSchema,
+      get: GetContactInputSchema,
+      create: CreateContactInputSchema,
+      update: UpdateContactInputSchema,
+      delete: DeleteContactInputSchema,
+    },
+    titles: {
+      list: "List Holded Contacts",
+      get: "Get Holded Contact",
+      create: "Create Holded Contact",
+      update: "Update Holded Contact",
+      delete: "Delete Holded Contact",
+    },
+    descriptions: {
+      list: `List all contacts from Holded (clients, suppliers, etc.).
 
 Returns paginated list of contacts (max 500 per page). Use page parameter to navigate through results.
 
@@ -109,53 +140,7 @@ Args:
 
 Returns:
   Array of contacts with id, name, email, phone, type, and other details.`,
-      inputSchema: ListContactsInputSchema,
-      annotations: {
-        readOnlyHint: true,
-        destructiveHint: false,
-        idempotentHint: true,
-        openWorldHint: true,
-      },
-    },
-    async (params: ListContactsInput) => {
-      try {
-        const queryParams: Record<string, unknown> = {};
-        if (params.page > 1) {
-          queryParams.page = params.page;
-        }
-
-        const contacts = await makeApiRequest<Contact[]>(
-          "invoicing",
-          "contacts",
-          "GET",
-          undefined,
-          queryParams
-        );
-
-        const textContent =
-          params.response_format === ResponseFormat.MARKDOWN
-            ? formatContactsMarkdown(contacts)
-            : JSON.stringify(contacts, null, 2);
-
-        return {
-          content: [{ type: "text", text: textContent }],
-          structuredContent: { contacts, count: contacts.length, page: params.page },
-        };
-      } catch (error) {
-        return {
-          content: [{ type: "text", text: handleApiError(error) }],
-          isError: true,
-        };
-      }
-    }
-  );
-
-  // Get Contact
-  server.registerTool(
-    "holded_invoicing_get_contact",
-    {
-      title: "Get Holded Contact",
-      description: `Get a specific contact by ID from Holded.
+      get: `Get a specific contact by ID from Holded.
 
 Args:
   - contact_id (string): The contact ID to retrieve (required)
@@ -163,46 +148,7 @@ Args:
 
 Returns:
   Contact details including name, email, phone, addresses, and custom fields.`,
-      inputSchema: GetContactInputSchema,
-      annotations: {
-        readOnlyHint: true,
-        destructiveHint: false,
-        idempotentHint: true,
-        openWorldHint: true,
-      },
-    },
-    async (params: GetContactInput) => {
-      try {
-        const contact = await makeApiRequest<Contact>(
-          "invoicing",
-          `contacts/${params.contact_id}`,
-          "GET"
-        );
-
-        const textContent =
-          params.response_format === ResponseFormat.MARKDOWN
-            ? formatContactMarkdown(contact)
-            : JSON.stringify(contact, null, 2);
-
-        return {
-          content: [{ type: "text", text: textContent }],
-          structuredContent: toStructuredContent(contact),
-        };
-      } catch (error) {
-        return {
-          content: [{ type: "text", text: handleApiError(error) }],
-          isError: true,
-        };
-      }
-    }
-  );
-
-  // Create Contact
-  server.registerTool(
-    "holded_invoicing_create_contact",
-    {
-      title: "Create Holded Contact",
-      description: `Create a new contact in Holded.
+      create: `Create a new contact in Holded.
 
 Args:
   - name (string): Contact name (required)
@@ -213,47 +159,7 @@ Args:
 
 Returns:
   The created contact with its assigned ID.`,
-      inputSchema: CreateContactInputSchema,
-      annotations: {
-        readOnlyHint: false,
-        destructiveHint: false,
-        idempotentHint: false,
-        openWorldHint: true,
-      },
-    },
-    async (params: CreateContactInput) => {
-      try {
-        const contact = await makeApiRequest<Contact>(
-          "invoicing",
-          "contacts",
-          "POST",
-          params
-        );
-
-        return {
-          content: [
-            {
-              type: "text",
-              text: `Contact created successfully.\n\n${JSON.stringify(contact, null, 2)}`,
-            },
-          ],
-          structuredContent: toStructuredContent(contact),
-        };
-      } catch (error) {
-        return {
-          content: [{ type: "text", text: handleApiError(error) }],
-          isError: true,
-        };
-      }
-    }
-  );
-
-  // Update Contact
-  server.registerTool(
-    "holded_invoicing_update_contact",
-    {
-      title: "Update Holded Contact",
-      description: `Update an existing contact in Holded. Only provided fields will be updated.
+      update: `Update an existing contact in Holded. Only provided fields will be updated.
 
 Args:
   - contact_id (string): The contact ID to update (required)
@@ -264,150 +170,51 @@ Args:
 
 Returns:
   The updated contact.`,
-      inputSchema: UpdateContactInputSchema,
-      annotations: {
-        readOnlyHint: false,
-        destructiveHint: false,
-        idempotentHint: true,
-        openWorldHint: true,
-      },
-    },
-    async (params: UpdateContactInput) => {
-      try {
-        const { contact_id, ...updateData } = params;
-        const contact = await makeApiRequest<Contact>(
-          "invoicing",
-          `contacts/${contact_id}`,
-          "PUT",
-          updateData
-        );
-
-        return {
-          content: [
-            {
-              type: "text",
-              text: `Contact updated successfully.\n\n${JSON.stringify(contact, null, 2)}`,
-            },
-          ],
-          structuredContent: toStructuredContent(contact),
-        };
-      } catch (error) {
-        return {
-          content: [{ type: "text", text: handleApiError(error) }],
-          isError: true,
-        };
-      }
-    }
-  );
-
-  // Delete Contact
-  server.registerTool(
-    "holded_invoicing_delete_contact",
-    {
-      title: "Delete Holded Contact",
-      description: `Delete a contact from Holded.
+      delete: `Delete a contact from Holded.
 
 Args:
   - contact_id (string): The contact ID to delete (required)
 
 Returns:
   Confirmation of deletion.`,
-      inputSchema: DeleteContactInputSchema,
-      annotations: {
-        readOnlyHint: false,
-        destructiveHint: true,
-        idempotentHint: true,
-        openWorldHint: true,
-      },
     },
-    async (params: DeleteContactInput) => {
-      try {
-        await makeApiRequest<void>(
-          "invoicing",
-          `contacts/${params.contact_id}`,
-          "DELETE"
-        );
+    formatters: {
+      list: formatContactsMarkdown,
+      single: formatContactMarkdown,
+    },
+  });
 
-        return {
-          content: [
-            {
-              type: "text",
-              text: `Contact ${params.contact_id} deleted successfully.`,
-            },
-          ],
-          structuredContent: { deleted: true, id: params.contact_id },
-        };
-      } catch (error) {
-        return {
-          content: [{ type: "text", text: handleApiError(error) }],
-          isError: true,
-        };
-      }
-    }
-  );
-
-  // List Contact Groups
-  server.registerTool(
-    "holded_invoicing_list_contact_groups",
-    {
-      title: "List Holded Contact Groups",
-      description: `List all contact groups from Holded.
+  // ── Contact Groups CRUD via factory ───────────────────
+  registerCrudTools<ContactGroup>(server, {
+    module: "invoicing",
+    toolPrefix: "holded_invoicing",
+    resource: "contact_group",
+    resourcePlural: "contact_groups",
+    endpoint: "contactgroups",
+    idParam: "group_id",
+    schemas: {
+      list: ListContactGroupsInputSchema,
+      get: GetContactGroupInputSchema,
+      create: CreateContactGroupInputSchema,
+      update: UpdateContactGroupInputSchema,
+      delete: DeleteContactGroupInputSchema,
+    },
+    titles: {
+      list: "List Holded Contact Groups",
+      get: "Get Holded Contact Group",
+      create: "Create Holded Contact Group",
+      update: "Update Holded Contact Group",
+      delete: "Delete Holded Contact Group",
+    },
+    descriptions: {
+      list: `List all contact groups from Holded.
 
 Args:
   - response_format ('json' | 'markdown'): Output format (default: 'json')
 
 Returns:
   Array of contact groups with id and name.`,
-      inputSchema: ListContactGroupsInputSchema,
-      annotations: {
-        readOnlyHint: true,
-        destructiveHint: false,
-        idempotentHint: true,
-        openWorldHint: true,
-      },
-    },
-    async (params: ListContactGroupsInput) => {
-      try {
-        const groups = await makeApiRequest<ContactGroup[]>(
-          "invoicing",
-          "contactgroups",
-          "GET"
-        );
-
-        let textContent: string;
-        if (params.response_format === ResponseFormat.MARKDOWN) {
-          if (!groups.length) {
-            textContent = "No contact groups found.";
-          } else {
-            const lines = ["# Contact Groups", "", `Found ${groups.length} groups:`, ""];
-            for (const group of groups) {
-              lines.push(`- **${group.name}** (ID: ${group.id})`);
-            }
-            textContent = lines.join("\n");
-          }
-        } else {
-          textContent = JSON.stringify(groups, null, 2);
-        }
-
-        return {
-          content: [{ type: "text", text: textContent }],
-          structuredContent: { groups, count: groups.length },
-        };
-      } catch (error) {
-        return {
-          content: [{ type: "text", text: handleApiError(error) }],
-          isError: true,
-        };
-      }
-    }
-  );
-
-  // Get Contact Group
-  server.registerTool(
-    "holded_invoicing_get_contact_group",
-    {
-      title: "Get Holded Contact Group",
-      description: `Get a specific contact group by ID from Holded.
+      get: `Get a specific contact group by ID from Holded.
 
 Args:
   - group_id (string): The contact group ID to retrieve (required)
@@ -415,46 +222,7 @@ Args:
 
 Returns:
   Contact group details.`,
-      inputSchema: GetContactGroupInputSchema,
-      annotations: {
-        readOnlyHint: true,
-        destructiveHint: false,
-        idempotentHint: true,
-        openWorldHint: true,
-      },
-    },
-    async (params: GetContactGroupInput) => {
-      try {
-        const group = await makeApiRequest<ContactGroup>(
-          "invoicing",
-          `contactgroups/${params.group_id}`,
-          "GET"
-        );
-
-        const textContent =
-          params.response_format === ResponseFormat.MARKDOWN
-            ? `# ${group.name}\n\n**ID**: ${group.id}`
-            : JSON.stringify(group, null, 2);
-
-        return {
-          content: [{ type: "text", text: textContent }],
-          structuredContent: toStructuredContent(group),
-        };
-      } catch (error) {
-        return {
-          content: [{ type: "text", text: handleApiError(error) }],
-          isError: true,
-        };
-      }
-    }
-  );
-
-  // Create Contact Group
-  server.registerTool(
-    "holded_invoicing_create_contact_group",
-    {
-      title: "Create Holded Contact Group",
-      description: `Create a new contact group in Holded.
+      create: `Create a new contact group in Holded.
 
 Args:
   - name (string): Contact group name (required)
@@ -462,47 +230,7 @@ Args:
 
 Returns:
   The created contact group with its assigned ID.`,
-      inputSchema: CreateContactGroupInputSchema,
-      annotations: {
-        readOnlyHint: false,
-        destructiveHint: false,
-        idempotentHint: false,
-        openWorldHint: true,
-      },
-    },
-    async (params: CreateContactGroupInput) => {
-      try {
-        const group = await makeApiRequest<ContactGroup>(
-          "invoicing",
-          "contactgroups",
-          "POST",
-          params
-        );
-
-        return {
-          content: [
-            {
-              type: "text",
-              text: `Contact group created successfully.\n\n${JSON.stringify(group, null, 2)}`,
-            },
-          ],
-          structuredContent: toStructuredContent(group),
-        };
-      } catch (error) {
-        return {
-          content: [{ type: "text", text: handleApiError(error) }],
-          isError: true,
-        };
-      }
-    }
-  );
-
-  // Update Contact Group
-  server.registerTool(
-    "holded_invoicing_update_contact_group",
-    {
-      title: "Update Holded Contact Group",
-      description: `Update an existing contact group in Holded. Only provided fields will be updated.
+      update: `Update an existing contact group in Holded. Only provided fields will be updated.
 
 Args:
   - group_id (string): The contact group ID to update (required)
@@ -511,87 +239,21 @@ Args:
 
 Returns:
   The updated contact group.`,
-      inputSchema: UpdateContactGroupInputSchema,
-      annotations: {
-        readOnlyHint: false,
-        destructiveHint: false,
-        idempotentHint: true,
-        openWorldHint: true,
-      },
-    },
-    async (params: UpdateContactGroupInput) => {
-      try {
-        const { group_id, ...updateData } = params;
-        const group = await makeApiRequest<ContactGroup>(
-          "invoicing",
-          `contactgroups/${group_id}`,
-          "PUT",
-          updateData
-        );
-
-        return {
-          content: [
-            {
-              type: "text",
-              text: `Contact group updated successfully.\n\n${JSON.stringify(group, null, 2)}`,
-            },
-          ],
-          structuredContent: toStructuredContent(group),
-        };
-      } catch (error) {
-        return {
-          content: [{ type: "text", text: handleApiError(error) }],
-          isError: true,
-        };
-      }
-    }
-  );
-
-  // Delete Contact Group
-  server.registerTool(
-    "holded_invoicing_delete_contact_group",
-    {
-      title: "Delete Holded Contact Group",
-      description: `Delete a contact group from Holded.
+      delete: `Delete a contact group from Holded.
 
 Args:
   - group_id (string): The contact group ID to delete (required)
 
 Returns:
   Confirmation of deletion.`,
-      inputSchema: DeleteContactGroupInputSchema,
-      annotations: {
-        readOnlyHint: false,
-        destructiveHint: true,
-        idempotentHint: true,
-        openWorldHint: true,
-      },
     },
-    async (params: DeleteContactGroupInput) => {
-      try {
-        await makeApiRequest<void>(
-          "invoicing",
-          `contactgroups/${params.group_id}`,
-          "DELETE"
-        );
+    formatters: {
+      list: formatContactGroupsMarkdown,
+      single: formatContactGroupMarkdown,
+    },
+  });
 
-        return {
-          content: [
-            {
-              type: "text",
-              text: `Contact group ${params.group_id} deleted successfully.`,
-            },
-          ],
-          structuredContent: { deleted: true, id: params.group_id },
-        };
-      } catch (error) {
-        return {
-          content: [{ type: "text", text: handleApiError(error) }],
-          isError: true,
-        };
-      }
-    }
-  );
+  // ── Manual tools (attachment-specific endpoints) ──────
 
   // List Contact Attachments
   server.registerTool(
