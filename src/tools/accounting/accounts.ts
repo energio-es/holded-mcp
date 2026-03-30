@@ -78,14 +78,12 @@ export function registerAccountTools(server: McpServer): void {
 
 Returns paginated list of accounting accounts. Use page parameter to navigate through results.
 
+For date-scoped account balances (debit/credit/balance totals for a specific period), use holded_accounting_list_account_balances instead.
+
 Args:
   - page (number): Page number for pagination (default: 1, max 500 items per page)
   - response_format ('json' | 'markdown'): Output format (default: 'json')
   - include_empty (boolean): Include empty accounts in the results (default: true)
-  - starttmp (number): Starting timestamp as Unix timestamp (optional, filters by account activity date)
-  - endtmp (number): Ending timestamp as Unix timestamp (optional, filters by account activity date)
-
-Note: When using starttmp/endtmp, the returned debit/credit/balance totals may include entries from outside the requested date range due to a known Holded API limitation. For accurate date-scoped totals, use holded_accounting_account_balances instead.
 
 Returns:
   Array of accounting accounts with id, code, name, type, and parent account information.`,
@@ -137,8 +135,6 @@ Returns:
     listQueryParams: (params) => {
       const qp: Record<string, unknown> = {};
       if (params.include_empty !== undefined) qp.includeEmpty = params.include_empty ? 1 : 0;
-      if (params.starttmp !== undefined) qp.starttmp = params.starttmp;
-      if (params.endtmp !== undefined) qp.endtmp = params.endtmp;
       return qp;
     },
   });

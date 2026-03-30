@@ -11,27 +11,12 @@ import {
 
 /**
  * List accounting accounts input schema
- * 
- * Note: The API also supports date filtering via starttmp and endtmp parameters.
  */
 export const ListAccountingAccountsInputSchema = z.strictObject({
     page: PaginationSchema.shape.page,
     response_format: ResponseFormatSchema,
     include_empty: z.boolean().optional().default(true).describe("Include empty accounts in the results (default: true)"),
-    starttmp: z.number().int().positive().optional().describe("Starting timestamp as Unix timestamp (optional, filters by account activity date)"),
-    endtmp: z.number().int().positive().optional().describe("Ending timestamp as Unix timestamp (optional, filters by account activity date)"),
-  }).refine(
-    (data) => {
-      // Only validate if both are provided
-      if (data.starttmp !== undefined && data.endtmp !== undefined) {
-        return data.starttmp <= data.endtmp;
-      }
-      return true;
-    },
-    {
-      message: "starttmp must be less than or equal to endtmp (start date cannot be after end date)",
-    }
-  )
+  })
 
 export type ListAccountingAccountsInput = z.infer<typeof ListAccountingAccountsInputSchema>;
 
