@@ -431,6 +431,17 @@ describe("registerCrudTools — update", () => {
       openWorldHint: true,
     });
   });
+
+  it("handles API errors", async () => {
+    mockMakeApiRequest.mockRejectedValue(new Error("not found"));
+
+    registerCrudTools(server as any, createFullCrudConfig());
+    const handler = server.tools.get("holded_invoicing_update_widget")!.handler;
+    const result = await handler({ widget_id: "abc123", name: "Test", response_format: ResponseFormat.JSON });
+
+    expect(result.isError).toBe(true);
+    expect(result.content[0].text).toContain("not found");
+  });
 });
 
 describe("registerCrudTools — delete", () => {
