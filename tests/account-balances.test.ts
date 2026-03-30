@@ -3,7 +3,7 @@
  * Uses synthetic data only — no real account numbers or amounts.
  */
 
-import { describe, it, expect } from '@jest/globals';
+import { describe, it, expect } from 'vitest';
 import { filterLeakedEntries, aggregateByAccount } from '../src/tools/accounting/account-balances.js';
 import type { LedgerEntryLine } from '../src/types.js';
 
