@@ -59,6 +59,23 @@ describe("buildToolResponse", () => {
       structuredContent: toStructuredContent(data),
     });
   });
+
+  it("uses structuredContent override when provided", () => {
+    const data = [
+      { id: "1", name: "A" },
+      { id: "2", name: "B" },
+    ];
+    const formatter = (d: typeof data) =>
+      d.map((item) => `- ${item.name}`).join("\n");
+    const override = { items: data, count: 2, page: 1 };
+
+    const result = buildToolResponse(data, ResponseFormat.MARKDOWN, formatter, override);
+
+    expect(result).toEqual({
+      content: [{ type: "text", text: "- A\n- B" }],
+      structuredContent: override,
+    });
+  });
 });
 
 describe("withErrorHandling", () => {
@@ -96,6 +113,18 @@ describe("withErrorHandling", () => {
     await wrapped(params);
 
     expect(handler).toHaveBeenCalledWith(params);
+  });
+
+  it("accepts unknown input and casts to Record<string, unknown>", async () => {
+    const handler = vi.fn().mockResolvedValue({
+      content: [{ type: "text", text: "ok" }],
+    });
+    const wrapped = withErrorHandling(handler);
+    const input: unknown = { foo: "bar" };
+
+    await wrapped(input);
+
+    expect(handler).toHaveBeenCalledWith({ foo: "bar" });
   });
 });
 
