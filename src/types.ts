@@ -636,7 +636,7 @@ export interface LedgerEntryLine {
 
 /**
  * Aggregated account balance computed from ledger entries.
- * Output of holded_accounting_account_balances tool.
+ * Output of holded_accounting_list_account_balances tool.
  */
 export interface AccountBalance {
   num: number;
