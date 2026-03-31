@@ -65,7 +65,7 @@ function getEnabledModules(): ModuleName[] {
  * Create and configure the MCP server
  */
 const server = new McpServer({
-  name: "holded-mcp-server",
+  name: "@energio/holded-mcp",
   version: "1.0.0",
 });
 
