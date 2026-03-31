@@ -28,17 +28,17 @@
     "mcp-server",
     "model-context-protocol"
   ],
-  "mcpName": "io.github.energio-es/holded-mcp-server",
+  "mcpName": "io.github.energio-es/holded-mcp",
   "author": "Andrei Baybaratskiy <andrei@energio.es>",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/energio-es/holded-mcp-server.git"
+    "url": "git+https://github.com/energio-es/holded-mcp.git"
   },
   "bugs": {
-    "url": "https://github.com/energio-es/holded-mcp-server/issues"
+    "url": "https://github.com/energio-es/holded-mcp/issues"
   },
-  "homepage": "https://github.com/energio-es/holded-mcp-server#readme",
+  "homepage": "https://github.com/energio-es/holded-mcp#readme",
   "files": [
     "dist",
     "README.md",

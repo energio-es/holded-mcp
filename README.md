@@ -2,7 +2,7 @@
 
 [![npm version](https://img.shields.io/npm/v/@energio%2Fholded-mcp.svg)](https://www.npmjs.com/package/@energio/holded-mcp)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![CI](https://github.com/energio-es/holded-mcp-server/actions/workflows/ci.yml/badge.svg)](https://github.com/energio-es/holded-mcp-server/actions/workflows/ci.yml)
+[![CI](https://github.com/energio-es/holded-mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/energio-es/holded-mcp/actions/workflows/ci.yml)
 [![Node.js Version](https://img.shields.io/badge/node-%3E%3D20-brightgreen.svg)](package.json)
 
 A Model Context Protocol (MCP) server for integrating with the Holded API. This server provides comprehensive access to Holded's business management platform, including invoicing, CRM, projects, accounting, and team functionality.
@@ -970,8 +970,8 @@ const invoice = await holded_invoicing_create_document({
 If you want to build from source (for development or contributions):
 
 ```bash
-git clone https://github.com/energio-es/holded-mcp-server.git
-cd holded-mcp-server
+git clone https://github.com/energio-es/holded-mcp.git
+cd holded-mcp
 npm install
 npm run build
 ```
@@ -983,7 +983,7 @@ Then use the built server in your MCP client configuration:
   "mcpServers": {
     "holded": {
       "command": "node",
-      "args": ["/absolute/path/to/holded-mcp-server/dist/index.js"],
+      "args": ["/absolute/path/to/holded-mcp/dist/index.js"],
       "env": {
         "HOLDED_API_KEY": "your_api_key_here"
       }
@@ -1034,7 +1034,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## Support
 
 - **Holded API Documentation**: https://developers.holded.com/reference
-- **Issues**: [GitHub Issues](https://github.com/energio-es/holded-mcp-server/issues) - *Response time: 1-2 weeks*
-- **Discussions**: [GitHub Discussions](https://github.com/energio-es/holded-mcp-server/discussions)
+- **Issues**: [GitHub Issues](https://github.com/energio-es/holded-mcp/issues) - *Response time: 1-2 weeks*
+- **Discussions**: [GitHub Discussions](https://github.com/energio-es/holded-mcp/discussions)
 - **Security**: [Report a Vulnerability](SECURITY.md) - *Response time: 72 hours*
 

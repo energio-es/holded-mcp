@@ -80,5 +80,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Respects `Retry-After` header
 - Maximum 3 retry attempts with exponential backoff
 
-[Unreleased]: https://github.com/energio-es/holded-mcp-server/compare/v1.0.0...HEAD
-[1.0.0]: https://github.com/energio-es/holded-mcp-server/releases/tag/v1.0.0
+[Unreleased]: https://github.com/energio-es/holded-mcp/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/energio-es/holded-mcp/releases/tag/v1.0.0
