@@ -161,7 +161,7 @@ export function registerCrudTools<T>(server: McpServer, config: CrudToolConfig<T
         },
       },
       withErrorHandling(async (params) => {
-        const { response_format, ...body } = params;
+        const { response_format: _response_format, ...body } = params;
         const requestBody = bodyTransform ? bodyTransform(body) : body;
         const item = await makeApiRequest<T>(
           module,
@@ -200,7 +200,7 @@ export function registerCrudTools<T>(server: McpServer, config: CrudToolConfig<T
       },
       withErrorHandling(async (params) => {
         const id = params[idParam] as string;
-        const { [idParam]: _, response_format, ...updateData } = params;
+        const { [idParam]: _id, response_format: _rf, ...updateData } = params;
         const requestBody = bodyTransform ? bodyTransform(updateData) : updateData;
         const item = await makeApiRequest<T>(
           module,

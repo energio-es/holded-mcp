@@ -82,7 +82,7 @@ async function main(): Promise<void> {
   // Validate API key is available
   try {
     getApiKey();
-  } catch (error) {
+  } catch {
     console.error("ERROR: HOLDED_API_KEY environment variable is required.");
     console.error("Get your API key from https://app.holded.com/api");
     process.exit(1);

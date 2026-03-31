@@ -9,7 +9,6 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import * as z from 'zod';
 
 // Import schemas
 import { CreateEmployeeInputSchema } from '../src/schemas/team/employees.js';
@@ -49,7 +48,6 @@ import {
 
 // Common schemas
 import { PaginationSchema, TimestampSchema, AddressSchema, ShippingAddressSchema, NumberingSeriesSchema, ContactPersonSchema } from '../src/schemas/common.js';
-import { ContactDefaultsSchema } from '../src/schemas/invoicing/contacts.js';
 import {
   validAccountBalances,
   accountBalancesWithFilter,

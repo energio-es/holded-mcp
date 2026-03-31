@@ -25,7 +25,6 @@ import {
   isRetryableError,
   getRetryAfterHeader,
   buildPaginationParams,
-  sleep,
   _resetForTesting,
 } from '../src/services/api.js';
 
