@@ -117,6 +117,9 @@ export function datesToApiRange(
 ): { starttmp: number; endtmp: number } {
   const starttmp = dateToMidnightCET(startDate);
 
+  // Validate endDate before computing next day (catches format/existence errors early)
+  dateToMidnightCET(endDate);
+
   // Compute endDate + 1 day
   const [ey, em, ed] = endDate.split('-').map(Number);
   const nextDay = new Date(Date.UTC(ey, em - 1, ed + 1, 12, 0, 0));

@@ -4,7 +4,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { dateToMidnightCET, datesToApiRange } from '../src/utils/timezone.js';
+import { dateToMidnightCET, datesToApiRange, resolveTimestamps } from '../src/utils/timezone.js';
 
 describe('dateToMidnightCET', () => {
   it('should convert a winter date to midnight CET (UTC+1)', () => {
@@ -91,5 +91,27 @@ describe('datesToApiRange', () => {
     const range = datesToApiRange('2025-03-01', '2025-04-30');
     expect(range.starttmp).toBeGreaterThan(0);
     expect(range.endtmp).toBeGreaterThan(range.starttmp);
+  });
+});
+
+describe('resolveTimestamps', () => {
+  it('should resolve date mode to CET-aligned timestamps', () => {
+    const result = resolveTimestamps({
+      raw_timestamps: false,
+      start_date: '2025-01-01',
+      end_date: '2025-12-31',
+    });
+    expect(result.starttmp).toBe(1735686000);
+    expect(result.endtmp).toBe(1767222000);
+  });
+
+  it('should pass through raw timestamps unchanged', () => {
+    const result = resolveTimestamps({
+      raw_timestamps: true,
+      starttmp: 1234567890,
+      endtmp: 1234567999,
+    });
+    expect(result.starttmp).toBe(1234567890);
+    expect(result.endtmp).toBe(1234567999);
   });
 });
