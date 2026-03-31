@@ -4,16 +4,20 @@
 
 import { z } from "zod";
 import { ResponseFormatSchema } from "../common.js";
+import {
+  accountingDateRangeFields,
+  accountingDateRangeRefinement,
+  ACCOUNTING_DATE_RANGE_ERROR,
+} from "./date-range.js";
 
 /**
  * Account Balances input schema
  *
- * Both starttmp and endtmp are required — the tool aggregates ledger entries
- * within this date range and filters out cross-fiscal-year leakage.
+ * Combines shared date range fields with account-specific options.
+ * Accepts either date mode (YYYY-MM-DD) or raw timestamp mode.
  */
 export const AccountBalancesInputSchema = z.strictObject({
-  starttmp: z.number().int().positive().describe("Period start as Unix timestamp (required)"),
-  endtmp: z.number().int().positive().describe("Period end as Unix timestamp (required)"),
+  ...accountingDateRangeFields,
   account_filter: z
     .array(z.number().int().positive())
     .optional()
@@ -24,11 +28,6 @@ export const AccountBalancesInputSchema = z.strictObject({
     .default(false)
     .describe("Include opening balance entry in totals (default: false, set true for balance sheet)"),
   response_format: ResponseFormatSchema,
-}).refine(
-  (data) => data.starttmp <= data.endtmp,
-  {
-    message: "starttmp must be less than or equal to endtmp (start date cannot be after end date)",
-  }
-);
+}).refine(accountingDateRangeRefinement, { message: ACCOUNTING_DATE_RANGE_ERROR });
 
 export type AccountBalancesInput = z.infer<typeof AccountBalancesInputSchema>;

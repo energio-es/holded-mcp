@@ -36,27 +36,42 @@ export const invalidEntryLineNegativeAccount = {
   debit: 1000,
 };
 
+// Account Balances — date mode (default)
 export const validAccountBalances = {
-  starttmp: 1730109600,
-  endtmp: 1730196000,
+  start_date: '2025-01-01',
+  end_date: '2025-12-31',
 };
 
 export const accountBalancesWithFilter = {
-  starttmp: 1730109600,
-  endtmp: 1730196000,
+  start_date: '2025-01-01',
+  end_date: '2025-12-31',
   account_filter: [62900001, 62900002],
   include_opening: true,
 };
 
+// Account Balances — raw timestamp mode
+export const validAccountBalancesRaw = {
+  starttmp: 1735686000,
+  endtmp: 1767222000,
+  raw_timestamps: true,
+};
+
+// Account Balances — invalid cases
 export const invalidAccountBalancesEndBeforeStart = {
-  starttmp: 1730196000,
-  endtmp: 1730109600,
+  start_date: '2025-12-31',
+  end_date: '2025-01-01',
 };
 
 export const invalidAccountBalancesMissingStart = {
-  endtmp: 1730196000,
+  end_date: '2025-12-31',
 };
 
 export const invalidAccountBalancesMissingEnd = {
-  starttmp: 1730109600,
+  start_date: '2025-01-01',
+};
+
+export const invalidAccountBalancesMixedMode = {
+  start_date: '2025-01-01',
+  end_date: '2025-12-31',
+  starttmp: 1735686000,
 };

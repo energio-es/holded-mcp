@@ -54,9 +54,11 @@ import { PaginationSchema, TimestampSchema, AddressSchema, ShippingAddressSchema
 import {
   validAccountBalances,
   accountBalancesWithFilter,
+  validAccountBalancesRaw,
   invalidAccountBalancesEndBeforeStart,
   invalidAccountBalancesMissingStart,
   invalidAccountBalancesMissingEnd,
+  invalidAccountBalancesMixedMode,
 } from './fixtures/accounting.js';
 
 describe('Schema Validation Against OpenAPI Specs', () => {
@@ -1144,7 +1146,7 @@ describe('Schema Validation Against OpenAPI Specs', () => {
   });
 
   describe('Account Balances', () => {
-    it('should accept valid starttmp and endtmp', () => {
+    it('should accept date mode with start_date and end_date', () => {
       const result = AccountBalancesInputSchema.safeParse(validAccountBalances);
       expect(result.success).toBe(true);
     });
@@ -1158,18 +1160,29 @@ describe('Schema Validation Against OpenAPI Specs', () => {
       }
     });
 
-    it('should reject when endtmp is before starttmp', () => {
-      const result = AccountBalancesInputSchema.safeParse(invalidAccountBalancesEndBeforeStart);
-      expect(result.success).toBe(false);
+    it('should accept raw timestamp mode', () => {
+      const result = AccountBalancesInputSchema.safeParse(validAccountBalancesRaw);
+      expect(result.success).toBe(true);
     });
 
-    it('should require starttmp', () => {
+    it('should reject when end_date is before start_date via datesToApiRange', () => {
+      // Date ordering is validated at the tool level by datesToApiRange, not in the schema.
+      const result = AccountBalancesInputSchema.safeParse(invalidAccountBalancesEndBeforeStart);
+      expect(result.success).toBe(true);
+    });
+
+    it('should reject when start_date is missing', () => {
       const result = AccountBalancesInputSchema.safeParse(invalidAccountBalancesMissingStart);
       expect(result.success).toBe(false);
     });
 
-    it('should require endtmp', () => {
+    it('should reject when end_date is missing', () => {
       const result = AccountBalancesInputSchema.safeParse(invalidAccountBalancesMissingEnd);
+      expect(result.success).toBe(false);
+    });
+
+    it('should reject mixed mode (dates + timestamps)', () => {
+      const result = AccountBalancesInputSchema.safeParse(invalidAccountBalancesMixedMode);
       expect(result.success).toBe(false);
     });
 

@@ -7,23 +7,23 @@ import {
   PaginationSchema,
   ResponseFormatSchema,
 } from "../common.js";
+import {
+  accountingDateRangeFields,
+  accountingDateRangeRefinement,
+  ACCOUNTING_DATE_RANGE_ERROR,
+} from "./date-range.js";
 
 /**
  * List daily ledger entries input schema
  *
- * The API requires starttmp and endtmp (requests without them are rejected).
+ * Combines shared date range fields with pagination.
+ * The API requires starttmp and endtmp (resolved from dates internally).
  */
 export const ListDailyLedgerInputSchema = z.strictObject({
-    starttmp: z.number().int().positive().describe("Starting timestamp as Unix timestamp (required, filters entries from this date)"),
-    endtmp: z.number().int().positive().describe("Ending timestamp as Unix timestamp (required, filters entries until this date)"),
-    page: PaginationSchema.shape.page,
-    response_format: ResponseFormatSchema,
-  }).refine(
-    (data) => data.starttmp <= data.endtmp,
-    {
-      message: "starttmp must be less than or equal to endtmp (start date cannot be after end date)",
-    }
-  )
+  ...accountingDateRangeFields,
+  page: PaginationSchema.shape.page,
+  response_format: ResponseFormatSchema,
+}).refine(accountingDateRangeRefinement, { message: ACCOUNTING_DATE_RANGE_ERROR });
 
 export type ListDailyLedgerInput = z.infer<typeof ListDailyLedgerInputSchema>;
 
