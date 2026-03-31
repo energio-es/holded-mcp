@@ -94,6 +94,23 @@ function getUtcOffsetMs(utcMs: number): number {
  * - starttmp = midnight CET of startDate (inclusive, matches API's >= filter)
  * - endtmp = midnight CET of (endDate + 1 day) (exclusive, matches API's < filter)
  */
+/**
+ * Resolve date range input to { starttmp, endtmp } timestamps.
+ * Supports both date mode (YYYY-MM-DD) and raw timestamp mode.
+ */
+export function resolveTimestamps(params: {
+  raw_timestamps: boolean;
+  starttmp?: number;
+  endtmp?: number;
+  start_date?: string;
+  end_date?: string;
+}): { starttmp: number; endtmp: number } {
+  if (params.raw_timestamps) {
+    return { starttmp: params.starttmp!, endtmp: params.endtmp! };
+  }
+  return datesToApiRange(params.start_date!, params.end_date!);
+}
+
 export function datesToApiRange(
   startDate: string,
   endDate: string,

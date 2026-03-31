@@ -15,7 +15,7 @@ import {
   AccountBalancesInputSchema,
   AccountBalancesInput,
 } from "../../schemas/accounting/account-balances.js";
-import { datesToApiRange } from "../../utils/timezone.js";
+import { resolveTimestamps } from "../../utils/timezone.js";
 
 /** Maximum entry lines per page returned by the daily ledger API (docs say 500, actual is 250) */
 const LEDGER_PAGE_SIZE = 250;
@@ -28,16 +28,6 @@ interface AccountMetadata {
   name: string;
   group: string;
   [key: string]: unknown;
-}
-
-/**
- * Resolve the date range input to { starttmp, endtmp } timestamps.
- */
-function resolveTimestamps(params: AccountBalancesInput): { starttmp: number; endtmp: number } {
-  if (params.raw_timestamps) {
-    return { starttmp: params.starttmp!, endtmp: params.endtmp! };
-  }
-  return datesToApiRange(params.start_date!, params.end_date!);
 }
 
 /**

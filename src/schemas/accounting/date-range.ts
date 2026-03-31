@@ -59,7 +59,7 @@ export function accountingDateRangeRefinement(
   } else {
     if (data.starttmp !== undefined || data.endtmp !== undefined) return false;
     if (data.start_date === undefined || data.end_date === undefined) return false;
-    return true;
+    return data.end_date >= data.start_date;
   }
 }
 

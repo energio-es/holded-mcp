@@ -13,7 +13,7 @@ import {
   ListDailyLedgerInput,
   CreateEntryInput,
 } from "../../schemas/accounting/daily-ledger.js";
-import { datesToApiRange } from "../../utils/timezone.js";
+import { resolveTimestamps } from "../../utils/timezone.js";
 
 /**
  * Register all daily ledger-related tools
@@ -55,16 +55,7 @@ Returns:
       const typedParams = params as unknown as ListDailyLedgerInput;
 
       // Resolve dates to timestamps
-      let starttmp: number;
-      let endtmp: number;
-      if (typedParams.raw_timestamps) {
-        starttmp = typedParams.starttmp!;
-        endtmp = typedParams.endtmp!;
-      } else {
-        const range = datesToApiRange(typedParams.start_date!, typedParams.end_date!);
-        starttmp = range.starttmp;
-        endtmp = range.endtmp;
-      }
+      const { starttmp, endtmp } = resolveTimestamps(typedParams);
 
       const queryParams: Record<string, unknown> = { starttmp, endtmp };
       if (typedParams.page > 1) {

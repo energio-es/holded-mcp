@@ -1165,10 +1165,9 @@ describe('Schema Validation Against OpenAPI Specs', () => {
       expect(result.success).toBe(true);
     });
 
-    it('should reject when end_date is before start_date via datesToApiRange', () => {
-      // Date ordering is validated at the tool level by datesToApiRange, not in the schema.
+    it('should reject when end_date is before start_date', () => {
       const result = AccountBalancesInputSchema.safeParse(invalidAccountBalancesEndBeforeStart);
-      expect(result.success).toBe(true);
+      expect(result.success).toBe(false);
     });
 
     it('should reject when start_date is missing', () => {
