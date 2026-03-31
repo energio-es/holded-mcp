@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Prepare holded-mcp-server for public release on GitHub, npm, and MCP registries.
+**Goal:** Prepare @energio/holded-mcp for public release on GitHub, npm, and MCP registries.
 
 **Architecture:** Update package metadata and README for discoverability, create MCP Registry metadata file, then publish to npm and submit to registries. All changes are configuration/documentation — no source code changes.
 
@@ -74,7 +74,7 @@ Create `server.json` in the project root:
   "packages": [
     {
       "registry_name": "npm",
-      "name": "holded-mcp-server",
+      "name": "@energio/holded-mcp",
       "version": "1.0.0",
       "runtime": "node",
       "runtime_arguments": [],
@@ -133,7 +133,7 @@ git commit -m "chore: add server.json for Official MCP Registry"
 Insert the npm version badge as the first badge on line 3, before the existing License badge. The badge line should become:
 
 ```markdown
-[![npm version](https://img.shields.io/npm/v/holded-mcp-server.svg)](https://www.npmjs.com/package/holded-mcp-server)
+[![npm version](https://img.shields.io/npm/v/@energio%2Fholded-mcp.svg)](https://www.npmjs.com/package/@energio/holded-mcp)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![CI](https://github.com/energio-es/holded-mcp-server/actions/workflows/ci.yml/badge.svg)](https://github.com/energio-es/holded-mcp-server/actions/workflows/ci.yml)
 [![Node.js Version](https://img.shields.io/badge/node-%3E%3D20-brightgreen.svg)](package.json)
@@ -181,7 +181,7 @@ Add the following to your Claude Desktop configuration file:
   "mcpServers": {
     "holded": {
       "command": "npx",
-      "args": ["-y", "holded-mcp-server"],
+      "args": ["-y", "@energio/holded-mcp"],
       "env": {
         "HOLDED_API_KEY": "your_api_key_here"
       }
@@ -197,7 +197,7 @@ Restart Claude Desktop to load the server.
 Add the server with a single command:
 
 ```bash
-claude mcp add holded -- npx -y holded-mcp-server
+claude mcp add holded -- npx -y @energio/holded-mcp
 ```
 
 Then set the API key in your environment:
@@ -219,7 +219,7 @@ Add the following to your Cursor MCP settings file:
   "mcpServers": {
     "holded": {
       "command": "npx",
-      "args": ["-y", "holded-mcp-server"],
+      "args": ["-y", "@energio/holded-mcp"],
       "env": {
         "HOLDED_API_KEY": "your_api_key_here"
       }
@@ -242,7 +242,7 @@ Add the following to your VS Code user settings (`settings.json`) or workspace s
     "servers": {
       "holded": {
         "command": "npx",
-        "args": ["-y", "holded-mcp-server"],
+        "args": ["-y", "@energio/holded-mcp"],
         "env": {
           "HOLDED_API_KEY": "your_api_key_here"
         }
@@ -259,7 +259,7 @@ Add the following to your VS Code user settings (`settings.json`) or workspace s
   "servers": {
     "holded": {
       "command": "npx",
-      "args": ["-y", "holded-mcp-server"],
+      "args": ["-y", "@energio/holded-mcp"],
       "env": {
         "HOLDED_API_KEY": "your_api_key_here"
       }
@@ -281,7 +281,7 @@ Add the following to your Windsurf MCP configuration file:
   "mcpServers": {
     "holded": {
       "command": "npx",
-      "args": ["-y", "holded-mcp-server"],
+      "args": ["-y", "@energio/holded-mcp"],
       "env": {
         "HOLDED_API_KEY": "your_api_key_here"
       }
@@ -295,7 +295,7 @@ Add the following to your Windsurf MCP configuration file:
 Any MCP-compatible agent can use this server via npx. The general configuration requires:
 
 1. **Command**: `npx`
-2. **Arguments**: `["-y", "holded-mcp-server"]`
+2. **Arguments**: `["-y", "@energio/holded-mcp"]`
 3. **Environment variable**: `HOLDED_API_KEY` with your API key
 
 Example configuration:
@@ -305,7 +305,7 @@ Example configuration:
   "mcpServers": {
     "holded": {
       "command": "npx",
-      "args": ["-y", "holded-mcp-server"],
+      "args": ["-y", "@energio/holded-mcp"],
       "env": {
         "HOLDED_API_KEY": "your_api_key_here"
       }
@@ -412,11 +412,11 @@ Expected: Shows the logged-in npm username
 - [ ] **Step 2: Publish**
 
 Run: `npm publish`
-Expected: Package published successfully as `holded-mcp-server@1.0.0`
+Expected: Package published successfully as `@energio/holded-mcp@1.0.0`
 
 - [ ] **Step 3: Verify on npm**
 
-Run: `npm view holded-mcp-server`
+Run: `npm view @energio/holded-mcp`
 Expected: Shows package metadata with correct version, description, keywords
 
 ---
@@ -466,7 +466,7 @@ Complete MCP server implementation with 143 tools covering all Holded API endpoi
 ### Installation
 
 ```
-npx -y holded-mcp-server
+npx -y @energio/holded-mcp
 ```
 
 See [README](https://github.com/energio-es/holded-mcp-server#readme) for full setup instructions.

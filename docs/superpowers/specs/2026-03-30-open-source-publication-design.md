@@ -1,6 +1,6 @@
 # Open Source Publication Preparation
 
-Prepare the holded-mcp-server project for public release on GitHub, npm, and MCP registries.
+Prepare the @energio/holded-mcp project for public release on GitHub, npm, and MCP registries.
 
 ## Context
 
@@ -24,7 +24,7 @@ The project is a TypeScript MCP server providing 143 tools for the Holded busine
 
 **Badges** — add npm version badge as the first badge:
 ```markdown
-[![npm version](https://img.shields.io/npm/v/holded-mcp-server.svg)](https://www.npmjs.com/package/holded-mcp-server)
+[![npm version](https://img.shields.io/npm/v/@energio%2Fholded-mcp.svg)](https://www.npmjs.com/package/@energio/holded-mcp)
 ```
 
 **Installation sections** — expand from 3 to 6 client-specific sections:

@@ -1,6 +1,6 @@
 # Holded MCP Server
 
-[![npm version](https://img.shields.io/npm/v/holded-mcp-server.svg)](https://www.npmjs.com/package/holded-mcp-server)
+[![npm version](https://img.shields.io/npm/v/@energio%2Fholded-mcp.svg)](https://www.npmjs.com/package/@energio/holded-mcp)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![CI](https://github.com/energio-es/holded-mcp-server/actions/workflows/ci.yml/badge.svg)](https://github.com/energio-es/holded-mcp-server/actions/workflows/ci.yml)
 [![Node.js Version](https://img.shields.io/badge/node-%3E%3D20-brightgreen.svg)](package.json)
@@ -81,7 +81,7 @@ Add the following to your Claude Desktop configuration file:
   "mcpServers": {
     "holded": {
       "command": "npx",
-      "args": ["-y", "holded-mcp-server"],
+      "args": ["-y", "@energio/holded-mcp"],
       "env": {
         "HOLDED_API_KEY": "your_api_key_here"
       }
@@ -97,7 +97,7 @@ Restart Claude Desktop to load the server.
 Add the server with a single command:
 
 ```bash
-claude mcp add holded -- npx -y holded-mcp-server
+claude mcp add holded -- npx -y @energio/holded-mcp
 ```
 
 Then set the API key in your environment:
@@ -119,7 +119,7 @@ Add the following to your Cursor MCP settings file:
   "mcpServers": {
     "holded": {
       "command": "npx",
-      "args": ["-y", "holded-mcp-server"],
+      "args": ["-y", "@energio/holded-mcp"],
       "env": {
         "HOLDED_API_KEY": "your_api_key_here"
       }
@@ -142,7 +142,7 @@ Add the following to your VS Code user settings (`settings.json`) or workspace s
     "servers": {
       "holded": {
         "command": "npx",
-        "args": ["-y", "holded-mcp-server"],
+        "args": ["-y", "@energio/holded-mcp"],
         "env": {
           "HOLDED_API_KEY": "your_api_key_here"
         }
@@ -159,7 +159,7 @@ Add the following to your VS Code user settings (`settings.json`) or workspace s
   "servers": {
     "holded": {
       "command": "npx",
-      "args": ["-y", "holded-mcp-server"],
+      "args": ["-y", "@energio/holded-mcp"],
       "env": {
         "HOLDED_API_KEY": "your_api_key_here"
       }
@@ -181,7 +181,7 @@ Add the following to your Windsurf MCP configuration file:
   "mcpServers": {
     "holded": {
       "command": "npx",
-      "args": ["-y", "holded-mcp-server"],
+      "args": ["-y", "@energio/holded-mcp"],
       "env": {
         "HOLDED_API_KEY": "your_api_key_here"
       }
@@ -195,7 +195,7 @@ Add the following to your Windsurf MCP configuration file:
 Any MCP-compatible agent can use this server via npx. The general configuration requires:
 
 1. **Command**: `npx`
-2. **Arguments**: `["-y", "holded-mcp-server"]`
+2. **Arguments**: `["-y", "@energio/holded-mcp"]`
 3. **Environment variable**: `HOLDED_API_KEY` with your API key
 
 Example configuration:
@@ -205,7 +205,7 @@ Example configuration:
   "mcpServers": {
     "holded": {
       "command": "npx",
-      "args": ["-y", "holded-mcp-server"],
+      "args": ["-y", "@energio/holded-mcp"],
       "env": {
         "HOLDED_API_KEY": "your_api_key_here"
       }
@@ -239,7 +239,7 @@ Example - enable only invoicing module:
   "mcpServers": {
     "holded": {
       "command": "npx",
-      "args": ["-y", "holded-mcp-server"],
+      "args": ["-y", "@energio/holded-mcp"],
       "env": {
         "HOLDED_API_KEY": "your_api_key_here",
         "HOLDED_MODULES": "invoicing"
@@ -265,7 +265,7 @@ Enable debug logging for API requests and retries by setting the `HOLDED_DEBUG` 
   "mcpServers": {
     "holded": {
       "command": "npx",
-      "args": ["-y", "holded-mcp-server"],
+      "args": ["-y", "@energio/holded-mcp"],
       "env": {
         "HOLDED_API_KEY": "your_api_key_here",
         "HOLDED_DEBUG": "true"

@@ -1,11 +1,11 @@
 {
-  "name": "holded-mcp-server",
+  "name": "@energio/holded-mcp",
   "version": "1.0.0",
   "description": "MCP server for Holded API integration - invoicing, CRM, projects, and accounting",
   "type": "module",
   "main": "dist/index.js",
   "bin": {
-    "holded-mcp-server": "dist/index.js"
+    "holded-mcp": "dist/index.js"
   },
   "scripts": {
     "start": "node dist/index.js",
