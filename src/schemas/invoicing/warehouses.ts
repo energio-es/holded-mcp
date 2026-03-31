@@ -7,7 +7,6 @@ import {
   IdSchema,
   PaginationSchema,
   ResponseFormatSchema,
-  OptionalStringSchema,
   AddressSchema,
   OptionalBooleanSchema,
 } from "../common.js";

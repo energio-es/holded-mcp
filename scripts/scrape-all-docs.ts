@@ -127,7 +127,7 @@ async function discoverEndpoints(): Promise<EndpointInfo[]> {
         
         current = current.parentElement;
       }
-    } catch (e) {
+    } catch {
       // Fall back to URL-based detection
     }
     
@@ -172,7 +172,7 @@ async function discoverEndpoints(): Promise<EndpointInfo[]> {
             }
           }
         }
-      } catch (e) {
+      } catch {
         // Use default method
       }
       
@@ -308,7 +308,7 @@ async function scrapeEndpoint(endpoint: EndpointInfo): Promise<string> {
  */
 function saveDoc(markdown: string, endpoint: EndpointInfo, baseDir: string) {
   // Extract slug from URL: /reference/api-key -> api-key
-  const urlPath = endpoint.docUrl.replace(/^https?:\/\/[^\/]+/, ''); // Remove domain if present
+  const urlPath = endpoint.docUrl.replace(/^https?:\/\/[^/]+/, ''); // Remove domain if present
   const slug = urlPath.replace('/reference/', '').replace(/\//g, '-');
   
   const filePath = join(baseDir, `${slug}.md`);
@@ -365,7 +365,7 @@ async function main() {
         completed = progress.completed || 0;
         failed = progress.failed || [];
         console.log(`Resuming from endpoint ${completed + 1}...\n`);
-      } catch (e) {
+      } catch {
         // Start fresh
       }
     }
