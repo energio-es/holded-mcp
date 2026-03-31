@@ -13,6 +13,7 @@ import {
   ListDailyLedgerInput,
   CreateEntryInput,
 } from "../../schemas/accounting/daily-ledger.js";
+import { datesToApiRange } from "../../utils/timezone.js";
 
 /**
  * Register all daily ledger-related tools
@@ -25,13 +26,20 @@ export function registerDailyLedgerTools(server: McpServer): void {
       title: "List Holded Daily Ledger Entries",
       description: `List daily ledger entries from Holded Accounting.
 
-Args:
-  - starttmp (number): Starting timestamp as Unix timestamp (required, filters entries from this date)
-  - endtmp (number): Ending timestamp as Unix timestamp (required, filters entries until this date)
-  - page (number): Page number for pagination (default: 1, max 500 items per page)
+Args (default mode — recommended):
+  - start_date (string): Period start date in YYYY-MM-DD format
+  - end_date (string): Period end date in YYYY-MM-DD format (inclusive)
+
+Args (raw timestamp mode — set raw_timestamps: true):
+  - starttmp (number): Starting Unix timestamp (CET-aligned recommended)
+  - endtmp (number): Ending Unix timestamp (CET-aligned recommended)
+  - raw_timestamps (boolean): Must be true to use timestamp mode
+
+Additional args:
+  - page (number): Page number for pagination (default: 1, max 250 items per page)
   - response_format ('json' | 'markdown'): Output format (default: 'json')
 
-Note: The starttmp and endtmp parameters are required by the API. Results may include entries belonging to adjacent fiscal years whose timestamps fall near the period boundary. Pagination order is non-deterministic.
+Note: Dates are interpreted in Spanish local time (CET/CEST). The API uses a half-open interval [starttmp, endtmp). Pagination order is non-deterministic.
 
 Returns:
   Array of daily ledger entries with date, account, amount, and description.`,
@@ -44,13 +52,23 @@ Returns:
       },
     },
     withErrorHandling(async (params) => {
-      const { starttmp, endtmp, page, response_format } = params as unknown as ListDailyLedgerInput;
-      const queryParams: Record<string, unknown> = {
-        starttmp,
-        endtmp,
-      };
-      if (page > 1) {
-        queryParams.page = page;
+      const typedParams = params as unknown as ListDailyLedgerInput;
+
+      // Resolve dates to timestamps
+      let starttmp: number;
+      let endtmp: number;
+      if (typedParams.raw_timestamps) {
+        starttmp = typedParams.starttmp!;
+        endtmp = typedParams.endtmp!;
+      } else {
+        const range = datesToApiRange(typedParams.start_date!, typedParams.end_date!);
+        starttmp = range.starttmp;
+        endtmp = range.endtmp;
+      }
+
+      const queryParams: Record<string, unknown> = { starttmp, endtmp };
+      if (typedParams.page > 1) {
+        queryParams.page = typedParams.page;
       }
 
       const entries = await makeApiRequest<DailyLedgerEntry[]>(
@@ -62,7 +80,7 @@ Returns:
       );
 
       let textContent: string;
-      if (response_format === ResponseFormat.MARKDOWN) {
+      if (typedParams.response_format === ResponseFormat.MARKDOWN) {
         if (!entries.length) {
           textContent = "No daily ledger entries found.";
         } else {
@@ -84,7 +102,7 @@ Returns:
 
       return {
         content: [{ type: "text", text: textContent }],
-        structuredContent: { entries, count: entries.length, page },
+        structuredContent: { entries, count: entries.length, page: typedParams.page },
       };
     })
   );
