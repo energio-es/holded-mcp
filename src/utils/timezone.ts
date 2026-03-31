@@ -88,13 +88,6 @@ function getUtcOffsetMs(utcMs: number): number {
 }
 
 /**
- * Convert an inclusive date range [startDate, endDate] to the half-open
- * timestamp interval [starttmp, endtmp) that the Holded API expects.
- *
- * - starttmp = midnight CET of startDate (inclusive, matches API's >= filter)
- * - endtmp = midnight CET of (endDate + 1 day) (exclusive, matches API's < filter)
- */
-/**
  * Resolve date range input to { starttmp, endtmp } timestamps.
  * Supports both date mode (YYYY-MM-DD) and raw timestamp mode.
  */
@@ -111,6 +104,13 @@ export function resolveTimestamps(params: {
   return datesToApiRange(params.start_date!, params.end_date!);
 }
 
+/**
+ * Convert an inclusive date range [startDate, endDate] to the half-open
+ * timestamp interval [starttmp, endtmp) that the Holded API expects.
+ *
+ * - starttmp = midnight CET of startDate (inclusive, matches API's >= filter)
+ * - endtmp = midnight CET of (endDate + 1 day) (exclusive, matches API's < filter)
+ */
 export function datesToApiRange(
   startDate: string,
   endDate: string,
