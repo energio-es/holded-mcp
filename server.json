@@ -2,41 +2,39 @@
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "io.github.energio-es/holded-mcp",
   "description": "MCP server for Holded — invoicing, accounting, CRM, projects, and team",
+  "version": "1.0.0",
   "repository": {
     "url": "https://github.com/energio-es/holded-mcp",
     "source": "github"
   },
-  "version_detail": {
-    "version": "1.0.0"
-  },
   "packages": [
     {
-      "registry_name": "npm",
-      "name": "@energio/holded-mcp",
+      "registryType": "npm",
+      "identifier": "@energio/holded-mcp",
       "version": "1.0.0",
-      "runtime": "node",
-      "runtime_arguments": [],
-      "package_arguments": [],
-      "environment_variables": [
+      "runtimeHint": "npx",
+      "runtimeArguments": [],
+      "packageArguments": [],
+      "environmentVariables": [
         {
           "name": "HOLDED_API_KEY",
           "description": "Your Holded API key. Get it from https://app.holded.com/api",
-          "required": true
+          "isRequired": true
         },
         {
           "name": "HOLDED_MODULES",
           "description": "Comma-separated list of modules to enable (invoicing, crm, projects, accounting, team). All enabled by default.",
-          "required": false
+          "isRequired": false
         },
         {
           "name": "HOLDED_RATE_LIMIT_PER_SECOND",
           "description": "API rate limit in requests per second. Default: 10.",
-          "required": false
+          "isRequired": false
         },
         {
           "name": "HOLDED_DEBUG",
           "description": "Set to 'true' to enable debug logging for API requests.",
-          "required": false
+          "isRequired": false
         }
       ],
       "transport": {
