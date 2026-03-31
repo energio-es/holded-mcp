@@ -56,7 +56,7 @@ Create `server.json` in the project root with:
 
 **Repository setup:**
 - Create the repo under `energio-es` org (or make public if it already exists as private)
-- Set description: "MCP server for Holded — invoicing, CRM, projects, accounting, and team"
+- Set description: "MCP server for Holded — invoicing, accounting, CRM, projects, and team"
 - Set repository topics: `mcp`, `mcp-server`, `holded`, `model-context-protocol`, `typescript`
 
 **Release:**

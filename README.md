@@ -5,7 +5,7 @@
 [![CI](https://github.com/energio-es/holded-mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/energio-es/holded-mcp/actions/workflows/ci.yml)
 [![Node.js Version](https://img.shields.io/badge/node-%3E%3D20-brightgreen.svg)](package.json)
 
-A Model Context Protocol (MCP) server for integrating with the Holded API. This server provides comprehensive access to Holded's business management platform, including invoicing, CRM, projects, accounting, and team functionality.
+A Model Context Protocol (MCP) server for integrating with the Holded API. This server provides comprehensive access to Holded's business management platform, including invoicing, accounting, CRM, projects, and team functionality.
 
 ## Table of Contents
 

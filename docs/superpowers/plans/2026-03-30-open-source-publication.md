@@ -63,7 +63,7 @@ Create `server.json` in the project root:
 {
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "io.github.energio-es/holded-mcp",
-  "description": "MCP server for Holded — invoicing, CRM, projects, accounting, and team",
+  "description": "MCP server for Holded — invoicing, accounting, CRM, projects, and team",
   "repository": {
     "url": "https://github.com/energio-es/holded-mcp",
     "source": "github"
@@ -433,7 +433,7 @@ This is a manual step in GitHub Settings > General > Danger Zone > Change reposi
 
 - [ ] **Step 3: Set repository description**
 
-Run: `gh repo edit energio-es/holded-mcp --description "MCP server for Holded — invoicing, CRM, projects, accounting, and team"`
+Run: `gh repo edit energio-es/holded-mcp --description "MCP server for Holded — invoicing, accounting, CRM, projects, and team"`
 
 - [ ] **Step 4: Set repository topics**
 
@@ -518,7 +518,7 @@ Go to `https://glama.ai/mcp/servers` and click "Add Server". Submit the GitHub U
 Go to `https://skillsindex.dev/submit` and fill in:
 - Tool Name: Holded MCP Server
 - GitHub URL: `https://github.com/energio-es/holded-mcp`
-- Description: MCP server for Holded — invoicing, CRM, projects, accounting, and team
+- Description: MCP server for Holded — invoicing, accounting, CRM, projects, and team
 - Category: Finance & Fintech
 - Ecosystem: MCP Server
 
