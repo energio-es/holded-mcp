@@ -1,9 +1,9 @@
 {
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
-  "name": "io.github.energio-es/holded-mcp-server",
+  "name": "io.github.energio-es/holded-mcp",
   "description": "MCP server for Holded — invoicing, CRM, projects, accounting, and team",
   "repository": {
-    "url": "https://github.com/energio-es/holded-mcp-server",
+    "url": "https://github.com/energio-es/holded-mcp",
     "source": "github"
   },
   "version_detail": {

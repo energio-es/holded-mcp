@@ -74,7 +74,7 @@ export const ContactPersonSchema = z.strictObject({
 
 - [ ] **Step 2: Run build to verify no errors**
 
-Run: `cd /Users/baibaratsky/Workspace/energio/holded-mcp-server && npx tsc --noEmit`
+Run: `cd /Users/baibaratsky/Workspace/energio/holded-mcp && npx tsc --noEmit`
 Expected: No errors
 
 - [ ] **Step 3: Commit**
@@ -222,12 +222,12 @@ export const UpdateDocumentInputSchema = z.strictObject({
 
 - [ ] **Step 5: Run build to verify no errors**
 
-Run: `cd /Users/baibaratsky/Workspace/energio/holded-mcp-server && npx tsc --noEmit`
+Run: `cd /Users/baibaratsky/Workspace/energio/holded-mcp && npx tsc --noEmit`
 Expected: No errors
 
 - [ ] **Step 6: Run tests to verify existing tests pass**
 
-Run: `cd /Users/baibaratsky/Workspace/energio/holded-mcp-server && npx jest --config jest.config.js`
+Run: `cd /Users/baibaratsky/Workspace/energio/holded-mcp && npx jest --config jest.config.js`
 Expected: All tests pass. The Document Creation tests should still pass since they use `doc_type`, `date`, `items` which are unchanged. The `DocumentItemSchema` test uses `{name, units}` which still works.
 
 - [ ] **Step 7: Update tests for renamed fields**
@@ -271,7 +271,7 @@ In `tests/schema-validation.test.ts`, the Document Creation tests (around line 4
 
 - [ ] **Step 8: Run tests again**
 
-Run: `cd /Users/baibaratsky/Workspace/energio/holded-mcp-server && npx jest --config jest.config.js`
+Run: `cd /Users/baibaratsky/Workspace/energio/holded-mcp && npx jest --config jest.config.js`
 Expected: All tests pass including new ones.
 
 - [ ] **Step 9: Commit**
@@ -417,7 +417,7 @@ export const UpdateContactInputSchema = z.strictObject({
 
 - [ ] **Step 5: Run build and tests**
 
-Run: `cd /Users/baibaratsky/Workspace/energio/holded-mcp-server && npx tsc --noEmit && npx jest --config jest.config.js`
+Run: `cd /Users/baibaratsky/Workspace/energio/holded-mcp && npx tsc --noEmit && npx jest --config jest.config.js`
 Expected: Build succeeds, all tests pass.
 
 - [ ] **Step 6: Add test for new contact fields**
@@ -450,7 +450,7 @@ In `tests/schema-validation.test.ts`, add this test inside the `describe('Contac
 
 - [ ] **Step 7: Run tests**
 
-Run: `cd /Users/baibaratsky/Workspace/energio/holded-mcp-server && npx jest --config jest.config.js`
+Run: `cd /Users/baibaratsky/Workspace/energio/holded-mcp && npx jest --config jest.config.js`
 Expected: All tests pass.
 
 - [ ] **Step 8: Commit**
@@ -588,7 +588,7 @@ with:
 
 - [ ] **Step 5: Run build and tests**
 
-Run: `cd /Users/baibaratsky/Workspace/energio/holded-mcp-server && npx tsc --noEmit && npx jest --config jest.config.js`
+Run: `cd /Users/baibaratsky/Workspace/energio/holded-mcp && npx tsc --noEmit && npx jest --config jest.config.js`
 Expected: Build succeeds, all tests pass.
 
 - [ ] **Step 6: Add test for new lead fields**
@@ -613,7 +613,7 @@ In `tests/schema-validation.test.ts`, add this test inside the `describe('Lead C
 
 - [ ] **Step 7: Run tests**
 
-Run: `cd /Users/baibaratsky/Workspace/energio/holded-mcp-server && npx jest --config jest.config.js`
+Run: `cd /Users/baibaratsky/Workspace/energio/holded-mcp && npx jest --config jest.config.js`
 Expected: All tests pass.
 
 - [ ] **Step 8: Commit**
@@ -652,7 +652,7 @@ In `src/schemas/invoicing/products.ts`, add these fields inside `UpdateProductIn
 
 - [ ] **Step 3: Run build and tests**
 
-Run: `cd /Users/baibaratsky/Workspace/energio/holded-mcp-server && npx tsc --noEmit && npx jest --config jest.config.js`
+Run: `cd /Users/baibaratsky/Workspace/energio/holded-mcp && npx tsc --noEmit && npx jest --config jest.config.js`
 Expected: Build succeeds, all tests pass.
 
 - [ ] **Step 4: Add test for new product fields**
@@ -675,7 +675,7 @@ In `tests/schema-validation.test.ts`, add this test inside the `describe('Produc
 
 - [ ] **Step 5: Run tests**
 
-Run: `cd /Users/baibaratsky/Workspace/energio/holded-mcp-server && npx jest --config jest.config.js`
+Run: `cd /Users/baibaratsky/Workspace/energio/holded-mcp && npx jest --config jest.config.js`
 Expected: All tests pass.
 
 - [ ] **Step 6: Commit**
@@ -693,12 +693,12 @@ git commit -m "feat: add purchasePrice, tags, calculatecost, subtotal to product
 
 - [ ] **Step 1: Full build**
 
-Run: `cd /Users/baibaratsky/Workspace/energio/holded-mcp-server && npm run build`
+Run: `cd /Users/baibaratsky/Workspace/energio/holded-mcp && npm run build`
 Expected: Compiles successfully to `dist/`
 
 - [ ] **Step 2: Full test suite**
 
-Run: `cd /Users/baibaratsky/Workspace/energio/holded-mcp-server && npm test`
+Run: `cd /Users/baibaratsky/Workspace/energio/holded-mcp && npm test`
 Expected: All 169+ tests pass (plus new tests added in this plan)
 
 - [ ] **Step 3: Note: `receiptnote` deferred to live testing**
@@ -707,5 +707,5 @@ The `receiptnote` document type in `src/constants.ts` is not in the API docs. Pe
 
 - [ ] **Step 4: Verify the server starts**
 
-Run: `cd /Users/baibaratsky/Workspace/energio/holded-mcp-server && echo '{}' | timeout 3 node dist/index.js 2>&1 || true`
+Run: `cd /Users/baibaratsky/Workspace/energio/holded-mcp && echo '{}' | timeout 3 node dist/index.js 2>&1 || true`
 Expected: Server starts and prints initialization messages (will exit due to missing API key or stdin close, but should not crash with import/syntax errors)

@@ -14,8 +14,8 @@ Thank you for your interest in contributing to Holded MCP Server! This document 
 
 1. **Fork and clone the repository**:
    ```bash
-   git clone https://github.com/energio-es/holded-mcp-server.git
-   cd holded-mcp-server
+   git clone https://github.com/energio-es/holded-mcp.git
+   cd holded-mcp
    ```
 
 2. **Install dependencies**:

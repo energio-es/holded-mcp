@@ -33,7 +33,7 @@ Replace the existing `keywords` array with:
 Add the `mcpName` field after the `keywords` array (required by the Official MCP Registry for ownership verification):
 
 ```json
-"mcpName": "io.github.energio-es/holded-mcp-server",
+"mcpName": "io.github.energio-es/holded-mcp",
 ```
 
 - [ ] **Step 3: Verify package.json is valid**
@@ -62,10 +62,10 @@ Create `server.json` in the project root:
 ```json
 {
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
-  "name": "io.github.energio-es/holded-mcp-server",
+  "name": "io.github.energio-es/holded-mcp",
   "description": "MCP server for Holded — invoicing, CRM, projects, accounting, and team",
   "repository": {
-    "url": "https://github.com/energio-es/holded-mcp-server",
+    "url": "https://github.com/energio-es/holded-mcp",
     "source": "github"
   },
   "version_detail": {
@@ -135,7 +135,7 @@ Insert the npm version badge as the first badge on line 3, before the existing L
 ```markdown
 [![npm version](https://img.shields.io/npm/v/@energio%2Fholded-mcp.svg)](https://www.npmjs.com/package/@energio/holded-mcp)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![CI](https://github.com/energio-es/holded-mcp-server/actions/workflows/ci.yml/badge.svg)](https://github.com/energio-es/holded-mcp-server/actions/workflows/ci.yml)
+[![CI](https://github.com/energio-es/holded-mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/energio-es/holded-mcp/actions/workflows/ci.yml)
 [![Node.js Version](https://img.shields.io/badge/node-%3E%3D20-brightgreen.svg)](package.json)
 ```
 
@@ -339,8 +339,8 @@ With:
 If you want to build from source (for development or contributions):
 
 ```bash
-git clone https://github.com/energio-es/holded-mcp-server.git
-cd holded-mcp-server
+git clone https://github.com/energio-es/holded-mcp.git
+cd holded-mcp
 npm install
 npm run build
 ```
@@ -352,7 +352,7 @@ Then use the built server in your MCP client configuration:
   "mcpServers": {
     "holded": {
       "command": "node",
-      "args": ["/absolute/path/to/holded-mcp-server/dist/index.js"],
+      "args": ["/absolute/path/to/holded-mcp/dist/index.js"],
       "env": {
         "HOLDED_API_KEY": "your_api_key_here"
       }
@@ -433,11 +433,11 @@ This is a manual step in GitHub Settings > General > Danger Zone > Change reposi
 
 - [ ] **Step 3: Set repository description**
 
-Run: `gh repo edit energio-es/holded-mcp-server --description "MCP server for Holded — invoicing, CRM, projects, accounting, and team"`
+Run: `gh repo edit energio-es/holded-mcp --description "MCP server for Holded — invoicing, CRM, projects, accounting, and team"`
 
 - [ ] **Step 4: Set repository topics**
 
-Run: `gh repo edit energio-es/holded-mcp-server --add-topic mcp --add-topic mcp-server --add-topic holded --add-topic model-context-protocol --add-topic typescript`
+Run: `gh repo edit energio-es/holded-mcp --add-topic mcp --add-topic mcp-server --add-topic holded --add-topic model-context-protocol --add-topic typescript`
 
 - [ ] **Step 5: Create GitHub release**
 
@@ -469,7 +469,7 @@ Complete MCP server implementation with 143 tools covering all Holded API endpoi
 npx -y @energio/holded-mcp
 ```
 
-See [README](https://github.com/energio-es/holded-mcp-server#readme) for full setup instructions.
+See [README](https://github.com/energio-es/holded-mcp#readme) for full setup instructions.
 EOF
 )"
 ```
@@ -503,7 +503,7 @@ These are all manual web form submissions. Complete after npm is live and GitHub
 
 - [ ] **Step 1: MCP Directory (FastMCP)**
 
-Go to `https://mcp.directory/submit` and submit the GitHub URL: `https://github.com/energio-es/holded-mcp-server`
+Go to `https://mcp.directory/submit` and submit the GitHub URL: `https://github.com/energio-es/holded-mcp`
 
 - [ ] **Step 2: MCP.SO**
 
@@ -517,7 +517,7 @@ Go to `https://glama.ai/mcp/servers` and click "Add Server". Submit the GitHub U
 
 Go to `https://skillsindex.dev/submit` and fill in:
 - Tool Name: Holded MCP Server
-- GitHub URL: `https://github.com/energio-es/holded-mcp-server`
+- GitHub URL: `https://github.com/energio-es/holded-mcp`
 - Description: MCP server for Holded — invoicing, CRM, projects, accounting, and team
 - Category: Finance & Fintech
 - Ecosystem: MCP Server

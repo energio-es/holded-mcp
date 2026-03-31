@@ -17,7 +17,7 @@ The project is a TypeScript MCP server providing 143 tools for the Holded busine
 
 **MCP Registry name** — add for Official MCP Registry ownership verification:
 ```json
-"mcpName": "io.github.energio-es/holded-mcp-server"
+"mcpName": "io.github.energio-es/holded-mcp"
 ```
 
 ### 2. README Enhancements
@@ -42,7 +42,7 @@ The project is a TypeScript MCP server providing 143 tools for the Holded busine
 
 Create `server.json` in the project root with:
 - Schema: `https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json`
-- Name: `io.github.energio-es/holded-mcp-server`
+- Name: `io.github.energio-es/holded-mcp`
 - Package type: npm, transport: stdio
 - Environment variables: `HOLDED_API_KEY` (required), `HOLDED_MODULES` (optional), `HOLDED_RATE_LIMIT_PER_SECOND` (optional), `HOLDED_DEBUG` (optional)
 

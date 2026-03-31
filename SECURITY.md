@@ -6,7 +6,7 @@
 
 If you discover a security vulnerability in this project, please report it privately:
 
-1. **Email**: Send details to the maintainers via [GitHub Security Advisories](https://github.com/energio-es/holded-mcp-server/security/advisories/new)
+1. **Email**: Send details to the maintainers via [GitHub Security Advisories](https://github.com/energio-es/holded-mcp/security/advisories/new)
 2. **Include**:
    - Description of the vulnerability
    - Steps to reproduce
