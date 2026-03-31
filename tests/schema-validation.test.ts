@@ -45,6 +45,9 @@ import { CreateAccountInputSchema, ListAccountingAccountsInputSchema } from '../
 import {
   AccountBalancesInputSchema,
 } from '../src/schemas/accounting/account-balances.js';
+import {
+  AccountingDateRangeSchema,
+} from '../src/schemas/accounting/date-range.js';
 
 // Common schemas
 import { PaginationSchema, TimestampSchema, AddressSchema, ShippingAddressSchema, NumberingSeriesSchema, ContactPersonSchema } from '../src/schemas/common.js';
@@ -1184,6 +1187,128 @@ describe('Schema Validation Against OpenAPI Specs', () => {
       if (result.success) {
         expect(result.data.response_format).toBe('json');
       }
+    });
+  });
+
+  describe('Accounting Date Range', () => {
+    it('should accept date mode with start_date and end_date', () => {
+      const result = AccountingDateRangeSchema.safeParse({
+        start_date: '2025-01-01',
+        end_date: '2025-12-31',
+      });
+      expect(result.success).toBe(true);
+    });
+
+    it('should accept raw timestamp mode', () => {
+      const result = AccountingDateRangeSchema.safeParse({
+        starttmp: 1735686000,
+        endtmp: 1767222000,
+        raw_timestamps: true,
+      });
+      expect(result.success).toBe(true);
+    });
+
+    it('should default raw_timestamps to false', () => {
+      const result = AccountingDateRangeSchema.safeParse({
+        start_date: '2025-01-01',
+        end_date: '2025-12-31',
+      });
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.raw_timestamps).toBe(false);
+      }
+    });
+
+    it('should reject date mode with starttmp present', () => {
+      const result = AccountingDateRangeSchema.safeParse({
+        start_date: '2025-01-01',
+        end_date: '2025-12-31',
+        starttmp: 1735686000,
+      });
+      expect(result.success).toBe(false);
+    });
+
+    it('should reject date mode with endtmp present', () => {
+      const result = AccountingDateRangeSchema.safeParse({
+        start_date: '2025-01-01',
+        end_date: '2025-12-31',
+        endtmp: 1767222000,
+      });
+      expect(result.success).toBe(false);
+    });
+
+    it('should reject raw timestamp mode with start_date present', () => {
+      const result = AccountingDateRangeSchema.safeParse({
+        starttmp: 1735686000,
+        endtmp: 1767222000,
+        raw_timestamps: true,
+        start_date: '2025-01-01',
+      });
+      expect(result.success).toBe(false);
+    });
+
+    it('should reject raw timestamp mode with end_date present', () => {
+      const result = AccountingDateRangeSchema.safeParse({
+        starttmp: 1735686000,
+        endtmp: 1767222000,
+        raw_timestamps: true,
+        end_date: '2025-12-31',
+      });
+      expect(result.success).toBe(false);
+    });
+
+    it('should reject date mode when start_date is missing', () => {
+      const result = AccountingDateRangeSchema.safeParse({
+        end_date: '2025-12-31',
+      });
+      expect(result.success).toBe(false);
+    });
+
+    it('should reject date mode when end_date is missing', () => {
+      const result = AccountingDateRangeSchema.safeParse({
+        start_date: '2025-01-01',
+      });
+      expect(result.success).toBe(false);
+    });
+
+    it('should reject raw timestamp mode when starttmp is missing', () => {
+      const result = AccountingDateRangeSchema.safeParse({
+        endtmp: 1767222000,
+        raw_timestamps: true,
+      });
+      expect(result.success).toBe(false);
+    });
+
+    it('should reject raw timestamp mode when endtmp is missing', () => {
+      const result = AccountingDateRangeSchema.safeParse({
+        starttmp: 1735686000,
+        raw_timestamps: true,
+      });
+      expect(result.success).toBe(false);
+    });
+
+    it('should reject invalid date format', () => {
+      const result = AccountingDateRangeSchema.safeParse({
+        start_date: '01/01/2025',
+        end_date: '31/12/2025',
+      });
+      expect(result.success).toBe(false);
+    });
+
+    it('should reject raw_timestamps: true with no timestamps', () => {
+      const result = AccountingDateRangeSchema.safeParse({
+        raw_timestamps: true,
+      });
+      expect(result.success).toBe(false);
+    });
+
+    it('should reject endtmp before starttmp in raw mode', () => {
+      const result = AccountingDateRangeSchema.safeParse({
+        starttmp: 1767222000,
+        endtmp: 1735686000,
+        raw_timestamps: true,
+      });
+      expect(result.success).toBe(false);
     });
   });
 
