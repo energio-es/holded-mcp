@@ -48,3 +48,6 @@ coverage/
 *.temp
 
 holded_docs/
+
+# MCP Registry
+.mcpregistry_*
