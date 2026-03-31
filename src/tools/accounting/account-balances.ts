@@ -2,8 +2,8 @@
  * Account Balances tool for Holded API
  *
  * Computes accurate, date-scoped per-account debit/credit/balance totals
- * by aggregating from individual daily ledger entries with cross-fiscal-year
- * leak filtering.
+ * by aggregating from individual daily ledger entries. Uses CET-aligned
+ * timestamps to prevent cross-fiscal-year leakage.
  */
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
@@ -15,6 +15,7 @@ import {
   AccountBalancesInputSchema,
   AccountBalancesInput,
 } from "../../schemas/accounting/account-balances.js";
+import { datesToApiRange } from "../../utils/timezone.js";
 
 /** Maximum entry lines per page returned by the daily ledger API (docs say 500, actual is 250) */
 const LEDGER_PAGE_SIZE = 250;
@@ -27,6 +28,16 @@ interface AccountMetadata {
   name: string;
   group: string;
   [key: string]: unknown;
+}
+
+/**
+ * Resolve the date range input to { starttmp, endtmp } timestamps.
+ */
+function resolveTimestamps(params: AccountBalancesInput): { starttmp: number; endtmp: number } {
+  if (params.raw_timestamps) {
+    return { starttmp: params.starttmp!, endtmp: params.endtmp! };
+  }
+  return datesToApiRange(params.start_date!, params.end_date!);
 }
 
 /**
@@ -65,101 +76,31 @@ async function fetchAllLedgerEntries(
 }
 
 /**
- * Entry types that legitimately appear at the fiscal year boundary timestamp.
- * Any other type at that timestamp is considered a cross-year leak.
- */
-const BOUNDARY_SAFE_TYPES = new Set(["opening", "vat_regularization"]);
-
-/**
- * Filter out cross-fiscal-year leaked entries from daily ledger results.
- *
- * Detection uses two signals:
- * 1. Entries sharing the same timestamp as the opening balance entry are candidates.
- * 2. Candidates are confirmed as leaked if their entryNumber also appears at a
- *    different timestamp (duplicate = different fiscal year).
- * 3. Fallback: candidates at the opening timestamp whose type is not "opening" or
- *    "vat_regularization" are excluded even without a duplicate entryNumber.
+ * Filter out opening balance entries if not requested.
+ * Simple type-based filter — CET-aligned boundaries prevent cross-year leakage.
  *
  * Exported for unit testing.
  */
-export function filterLeakedEntries(
+export function filterOpeningEntries(
   entries: LedgerEntryLine[],
   includeOpening: boolean,
-): { filtered: LedgerEntryLine[]; leakedCount: number; openingExcluded: boolean } {
-  if (entries.length === 0) {
-    return { filtered: [], leakedCount: 0, openingExcluded: false };
+): { filtered: LedgerEntryLine[]; openingExcluded: boolean } {
+  if (includeOpening) {
+    return { filtered: entries, openingExcluded: false };
   }
 
-  // Step 1: Find opening entry timestamps
-  const openingTimestamps = new Set<number>();
-  for (const e of entries) {
-    if (e.type === "opening") {
-      openingTimestamps.add(e.timestamp);
-    }
-  }
-
-  // No opening entry → no fiscal year boundary in range → no leakage possible
-  if (openingTimestamps.size === 0) {
-    return { filtered: [...entries], leakedCount: 0, openingExcluded: false };
-  }
-
-  // Step 2: Build a map of entryNumber → set of distinct timestamps
-  const entryNumberTimestamps = new Map<number, Set<number>>();
-  for (const e of entries) {
-    let ts = entryNumberTimestamps.get(e.entryNumber);
-    if (!ts) {
-      ts = new Set();
-      entryNumberTimestamps.set(e.entryNumber, ts);
-    }
-    ts.add(e.timestamp);
-  }
-
-  // Step 3: Filter
-  let leakedCount = 0;
   let openingExcluded = false;
   const filtered: LedgerEntryLine[] = [];
 
   for (const e of entries) {
-    const atBoundary = openingTimestamps.has(e.timestamp);
-
-    if (!atBoundary) {
-      // Not at boundary → always keep
-      filtered.push(e);
-      continue;
-    }
-
-    // At boundary: handle by type
     if (e.type === "opening") {
-      if (includeOpening) {
-        filtered.push(e);
-      } else {
-        openingExcluded = true;
-      }
-      continue;
-    }
-
-    if (BOUNDARY_SAFE_TYPES.has(e.type)) {
-      // vat_regularization at boundary is legitimate
-      filtered.push(e);
-      continue;
-    }
-
-    // Non-safe type at boundary → check for duplicate entryNumber (primary signal)
-    const timestamps = entryNumberTimestamps.get(e.entryNumber)!;
-    const hasDuplicate = timestamps.size > 1;
-
-    if (hasDuplicate) {
-      // Confirmed leak: same entryNumber exists at a different timestamp
-      leakedCount++;
+      openingExcluded = true;
     } else {
-      // Fallback: non-safe type at opening timestamp, no duplicate found.
-      // Still exclude — legitimate entries at the exact boundary are limited to safe types.
-      leakedCount++;
+      filtered.push(e);
     }
-    // Either way, this entry is excluded (not pushed to filtered)
   }
 
-  return { filtered, leakedCount, openingExcluded };
+  return { filtered, openingExcluded };
 }
 
 /**
@@ -221,19 +162,26 @@ export function registerAccountBalancesTools(server: McpServer): void {
       title: "Holded Accounting Account Balances",
       description: `Compute accurate, date-scoped per-account debit/credit/balance totals.
 
-Aggregates from individual daily ledger entries and filters out cross-fiscal-year leakage to produce correct period-scoped balances.
+Aggregates from individual daily ledger entries to produce correct period-scoped balances. Dates are interpreted in Spanish local time (CET/CEST).
 
 Use this tool when you need account totals for a specific period (P&L, trial balance, balance sheet).
 
-Args:
-  - starttmp (number): Period start as Unix timestamp (required)
-  - endtmp (number): Period end as Unix timestamp (required)
+Args (default mode — recommended):
+  - start_date (string): Period start date in YYYY-MM-DD format
+  - end_date (string): Period end date in YYYY-MM-DD format (inclusive)
+
+Args (raw timestamp mode — set raw_timestamps: true):
+  - starttmp (number): Period start as Unix timestamp (CET-aligned recommended)
+  - endtmp (number): Period end as Unix timestamp (CET-aligned recommended)
+  - raw_timestamps (boolean): Must be true to use timestamp mode
+
+Additional args:
   - account_filter (number[]): Filter to specific account numbers (optional, returns all if omitted)
   - include_opening (boolean): Include opening balance entry in totals (default: false — set true for balance sheet, false for P&L)
   - response_format ('json' | 'markdown'): Output format (default: 'json')
 
 Returns:
-  Per-account debit/credit/balance totals, plus metadata about filtered entries.`,
+  Per-account debit/credit/balance totals with period metadata.`,
       inputSchema: AccountBalancesInputSchema,
       annotations: {
         readOnlyHint: true,
@@ -243,24 +191,24 @@ Returns:
       },
     },
     withErrorHandling(async (params) => {
-      const { starttmp, endtmp, account_filter, include_opening, response_format } = params as unknown as AccountBalancesInput;
+      const typedParams = params as unknown as AccountBalancesInput;
 
-      // 1. Fetch all ledger entries (auto-paginate)
-      const { entries, pagesFetched } = await fetchAllLedgerEntries(
-        starttmp,
-        endtmp,
-      );
+      // 1. Resolve dates to timestamps
+      const { starttmp, endtmp } = resolveTimestamps(typedParams);
 
-      // 2. Filter leaked entries
-      const { filtered, leakedCount, openingExcluded } = filterLeakedEntries(
+      // 2. Fetch all ledger entries (auto-paginate)
+      const { entries, pagesFetched } = await fetchAllLedgerEntries(starttmp, endtmp);
+
+      // 3. Filter opening entries if not requested
+      const { filtered, openingExcluded } = filterOpeningEntries(
         entries,
-        include_opening,
+        typedParams.include_opening,
       );
 
-      // 3. Aggregate by account
+      // 4. Aggregate by account
       const totals = aggregateByAccount(filtered);
 
-      // 4. Enrich with account metadata from list_accounts
+      // 5. Enrich with account metadata from list_accounts
       const accountMeta = await makeApiRequest<AccountMetadata[]>(
         "accounting",
         "chartofaccounts",
@@ -273,7 +221,7 @@ Returns:
         metaByNum.set(a.num, a);
       }
 
-      // 5. Build result
+      // 6. Build result
       let accounts: AccountBalance[] = [];
       for (const [num, { debit, credit }] of totals) {
         const meta = metaByNum.get(num);
@@ -287,9 +235,9 @@ Returns:
         });
       }
 
-      // 6. Apply account filter
-      if (account_filter && account_filter.length > 0) {
-        const filterSet = new Set(account_filter);
+      // 7. Apply account filter
+      if (typedParams.account_filter && typedParams.account_filter.length > 0) {
+        const filterSet = new Set(typedParams.account_filter);
         accounts = accounts.filter((a) => filterSet.has(a.num));
       }
 
@@ -299,19 +247,13 @@ Returns:
       const structured = {
         accounts,
         count: accounts.length,
-        period: {
-          starttmp,
-          endtmp,
-        },
-        filtered_entries: {
-          leaked_cross_year: leakedCount,
-          opening_balance_excluded: openingExcluded,
-        },
+        period: { starttmp, endtmp },
+        opening_balance_excluded: openingExcluded,
         pages_fetched: pagesFetched,
       };
 
       const textContent =
-        response_format === ResponseFormat.MARKDOWN
+        typedParams.response_format === ResponseFormat.MARKDOWN
           ? formatAccountBalancesMarkdown(accounts)
           : JSON.stringify(structured, null, 2);
 
