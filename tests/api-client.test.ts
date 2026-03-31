@@ -287,6 +287,18 @@ describe('API Client Tests', () => {
 
       expect(mockInstance.request).toHaveBeenCalledTimes(4);
     });
+
+    it('should throw on HTML response (Holded 200 with HTML error page)', async () => {
+      const mockInstance = mockedAxios.create() as any;
+      const htmlBody = '<!DOCTYPE html><html><head><title>404 · Holded</title></head><body></body></html>';
+
+      mockInstance.request.mockResolvedValueOnce({ data: htmlBody });
+
+      const resultPromise = makeApiRequest('accounting', 'account/77800000', 'GET');
+      const expectPromise = expect(resultPromise).rejects.toThrow('Unexpected HTML response');
+      await vi.advanceTimersByTimeAsync(1000);
+      await expectPromise;
+    });
   });
 
   describe('Error Handling', () => {
