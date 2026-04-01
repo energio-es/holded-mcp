@@ -47,7 +47,7 @@ Returns:
       const { doc_type, response_format } = params as unknown as GetNumberingSeriesInput;
       const series = await makeApiRequest<NumberingSeries[]>(
         "invoicing",
-        `numberseries/${doc_type}`,
+        `numberingseries/${doc_type}`,
         "GET"
       );
 
@@ -106,7 +106,7 @@ Returns:
       const { doc_type, ...seriesData } = params as unknown as CreateNumberingSeriesInput;
       const series = await makeApiRequest<NumberingSeries>(
         "invoicing",
-        `numberseries/${doc_type}`,
+        `numberingseries/${doc_type}`,
         "POST",
         seriesData
       );
@@ -151,7 +151,7 @@ Returns:
       const { doc_type, numbering_series_id, ...updateData } = params as unknown as UpdateNumberingSeriesInput;
       const series = await makeApiRequest<NumberingSeries>(
         "invoicing",
-        `numberseries/${doc_type}/${numbering_series_id}`,
+        `numberingseries/${doc_type}/${numbering_series_id}`,
         "PUT",
         updateData
       );
@@ -193,7 +193,7 @@ Returns:
       const { doc_type, numbering_series_id } = params as unknown as DeleteNumberingSeriesInput;
       await makeApiRequest<void>(
         "invoicing",
-        `numberseries/${doc_type}/${numbering_series_id}`,
+        `numberingseries/${doc_type}/${numbering_series_id}`,
         "DELETE"
       );
 
