@@ -5,7 +5,7 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { makeApiRequest, toStructuredContent } from "../../services/api.js";
 import { ResponseFormat } from "../../constants.js";
-import { TimeTracking } from "../../types.js";
+import { ProjectTimeTrackingRef } from "../../types.js";
 import { withErrorHandling } from "../utilities.js";
 import {
   ListProjectTimeTrackingsInputSchema,
@@ -25,7 +25,7 @@ import {
 /**
  * Format project time-trackings as markdown
  */
-export function formatProjectTimeTrackingsMarkdown(times: TimeTracking[]): string {
+export function formatProjectTimeTrackingsMarkdown(times: ProjectTimeTrackingRef[]): string {
   if (!times.length) {
     return "No time-trackings found for this project.";
   }
@@ -33,8 +33,8 @@ export function formatProjectTimeTrackingsMarkdown(times: TimeTracking[]): strin
   const lines = ["# Project Time Trackings", "", `Found ${times.length} time entries:`, ""];
 
   for (const time of times) {
-    lines.push(`## Entry ${time.id}`);
-    lines.push(`- **ID**: ${time.id}`);
+    lines.push(`## Entry ${time.timeId}`);
+    lines.push(`- **ID**: ${time.timeId}`);
     if (time.date) lines.push(`- **Date**: ${new Date(time.date * 1000).toLocaleDateString()}`);
     if (time.duration !== undefined) lines.push(`- **Hours**: ${(time.duration / 3600).toFixed(1)}`);
     if (time.user) lines.push(`- **Employee**: ${time.user}`);
@@ -78,7 +78,7 @@ Returns:
         queryParams.page = page;
       }
 
-      const times = await makeApiRequest<TimeTracking[]>(
+      const times = await makeApiRequest<ProjectTimeTrackingRef[]>(
         "projects",
         `projects/${project_id}/times`,
         "GET",
@@ -125,7 +125,7 @@ Returns:
     },
     withErrorHandling(async (params) => {
       const { project_id, ...timeData } = params as unknown as CreateProjectTimeTrackingInput;
-      const time = await makeApiRequest<TimeTracking>(
+      const time = await makeApiRequest<ProjectTimeTrackingRef>(
         "projects",
         `projects/${project_id}/times`,
         "POST",
@@ -172,7 +172,7 @@ Returns:
     },
     withErrorHandling(async (params) => {
       const { project_id, time_id, ...updateData } = params as unknown as UpdateProjectTimeTrackingInput;
-      const time = await makeApiRequest<TimeTracking>(
+      const time = await makeApiRequest<ProjectTimeTrackingRef>(
         "projects",
         `projects/${project_id}/times/${time_id}`,
         "PUT",
@@ -256,7 +256,7 @@ Returns:
     },
     withErrorHandling(async (params) => {
       const { project_id, time_id, response_format } = params as unknown as GetProjectTimeTrackingInput;
-      const time = await makeApiRequest<TimeTracking>(
+      const time = await makeApiRequest<ProjectTimeTrackingRef>(
         "projects",
         `projects/${project_id}/times/${time_id}`,
         "GET"
@@ -264,8 +264,8 @@ Returns:
 
       let textContent: string;
       if (response_format === ResponseFormat.MARKDOWN) {
-        const lines = [`# Time Tracking Entry ${time.id}`, ""];
-        if (time.date) lines.push(`- **Date**: ${new Date(time.date * 1000).toLocaleDateString()}`);
+        const lines = [`# Time Tracking Entry ${time.timeId}`, ""];
+        if (time.date) lines.push(`- **Date**: ${new Date((time.date as number) * 1000).toLocaleDateString()}`);
         if (time.duration !== undefined) lines.push(`- **Hours**: ${(time.duration / 3600).toFixed(1)}`);
         if (time.user) lines.push(`- **Employee**: ${time.user}`);
         if (time.desc) lines.push(`- **Description**: ${time.desc}`);

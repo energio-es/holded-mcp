@@ -159,7 +159,7 @@ Returns:
             lines.push(`## ${t.name}`);
             lines.push(`- **ID**: ${t.id}`);
             lines.push(`- **Type**: ${t.type}`);
-            if (t.currency) lines.push(`- **Currency**: ${t.currency}`);
+            if (t.treasuryId) lines.push(`- **Treasury ID**: ${t.treasuryId}`);
             if (t.balance !== undefined) lines.push(`- **Balance**: ${t.balance}`);
             if (t.accountNumber !== undefined) lines.push(`- **Account Number**: ${t.accountNumber}`);
             if (t.iban) lines.push(`- **IBAN**: ${t.iban}`);
@@ -213,13 +213,12 @@ Returns:
         const lines = [`# ${treasury.name}`, ""];
         lines.push(`- **ID**: ${treasury.id}`);
         lines.push(`- **Type**: ${treasury.type}`);
-        if (treasury.currency) lines.push(`- **Currency**: ${treasury.currency}`);
+        if (treasury.treasuryId) lines.push(`- **Treasury ID**: ${treasury.treasuryId}`);
         if (treasury.balance !== undefined) lines.push(`- **Balance**: ${treasury.balance}`);
         if (treasury.accountNumber !== undefined) lines.push(`- **Account Number**: ${treasury.accountNumber}`);
         if (treasury.iban) lines.push(`- **IBAN**: ${treasury.iban}`);
         if (treasury.swift) lines.push(`- **SWIFT/BIC**: ${treasury.swift}`);
-        if (treasury.bank) lines.push(`- **Bank**: ${treasury.bank}`);
-        if (treasury.bankname) lines.push(`- **Bank Name**: ${treasury.bankname}`);
+        if (treasury.treasuryName) lines.push(`- **Treasury Name**: ${treasury.treasuryName}`);
         textContent = lines.join("\n");
       } else {
         textContent = JSON.stringify(treasury, null, 2);

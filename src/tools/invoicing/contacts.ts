@@ -75,8 +75,8 @@ export function formatContactMarkdown(contact: Contact): string {
     if (addr.country) lines.push(`- ${addr.country}`);
   }
 
-  if (contact.notes) {
-    lines.push("", "### Notes", contact.notes);
+  if (contact.notes && contact.notes.length > 0) {
+    lines.push("", "### Notes", JSON.stringify(contact.notes));
   }
 
   return lines.join("\n");
