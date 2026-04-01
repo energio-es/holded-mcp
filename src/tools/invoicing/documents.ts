@@ -366,7 +366,7 @@ Returns:
       const { doc_type, document_id, account_id, ...paymentData } = params as unknown as PayDocumentInput;
       const requestData = {
         ...paymentData,
-        ...(account_id ? { accountId: account_id } : {}),
+        ...(account_id ? { bankId: account_id } : {}),
       };
 
       const result = await makeApiRequest<{ status: string; [key: string]: unknown }>(

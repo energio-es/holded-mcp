@@ -43,6 +43,7 @@ export function formatTimeTrackingsMarkdown(times: TimeTracking[]): string {
   for (const time of times) {
     lines.push(`## ${time.employeeName || `Employee ${time.employeeId}`}`);
     lines.push(`- **ID**: ${time.id}`);
+    if (time.date?.date) lines.push(`- **Date**: ${time.date.date}`);
     lines.push(`- **Hours**: ${(time.time / 3600).toFixed(1)}`);
     if (time.status) lines.push(`- **Status**: ${time.status}`);
     lines.push("");
@@ -57,6 +58,7 @@ export function formatTimeTrackingsMarkdown(times: TimeTracking[]): string {
 export function formatTimeTrackingMarkdown(time: TimeTracking): string {
   const lines = [`# Time Tracking Entry`, "", `**ID**: ${time.id}`, ""];
   lines.push(`- **Employee**: ${time.employeeName || time.employeeId}`);
+  if (time.date?.date) lines.push(`- **Date**: ${time.date.date}`);
   lines.push(`- **Hours**: ${(time.time / 3600).toFixed(1)}`);
   if (time.status) lines.push(`- **Status**: ${time.status}`);
 

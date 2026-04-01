@@ -136,9 +136,9 @@ Returns:
 Args:
   - name (string): Product name (required)
   - sku (string): Stock Keeping Unit
-  - kind ('product' | 'service' | 'pack'): Product kind
+  - kind ('simple' | 'variants' | 'lots' | 'pack'): Product kind
   - price (number): Selling price
-  - costPrice (number): Cost price
+  - cost (number): Cost price
   - stock (number): Initial stock quantity
   - And other optional fields for variants, custom fields, etc.
 
