@@ -26,8 +26,8 @@ export function formatEventsMarkdown(events: CrmEvent[]): string {
   for (const event of events) {
     lines.push(`## ${event.name}`);
     lines.push(`- **ID**: ${event.id}`);
-    lines.push(`- **Start**: ${new Date(event.start * 1000).toLocaleString()}`);
-    if (event.end) lines.push(`- **End**: ${new Date(event.end * 1000).toLocaleString()}`);
+    lines.push(`- **Start**: ${new Date(event.startDate * 1000).toLocaleString()}`);
+    if (event.endDate) lines.push(`- **End**: ${new Date(event.endDate * 1000).toLocaleString()}`);
     if (event.leadId) lines.push(`- **Lead ID**: ${event.leadId}`);
     if (event.contactId) lines.push(`- **Contact ID**: ${event.contactId}`);
     lines.push("");
@@ -42,13 +42,14 @@ export function formatEventsMarkdown(events: CrmEvent[]): string {
 export function formatEventMarkdown(event: CrmEvent): string {
   const lines = [`# ${event.name}`, ""];
   lines.push(`- **ID**: ${event.id}`);
-  lines.push(`- **Start**: ${new Date(event.start * 1000).toLocaleString()}`);
-  if (event.end) lines.push(`- **End**: ${new Date(event.end * 1000).toLocaleString()}`);
-  if (event.allDay !== undefined) lines.push(`- **All Day**: ${event.allDay ? "Yes" : "No"}`);
-  if (event.description) lines.push(`- **Description**: ${event.description}`);
+  lines.push(`- **Start**: ${new Date(event.startDate * 1000).toLocaleString()}`);
+  if (event.endDate) lines.push(`- **End**: ${new Date(event.endDate * 1000).toLocaleString()}`);
+  if (event.kind) lines.push(`- **Kind**: ${event.kind}`);
+  if (event.status !== undefined) lines.push(`- **Status**: ${event.status}`);
+  if (event.desc) lines.push(`- **Description**: ${event.desc}`);
   if (event.leadId) lines.push(`- **Lead ID**: ${event.leadId}`);
   if (event.contactId) lines.push(`- **Contact ID**: ${event.contactId}`);
-  if (event.assignedTo) lines.push(`- **Assigned To**: ${event.assignedTo}`);
+  if (event.contactName) lines.push(`- **Contact Name**: ${event.contactName}`);
 
   return lines.join("\n");
 }
@@ -99,13 +100,12 @@ Returns:
 
 Args:
   - name (string): Event name (required)
-  - start (number): Start time as Unix timestamp (required)
-  - end (number): End time as Unix timestamp
-  - allDay (boolean): Whether the event is all-day
-  - description (string): Event description
+  - startDate (number): Start time as Unix timestamp (required)
+  - duration (number): Duration in seconds
+  - desc (string): Event description
   - leadId (string): Associated lead ID
   - contactId (string): Associated contact ID
-  - assignedTo (string): User ID to assign the event to
+  - userId (string): User ID to assign the event to
 
 Returns:
   The created event with its assigned ID.`,
@@ -114,13 +114,12 @@ Returns:
 Args:
   - event_id (string): The event ID to update (required)
   - name (string): Event name
-  - start (number): Start time as Unix timestamp
-  - end (number): End time as Unix timestamp
-  - allDay (boolean): Whether the event is all-day
-  - description (string): Event description
+  - startDate (number): Start time as Unix timestamp
+  - duration (number): Duration in seconds
+  - desc (string): Event description
   - leadId (string): Associated lead ID
   - contactId (string): Associated contact ID
-  - assignedTo (string): User ID to assign the event to
+  - userId (string): User ID to assign the event to
 
 Returns:
   The updated event.`,

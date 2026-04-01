@@ -35,12 +35,10 @@ export function formatProjectTimeTrackingsMarkdown(times: TimeTracking[]): strin
   for (const time of times) {
     lines.push(`## Entry ${time.id}`);
     lines.push(`- **ID**: ${time.id}`);
-    lines.push(`- **Date**: ${new Date(time.date * 1000).toLocaleDateString()}`);
-    lines.push(`- **Hours**: ${time.hours}`);
-    if (time.employeeName) lines.push(`- **Employee**: ${time.employeeName}`);
-    if (time.description) lines.push(`- **Description**: ${time.description}`);
-    if (time.taskName) lines.push(`- **Task**: ${time.taskName}`);
-    if (time.billable !== undefined) lines.push(`- **Billable**: ${time.billable ? "Yes" : "No"}`);
+    if (time.date) lines.push(`- **Date**: ${new Date(time.date * 1000).toLocaleDateString()}`);
+    if (time.duration !== undefined) lines.push(`- **Hours**: ${(time.duration / 3600).toFixed(1)}`);
+    if (time.user) lines.push(`- **Employee**: ${time.user}`);
+    if (time.desc) lines.push(`- **Description**: ${time.desc}`);
     lines.push("");
   }
 
@@ -112,7 +110,7 @@ Args:
   - duration (number): Duration in seconds (required)
   - costHour (number): Cost per hour (required)
   - desc (string): Description of work (optional)
-  - userId (string): User/Employee ID (optional)
+  - userId (string): User/Employee ID (required)
   - taskId (string): Task ID (optional)
 
 Returns:
@@ -268,14 +266,11 @@ Returns:
       if (response_format === ResponseFormat.MARKDOWN) {
         const lines = [`# Time Tracking Entry ${time.id}`, ""];
         if (time.date) lines.push(`- **Date**: ${new Date(time.date * 1000).toLocaleDateString()}`);
-        if (time.hours !== undefined) lines.push(`- **Hours**: ${time.hours}`);
-        if (time.duration !== undefined) lines.push(`- **Duration**: ${time.duration} seconds`);
-        if (time.description) lines.push(`- **Description**: ${time.description}`);
-        if (time.employeeName) lines.push(`- **Employee**: ${time.employeeName}`);
-        if (time.taskName) lines.push(`- **Task**: ${time.taskName}`);
+        if (time.duration !== undefined) lines.push(`- **Hours**: ${(time.duration / 3600).toFixed(1)}`);
+        if (time.user) lines.push(`- **Employee**: ${time.user}`);
+        if (time.desc) lines.push(`- **Description**: ${time.desc}`);
         if (time.costHour !== undefined) lines.push(`- **Cost/Hour**: ${time.costHour}`);
         if (time.total !== undefined) lines.push(`- **Total**: ${time.total}`);
-        if (time.billable !== undefined) lines.push(`- **Billable**: ${time.billable ? "Yes" : "No"}`);
         textContent = lines.join("\n");
       } else {
         textContent = JSON.stringify(time, null, 2);

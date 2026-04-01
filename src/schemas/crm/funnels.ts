@@ -21,9 +21,9 @@ export type ListFunnelsInput = z.infer<typeof ListFunnelsInputSchema>;
  * Funnel stage schema
  */
 export const FunnelStageSchema = z.strictObject({
+  stageId: z.string().optional().describe("Stage ID (required for existing stages)"),
   name: z.string().min(1).describe("Stage name (required)"),
-  order: z.number().int().min(0).optional().describe("Stage order/position"),
-  probability: z.number().min(0).max(100).optional().describe("Default probability (0-100%)"),
+  desc: z.string().optional().describe("Stage description"),
 })
 
 /**
@@ -31,7 +31,6 @@ export const FunnelStageSchema = z.strictObject({
  */
 export const CreateFunnelInputSchema = z.strictObject({
   name: z.string().min(1, { message: "Name is required" }).describe("Funnel name (required)"),
-  stages: z.array(FunnelStageSchema).optional().describe("Initial funnel stages"),
 })
 
 export type CreateFunnelInput = z.infer<typeof CreateFunnelInputSchema>;

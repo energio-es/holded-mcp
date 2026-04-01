@@ -30,7 +30,7 @@ export type ListProjectTimeTrackingsInput = z.infer<typeof ListProjectTimeTracki
  * - duration: Duration in seconds (required)
  * - costHour: Cost per hour (required)
  * - desc: Description (optional)
- * - userId: User/Employee ID (optional)
+ * - userId: User/Employee ID (required)
  * - taskId: Task ID (optional)
  */
 export const CreateProjectTimeTrackingInputSchema = z.strictObject({
@@ -38,7 +38,7 @@ export const CreateProjectTimeTrackingInputSchema = z.strictObject({
   duration: z.number().int().positive().describe("Duration in seconds (required)"),
   costHour: z.number().int().describe("Cost per hour (required)"),
   desc: OptionalStringSchema.describe("Description of work"),
-  userId: OptionalStringSchema.describe("User/Employee ID"),
+  userId: z.string().min(1).describe("User/Employee ID (required)"),
   taskId: OptionalStringSchema.describe("Task ID"),
 });
 

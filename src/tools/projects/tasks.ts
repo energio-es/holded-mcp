@@ -31,10 +31,8 @@ export function formatTasksMarkdown(tasks: Task[]): string {
     lines.push(`- **ID**: ${task.id}`);
     if (task.projectId) lines.push(`- **Project ID**: ${task.projectId}`);
     if (task.status) lines.push(`- **Status**: ${task.status}`);
-    if (task.priority) lines.push(`- **Priority**: ${task.priority}`);
     if (task.dueDate) lines.push(`- **Due Date**: ${new Date(task.dueDate * 1000).toLocaleDateString()}`);
-    if (task.completed !== undefined) lines.push(`- **Completed**: ${task.completed ? "Yes" : "No"}`);
-    if (task.assignedTo) lines.push(`- **Assigned To**: ${task.assignedTo}`);
+    if (task.userId && task.userId.length > 0) lines.push(`- **Assigned Users**: ${task.userId.join(", ")}`);
     lines.push("");
   }
 

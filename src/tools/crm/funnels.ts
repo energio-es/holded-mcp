@@ -29,7 +29,7 @@ export function formatFunnelsMarkdown(funnels: Funnel[]): string {
     if (funnel.stages && funnel.stages.length > 0) {
       lines.push("- **Stages**:");
       for (const stage of funnel.stages) {
-        lines.push(`  - ${stage.name} (ID: ${stage.id}, Order: ${stage.order})`);
+        lines.push(`  - ${stage.name} (ID: ${stage.stageId})`);
       }
     }
     lines.push("");
@@ -47,7 +47,7 @@ export function formatFunnelMarkdown(funnel: Funnel): string {
   if (funnel.stages && funnel.stages.length > 0) {
     lines.push("", "## Stages");
     for (const stage of funnel.stages) {
-      lines.push(`- **${stage.name}** (ID: ${stage.id}, Order: ${stage.order})`);
+      lines.push(`- **${stage.name}** (ID: ${stage.stageId})`);
     }
   }
 
@@ -99,7 +99,6 @@ Returns:
 
 Args:
   - name (string): Funnel name (required)
-  - stages (array): Initial funnel stages with name, order, and probability
 
 Returns:
   The created funnel with its assigned ID.`,

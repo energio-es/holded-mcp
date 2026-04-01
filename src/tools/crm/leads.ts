@@ -18,7 +18,6 @@ import {
   DeleteLeadTaskInputSchema,
   UpdateLeadDatesInputSchema,
   CreateLeadTaskInputSchema,
-  DeleteLeadNoteInputSchema,
   UpdateLeadStageInput,
   CreateLeadNoteInput,
   UpdateLeadNoteInput,
@@ -26,7 +25,6 @@ import {
   DeleteLeadTaskInput,
   UpdateLeadDatesInput,
   CreateLeadTaskInput,
-  DeleteLeadNoteInput,
 } from "../../schemas/crm/leads.js";
 import { registerCrudTools } from "../factory.js";
 import { snakeToCamel, withErrorHandling } from "../utilities.js";
@@ -45,9 +43,8 @@ export function formatLeadsMarkdown(leads: Lead[]): string {
     lines.push(`## ${lead.name}`);
     lines.push(`- **ID**: ${lead.id}`);
     if (lead.contactName) lines.push(`- **Contact**: ${lead.contactName}`);
-    if (lead.potential !== undefined) lines.push(`- **Potential**: ${lead.potential} ${lead.currency || ""}`);
-    if (lead.probability !== undefined) lines.push(`- **Probability**: ${lead.probability}%`);
-    if (lead.status) lines.push(`- **Status**: ${lead.status}`);
+    if (lead.potential !== undefined) lines.push(`- **Potential**: ${lead.potential}`);
+    if (lead.status !== undefined) lines.push(`- **Status**: ${lead.status}`);
     lines.push("");
   }
 
@@ -63,19 +60,12 @@ export function formatLeadMarkdown(lead: Lead): string {
   if (lead.contactName) lines.push(`- **Contact**: ${lead.contactName} (${lead.contactId || "N/A"})`);
   if (lead.funnelId) lines.push(`- **Funnel ID**: ${lead.funnelId}`);
   if (lead.stageId) lines.push(`- **Stage ID**: ${lead.stageId}`);
-  if (lead.potential !== undefined) lines.push(`- **Potential**: ${lead.potential} ${lead.currency || ""}`);
-  if (lead.probability !== undefined) lines.push(`- **Probability**: ${lead.probability}%`);
-  if (lead.status) lines.push(`- **Status**: ${lead.status}`);
-  if (lead.expectedCloseDate) lines.push(`- **Expected Close**: ${new Date(lead.expectedCloseDate * 1000).toLocaleDateString()}`);
-  if (lead.assignedTo) lines.push(`- **Assigned To**: ${lead.assignedTo}`);
-
-  if (lead.notes) {
-    lines.push("", "## Notes", lead.notes);
-  }
-
-  if (lead.tags && lead.tags.length > 0) {
-    lines.push("", `**Tags**: ${lead.tags.join(", ")}`);
-  }
+  if (lead.potential !== undefined) lines.push(`- **Potential**: ${lead.potential}`);
+  if (lead.value !== undefined) lines.push(`- **Value**: ${lead.value}`);
+  if (lead.status !== undefined) lines.push(`- **Status**: ${lead.status}`);
+  if (lead.userId) lines.push(`- **User ID**: ${lead.userId}`);
+  if (lead.dueDate) lines.push(`- **Due Date**: ${new Date(lead.dueDate * 1000).toLocaleDateString()}`);
+  if (lead.createdAt) lines.push(`- **Created At**: ${new Date(lead.createdAt * 1000).toLocaleString()}`);
 
   return lines.join("\n");
 }
@@ -222,7 +212,8 @@ Returns:
 
 Args:
   - lead_id (string): The lead ID to add the note to (required)
-  - content (string): Note content (required)
+  - title (string): Note title (required)
+  - desc (string): Note description/body
 
 Returns:
   The created note.`,
@@ -236,11 +227,13 @@ Returns:
     },
     withErrorHandling(async (params) => {
       const typedParams = params as unknown as CreateLeadNoteInput;
+      const body: Record<string, unknown> = { title: typedParams.title };
+      if (typedParams.desc !== undefined) body.desc = typedParams.desc;
       const note = await makeApiRequest<LeadNote>(
         "crm",
         `leads/${typedParams.lead_id}/notes`,
         "POST",
-        { content: typedParams.content }
+        body
       );
 
       return {
@@ -316,7 +309,8 @@ Returns:
 Args:
   - lead_id (string): The lead ID (required)
   - note_id (string): The note ID to update (required)
-  - content (string): Note content (required)
+  - title (string): Note title (required)
+  - desc (string): Note description/body
 
 Returns:
   The updated note.`,
@@ -329,12 +323,14 @@ Returns:
       },
     },
     withErrorHandling(async (params) => {
-      const { lead_id, note_id, content } = params as unknown as UpdateLeadNoteInput;
+      const { lead_id, note_id, title, desc } = params as unknown as UpdateLeadNoteInput;
+      const body: Record<string, unknown> = { noteId: note_id, title };
+      if (desc !== undefined) body.desc = desc;
       const note = await makeApiRequest<LeadNote>(
         "crm",
         `leads/${lead_id}/notes`,
         "PUT",
-        { noteId: note_id, content }
+        body
       );
 
       return {
@@ -400,7 +396,7 @@ Returns:
 
 Args:
   - lead_id (string): The lead ID (required)
-  - creation_date (number): Creation date as Unix timestamp (required)
+  - date (number): Lead creation date as Unix timestamp (required)
 
 Returns:
   Confirmation of date update.`,
@@ -413,12 +409,12 @@ Returns:
       },
     },
     withErrorHandling(async (params) => {
-      const { lead_id, creation_date } = params as unknown as UpdateLeadDatesInput;
+      const { lead_id, date } = params as unknown as UpdateLeadDatesInput;
       const result = await makeApiRequest<{ status: string; [key: string]: unknown }>(
         "crm",
         `leads/${lead_id}/dates`,
         "PUT",
-        { creationDate: creation_date }
+        { date }
       );
 
       return {
@@ -428,7 +424,7 @@ Returns:
             text: `Lead dates updated successfully.\n\n${JSON.stringify(result, null, 2)}`,
           },
         ],
-        structuredContent: { updated: true, leadId: lead_id, creationDate: creation_date, ...result },
+        structuredContent: { updated: true, leadId: lead_id, date, ...result },
       };
     })
   );
@@ -482,45 +478,4 @@ Returns:
     })
   );
 
-  // Delete Lead Note
-  server.registerTool(
-    "holded_crm_delete_lead_note",
-    {
-      title: "Delete Holded Lead Note",
-      description: `Delete a note from a lead in Holded CRM.
-
-Args:
-  - lead_id (string): The lead ID (required)
-  - note_id (string): The note ID to delete (required)
-
-Returns:
-  Confirmation of note deletion.`,
-      inputSchema: DeleteLeadNoteInputSchema,
-      annotations: {
-        readOnlyHint: false,
-        destructiveHint: true,
-        idempotentHint: true,
-        openWorldHint: true,
-      },
-    },
-    withErrorHandling(async (params) => {
-      const { lead_id, note_id } = params as unknown as DeleteLeadNoteInput;
-      await makeApiRequest<void>(
-        "crm",
-        `leads/${lead_id}/notes`,
-        "DELETE",
-        { noteId: note_id }
-      );
-
-      return {
-        content: [
-          {
-            type: "text",
-            text: `Note ${note_id} deleted successfully from lead ${lead_id}.`,
-          },
-        ],
-        structuredContent: { deleted: true, leadId: lead_id, noteId: note_id },
-      };
-    })
-  );
 }

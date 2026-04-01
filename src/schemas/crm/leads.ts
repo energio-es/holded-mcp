@@ -85,7 +85,8 @@ export type UpdateLeadStageInput = z.infer<typeof UpdateLeadStageInputSchema>;
  */
 export const CreateLeadNoteInputSchema = z.strictObject({
   lead_id: IdSchema.describe("The lead ID to add the note to"),
-  content: z.string().min(1, { message: "Note content is required" }).describe("Note content (required)"),
+  title: z.string().min(1, { message: "Note title is required" }).describe("Note title (required)"),
+  desc: z.string().optional().describe("Note description/body"),
 })
 
 export type CreateLeadNoteInput = z.infer<typeof CreateLeadNoteInputSchema>;
@@ -111,7 +112,8 @@ export type UpdateLeadTaskInput = z.infer<typeof UpdateLeadTaskInputSchema>;
 export const UpdateLeadNoteInputSchema = z.strictObject({
   lead_id: IdSchema.describe("The lead ID"),
   note_id: IdSchema.describe("The note ID to update"),
-  content: z.string().min(1, { message: "Note content is required" }).describe("Note content (required)"),
+  title: z.string().min(1, { message: "Note title is required" }).describe("Note title (required)"),
+  desc: z.string().optional().describe("Note description/body"),
 })
 
 export type UpdateLeadNoteInput = z.infer<typeof UpdateLeadNoteInputSchema>;
@@ -131,7 +133,7 @@ export type DeleteLeadTaskInput = z.infer<typeof DeleteLeadTaskInputSchema>;
  */
 export const UpdateLeadDatesInputSchema = z.strictObject({
   lead_id: IdSchema.describe("The lead ID"),
-  creation_date: TimestampSchema.describe("Creation date as Unix timestamp"),
+  date: TimestampSchema.describe("Lead creation date as Unix timestamp (required)"),
 })
 
 export type UpdateLeadDatesInput = z.infer<typeof UpdateLeadDatesInputSchema>;
@@ -150,12 +152,3 @@ export const CreateLeadTaskInputSchema = z.strictObject({
 export type CreateLeadTaskInput = z.infer<typeof CreateLeadTaskInputSchema>;
 
 
-/**
- * Delete lead note input schema
- */
-export const DeleteLeadNoteInputSchema = z.strictObject({
-  lead_id: IdSchema.describe("The lead ID"),
-  note_id: IdSchema.describe("The note ID to delete"),
-})
-
-export type DeleteLeadNoteInput = z.infer<typeof DeleteLeadNoteInputSchema>;

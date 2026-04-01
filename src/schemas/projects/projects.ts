@@ -53,6 +53,14 @@ export type GetProjectInput = z.infer<typeof GetProjectInputSchema>;
 export const UpdateProjectInputSchema = z.strictObject({
   project_id: IdSchema.describe("The project ID to update"),
   name: z.string().min(1).optional().describe("Project name"),
+  desc: z.string().optional().describe("Project description"),
+  tags: z.array(z.string()).optional().describe("Project tags"),
+  contactName: z.string().optional().describe("Contact name"),
+  date: z.number().int().optional().describe("Start date as Unix timestamp"),
+  dueDate: z.number().int().optional().describe("Due date as Unix timestamp"),
+  status: z.number().int().optional().describe("Project status"),
+  billable: z.number().int().optional().describe("Billable flag (0 or 1)"),
+  price: z.number().optional().describe("Project price"),
 })
 
 export type UpdateProjectInput = z.infer<typeof UpdateProjectInputSchema>;
