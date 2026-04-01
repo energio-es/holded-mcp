@@ -191,7 +191,7 @@ Returns:
     toolPrefix: "holded_invoicing",
     resource: "contact_group",
     resourcePlural: "contact_groups",
-    endpoint: "contactgroups",
+    endpoint: "contacts/groups",
     idParam: "group_id",
     schemas: {
       list: ListContactGroupsInputSchema,
