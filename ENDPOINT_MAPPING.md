@@ -1,10 +1,10 @@
 # Holded API Endpoint Mapping
 
 **Source:** [Holded API Documentation](https://developers.holded.com)  
-**Last Updated:** 2026-02-05  
-**Last Verified:** 2026-02-05 (Method-by-method verification)  
-**Total API Endpoints:** 132  
-**Implemented Tools:** 143  
+**Last Updated:** 2026-04-01
+**Last Verified:** 2026-04-01 (Method-by-method verification against live API)
+**Total API Endpoints:** 132
+**Implemented Tools:** 138  
 **Coverage:** 100% (all documented endpoints + 6 additional operations)
 
 ## API Versions

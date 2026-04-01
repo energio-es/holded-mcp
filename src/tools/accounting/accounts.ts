@@ -96,7 +96,7 @@ Returns:
     listQueryParams: (params) => {
       const qp: Record<string, unknown> = {};
       if (params.include_empty !== undefined) qp.includeEmpty = params.include_empty ? 1 : 0;
-      if (params.start_date || params.raw_timestamps) {
+      if ((params.start_date && params.end_date) || params.raw_timestamps) {
         const { starttmp, endtmp } = resolveTimestamps(params as {
           raw_timestamps: boolean;
           starttmp?: number;
