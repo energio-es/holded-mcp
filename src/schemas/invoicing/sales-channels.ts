@@ -7,7 +7,6 @@ import {
   IdSchema,
   PaginationSchema,
   ResponseFormatSchema,
-  OptionalStringSchema,
 } from "../common.js";
 
 /**
@@ -35,7 +34,7 @@ export type GetSalesChannelInput = z.infer<typeof GetSalesChannelInputSchema>;
  */
 export const CreateSalesChannelInputSchema = z.strictObject({
   name: z.string().min(1, { message: "Name is required" }).describe("Sales channel name (required)"),
-  description: OptionalStringSchema.describe("Sales channel description"),
+  accountNum: z.number().int().describe("Accounting account number (required)"),
 });
 
 export type CreateSalesChannelInput = z.infer<typeof CreateSalesChannelInputSchema>;
@@ -46,7 +45,7 @@ export type CreateSalesChannelInput = z.infer<typeof CreateSalesChannelInputSche
 export const UpdateSalesChannelInputSchema = z.strictObject({
   sales_channel_id: IdSchema.describe("The sales channel ID to update"),
   name: z.string().min(1).optional().describe("Sales channel name"),
-  description: OptionalStringSchema,
+  accountNum: z.number().int().optional().describe("Accounting account number"),
 });
 
 export type UpdateSalesChannelInput = z.infer<typeof UpdateSalesChannelInputSchema>;

@@ -60,9 +60,9 @@ Returns:
           for (const s of series) {
             lines.push(`## ${s.name}`);
             lines.push(`- **ID**: ${s.id}`);
-            if (s.prefix) lines.push(`- **Prefix**: ${s.prefix}`);
-            if (s.suffix) lines.push(`- **Suffix**: ${s.suffix}`);
-            lines.push(`- **Next Number**: ${s.nextNumber}`);
+            if (s.format) lines.push(`- **Format**: ${s.format}`);
+            if (s.last !== undefined) lines.push(`- **Last**: ${s.last}`);
+            if (s.type) lines.push(`- **Type**: ${s.type}`);
             lines.push("");
           }
           textContent = lines.join("\n");

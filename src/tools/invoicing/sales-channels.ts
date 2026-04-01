@@ -15,7 +15,8 @@ import { registerCrudTools } from "../factory.js";
 interface SalesChannel {
   id: string;
   name: string;
-  description?: string;
+  color?: string;
+  accountNum?: number;
   [key: string]: unknown;
 }
 
@@ -32,7 +33,7 @@ export function formatSalesChannelsMarkdown(channels: SalesChannel[]): string {
   for (const channel of channels) {
     lines.push(`## ${channel.name}`);
     lines.push(`- **ID**: ${channel.id}`);
-    if (channel.description) lines.push(`- **Description**: ${channel.description}`);
+    if (channel.accountNum !== undefined) lines.push(`- **Account Number**: ${channel.accountNum}`);
     lines.push("");
   }
 
@@ -44,7 +45,7 @@ export function formatSalesChannelsMarkdown(channels: SalesChannel[]): string {
  */
 export function formatSalesChannelMarkdown(channel: SalesChannel): string {
   const lines = [`# ${channel.name}`, "", `**ID**: ${channel.id}`, ""];
-  if (channel.description) lines.push(`- **Description**: ${channel.description}`);
+  if (channel.accountNum !== undefined) lines.push(`- **Account Number**: ${channel.accountNum}`);
 
   return lines.join("\n");
 }

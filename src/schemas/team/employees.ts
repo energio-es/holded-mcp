@@ -57,6 +57,7 @@ export const CreateEmployeeInputSchema = z.strictObject({
   lastName: z.string().min(1, { message: "Last name is required" }).describe("Employee last name (required)"),
   email: z.string().email({ message: "Valid email is required" }).describe("Email address (required)"),
   sendInvite: z.boolean().optional().describe("Whether to send invitation email to the employee"),
+  response_format: ResponseFormatSchema,
 });
 
 export type CreateEmployeeInput = z.infer<typeof CreateEmployeeInputSchema>;
@@ -153,6 +154,7 @@ export const UpdateEmployeeInputSchema = z.strictObject({
   workplace: OptionalStringSchema.describe("Workplace ID"),
   teams: z.array(z.string()).optional().describe("Array of team IDs"),
   holdedUserId: OptionalStringSchema.describe("Holded user ID"),
+  response_format: ResponseFormatSchema,
 });
 
 export type UpdateEmployeeInput = z.infer<typeof UpdateEmployeeInputSchema>;

@@ -14,7 +14,7 @@ import {
 /**
  * Format taxes as markdown
  */
-export function formatTaxesMarkdown(taxes: Array<{ id: string; name: string; rate?: number; [key: string]: unknown }>): string {
+export function formatTaxesMarkdown(taxes: Array<{ key: string; name: string; amount?: number; [key: string]: unknown }>): string {
   if (!taxes.length) {
     return "No taxes found.";
   }
@@ -23,8 +23,8 @@ export function formatTaxesMarkdown(taxes: Array<{ id: string; name: string; rat
 
   for (const tax of taxes) {
     lines.push(`## ${tax.name}`);
-    lines.push(`- **ID**: ${tax.id}`);
-    if (tax.rate !== undefined) lines.push(`- **Rate**: ${tax.rate}%`);
+    lines.push(`- **Key**: ${tax.key}`);
+    if (tax.amount !== undefined) lines.push(`- **Amount**: ${tax.amount}%`);
     lines.push("");
   }
 
@@ -57,7 +57,7 @@ Returns:
     },
     withErrorHandling(async (params) => {
       const { response_format } = params as unknown as GetTaxesInput;
-      const taxes = await makeApiRequest<Array<{ id: string; name: string; rate?: number; [key: string]: unknown }>>(
+      const taxes = await makeApiRequest<Array<{ key: string; name: string; amount?: number; [key: string]: unknown }>>(
         "invoicing",
         "taxes",
         "GET"

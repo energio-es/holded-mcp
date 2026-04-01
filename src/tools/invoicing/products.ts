@@ -59,13 +59,13 @@ export function formatProductMarkdown(product: Product): string {
 
   if (product.sku) lines.push(`- **SKU**: ${product.sku}`);
   if (product.kind) lines.push(`- **Kind**: ${product.kind}`);
-  if (product.type) lines.push(`- **Type**: ${product.type}`);
+  if (product.typeId) lines.push(`- **Type ID**: ${product.typeId}`);
   if (product.desc) lines.push(`- **Description**: ${product.desc}`);
   if (product.price !== undefined) lines.push(`- **Price**: ${product.price}`);
-  if (product.costPrice !== undefined) lines.push(`- **Cost Price**: ${product.costPrice}`);
+  if (product.cost !== undefined) lines.push(`- **Cost**: ${product.cost}`);
   if (product.tax) lines.push(`- **Tax**: ${product.tax}`);
   if (product.stock !== undefined) lines.push(`- **Stock**: ${product.stock}`);
-  if (product.stockControl !== undefined) lines.push(`- **Stock Control**: ${product.stockControl}`);
+  if (product.hasStock !== undefined) lines.push(`- **Has Stock**: ${product.hasStock}`);
   if (product.barcode) lines.push(`- **Barcode**: ${product.barcode}`);
   if (product.weight !== undefined) lines.push(`- **Weight**: ${product.weight}`);
 

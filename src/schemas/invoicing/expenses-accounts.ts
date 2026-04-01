@@ -7,7 +7,6 @@ import {
   IdSchema,
   PaginationSchema,
   ResponseFormatSchema,
-  OptionalStringSchema,
 } from "../common.js";
 
 /**
@@ -35,8 +34,7 @@ export type GetExpensesAccountInput = z.infer<typeof GetExpensesAccountInputSche
  */
 export const CreateExpensesAccountInputSchema = z.strictObject({
   name: z.string().min(1, { message: "Name is required" }).describe("Expenses account name (required)"),
-  code: OptionalStringSchema.describe("Account code"),
-  description: OptionalStringSchema.describe("Account description"),
+  accountNum: z.number().int().describe("Accounting account number (required)"),
 });
 
 export type CreateExpensesAccountInput = z.infer<typeof CreateExpensesAccountInputSchema>;
@@ -47,8 +45,7 @@ export type CreateExpensesAccountInput = z.infer<typeof CreateExpensesAccountInp
 export const UpdateExpensesAccountInputSchema = z.strictObject({
   expenses_account_id: IdSchema.describe("The expenses account ID to update"),
   name: z.string().min(1).optional().describe("Expenses account name"),
-  code: OptionalStringSchema,
-  description: OptionalStringSchema,
+  accountNum: z.number().int().optional().describe("Accounting account number"),
 });
 
 export type UpdateExpensesAccountInput = z.infer<typeof UpdateExpensesAccountInputSchema>;

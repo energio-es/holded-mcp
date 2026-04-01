@@ -30,10 +30,10 @@ export function formatPaymentsMarkdown(payments: Payment[]): string {
   for (const payment of payments) {
     lines.push(`## Payment ${payment.id}`);
     lines.push(`- **ID**: ${payment.id}`);
-    lines.push(`- **Document ID**: ${payment.docId}`);
+    lines.push(`- **Document ID**: ${payment.documentId}`);
     lines.push(`- **Amount**: ${payment.amount}`);
     lines.push(`- **Date**: ${new Date(payment.date * 1000).toLocaleDateString()}`);
-    if (payment.accountId) lines.push(`- **Account ID**: ${payment.accountId}`);
+    if (payment.bankId) lines.push(`- **Bank ID**: ${payment.bankId}`);
     if (payment.desc) lines.push(`- **Description**: ${payment.desc}`);
     lines.push("");
   }
@@ -47,10 +47,10 @@ export function formatPaymentsMarkdown(payments: Payment[]): string {
 export function formatPaymentMarkdown(payment: Payment): string {
   const lines = [`# Payment ${payment.id}`, ""];
   lines.push(`- **ID**: ${payment.id}`);
-  lines.push(`- **Document ID**: ${payment.docId}`);
+  lines.push(`- **Document ID**: ${payment.documentId}`);
   lines.push(`- **Amount**: ${payment.amount}`);
   lines.push(`- **Date**: ${new Date(payment.date * 1000).toLocaleDateString()}`);
-  if (payment.accountId) lines.push(`- **Account ID**: ${payment.accountId}`);
+  if (payment.bankId) lines.push(`- **Bank ID**: ${payment.bankId}`);
   if (payment.desc) lines.push(`- **Description**: ${payment.desc}`);
   return lines.join("\n");
 }
@@ -138,14 +138,14 @@ Returns:
       const { doc_id, account_id, ...paymentData } = params as unknown as CreatePaymentInput;
       const requestData = {
         ...paymentData,
-        ...(account_id ? { accountId: account_id } : {}),
+        ...(account_id ? { bankId: account_id } : {}),
       };
 
       const payment = await makeApiRequest<Payment>(
         "invoicing",
         "payments",
         "POST",
-        { docId: doc_id, ...requestData }
+        { documentId: doc_id, ...requestData }
       );
 
       return {
@@ -188,7 +188,7 @@ Returns:
       const { payment_id, account_id, ...updateData } = params as unknown as UpdatePaymentInput;
       const requestData = {
         ...updateData,
-        ...(account_id ? { accountId: account_id } : {}),
+        ...(account_id ? { bankId: account_id } : {}),
       };
 
       const payment = await makeApiRequest<Payment>(

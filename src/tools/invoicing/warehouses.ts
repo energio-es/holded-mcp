@@ -33,7 +33,7 @@ export function formatWarehousesMarkdown(warehouses: Warehouse[]): string {
       if (addr.postalCode) lines.push(`- **Postal Code**: ${addr.postalCode}`);
       if (addr.country) lines.push(`- **Country**: ${addr.country}`);
     }
-    if (warehouse.active !== undefined) lines.push(`- **Active**: ${warehouse.active ? "Yes" : "No"}`);
+    if (warehouse.default !== undefined) lines.push(`- **Default**: ${warehouse.default ? "Yes" : "No"}`);
     lines.push("");
   }
 
@@ -57,7 +57,7 @@ export function formatWarehouseMarkdown(warehouse: Warehouse): string {
     lines.push("");
   }
 
-  if (warehouse.active !== undefined) lines.push(`- **Active**: ${warehouse.active ? "Yes" : "No"}`);
+  if (warehouse.default !== undefined) lines.push(`- **Default**: ${warehouse.default ? "Yes" : "No"}`);
 
   return lines.join("\n");
 }

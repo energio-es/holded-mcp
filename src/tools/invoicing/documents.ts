@@ -55,7 +55,6 @@ export function formatDocumentsMarkdown(documents: Document[], docType: string):
     if (doc.date) lines.push(`- **Date**: ${new Date(doc.date * 1000).toLocaleDateString()}`);
     if (doc.total !== undefined) lines.push(`- **Total**: ${doc.total} ${doc.currency || ""}`);
     if (doc.status) lines.push(`- **Status**: ${doc.status}`);
-    if (doc.paid !== undefined) lines.push(`- **Paid**: ${doc.paid ? "Yes" : "No"}`);
     lines.push("");
   }
 
@@ -66,20 +65,20 @@ export function formatDocumentsMarkdown(documents: Document[], docType: string):
  * Format a single document as markdown
  */
 export function formatDocumentMarkdown(doc: Document): string {
-  const lines = [`# ${doc.docType?.toUpperCase() || "Document"}: ${doc.docNumber || doc.id}`, ""];
+  const lines = [`# Document: ${doc.docNumber || doc.id}`, ""];
 
   lines.push(`**ID**: ${doc.id}`);
-  if (doc.contactName) lines.push(`**Contact**: ${doc.contactName} (${doc.contactId || "N/A"})`);
+  if (doc.contactName) lines.push(`**Contact**: ${doc.contactName} (${doc.contact || "N/A"})`);
   if (doc.date) lines.push(`**Date**: ${new Date(doc.date * 1000).toLocaleDateString()}`);
   if (doc.dueDate) lines.push(`**Due Date**: ${new Date(doc.dueDate * 1000).toLocaleDateString()}`);
   if (doc.status) lines.push(`**Status**: ${doc.status}`);
   lines.push("");
 
-  if (doc.items && doc.items.length > 0) {
+  if (doc.products && doc.products.length > 0) {
     lines.push("## Line Items", "");
     lines.push("| Item | Qty | Subtotal | Tax |");
     lines.push("|------|-----|----------|-----|");
-    for (const item of doc.items) {
+    for (const item of doc.products) {
       lines.push(`| ${item.name} | ${item.units || 1} | ${item.subtotal || 0} | ${item.tax || "-"} |`);
     }
     lines.push("");
@@ -89,8 +88,7 @@ export function formatDocumentMarkdown(doc: Document): string {
   if (doc.subtotal !== undefined) lines.push(`- **Subtotal**: ${doc.subtotal}`);
   if (doc.tax !== undefined) lines.push(`- **Tax**: ${doc.tax}`);
   if (doc.total !== undefined) lines.push(`- **Total**: ${doc.total} ${doc.currency || ""}`);
-  if (doc.paid !== undefined) lines.push(`- **Paid**: ${doc.paid ? "Yes" : "No"}`);
-  if (doc.paidAmount !== undefined) lines.push(`- **Paid Amount**: ${doc.paidAmount}`);
+  if (doc.paymentsTotal !== undefined) lines.push(`- **Payments Total**: ${doc.paymentsTotal}`);
 
   if (doc.notes) {
     lines.push("", "## Notes", doc.notes);

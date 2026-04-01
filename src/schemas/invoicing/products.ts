@@ -45,7 +45,7 @@ export const ProductVariantSchema = z.strictObject({
   sku: z.string().optional().describe("Variant SKU"),
   barcode: z.string().optional().describe("Variant barcode"),
   price: z.number().optional().describe("Variant price"),
-  costPrice: z.number().optional().describe("Variant cost price"),
+  cost: z.number().optional().describe("Variant cost price"),
 })
 
 /**
@@ -55,16 +55,16 @@ export const CreateProductInputSchema = z.strictObject({
   name: z.string().min(1, { message: "Name is required" }).describe("Product name (required)"),
   sku: z.string().optional().describe("Stock Keeping Unit (SKU)"),
   kind: z
-    .enum(["product", "service", "pack"])
+    .enum(["simple", "variants", "lots", "pack"])
     .optional()
-    .describe("Product kind: product, service, or pack"),
-  type: z.string().optional().describe("Product type/category"),
+    .describe("Product kind: simple, variants, lots, or pack"),
+  typeId: z.string().optional().describe("Product type/category"),
   desc: z.string().optional().describe("Product description"),
   price: z.number().min(0).optional().describe("Selling price"),
-  costPrice: z.number().min(0).optional().describe("Cost price"),
+  cost: z.number().min(0).optional().describe("Cost price"),
   tax: z.string().optional().describe("Tax rate ID or percentage"),
   stock: z.number().optional().describe("Initial stock quantity"),
-  stockControl: z.boolean().optional().describe("Enable stock control"),
+  hasStock: z.boolean().optional().describe("Enable stock control"),
   barcode: z.string().optional().describe("Product barcode"),
   weight: z.number().min(0).optional().describe("Product weight"),
   purchasePrice: z.number().min(0).optional().describe("Purchase/supplier price"),
@@ -85,15 +85,15 @@ export const UpdateProductInputSchema = z.strictObject({
   name: z.string().min(1).optional().describe("Product name"),
   sku: z.string().optional().describe("Stock Keeping Unit (SKU)"),
   kind: z
-    .enum(["product", "service", "pack"])
+    .enum(["simple", "variants", "lots", "pack"])
     .optional()
-    .describe("Product kind: product, service, or pack"),
-  type: z.string().optional().describe("Product type/category"),
+    .describe("Product kind: simple, variants, lots, or pack"),
+  typeId: z.string().optional().describe("Product type/category"),
   desc: z.string().optional().describe("Product description"),
   price: z.number().min(0).optional().describe("Selling price"),
-  costPrice: z.number().min(0).optional().describe("Cost price"),
+  cost: z.number().min(0).optional().describe("Cost price"),
   tax: z.string().optional().describe("Tax rate ID or percentage"),
-  stockControl: z.boolean().optional().describe("Enable stock control"),
+  hasStock: z.boolean().optional().describe("Enable stock control"),
   barcode: z.string().optional().describe("Product barcode"),
   weight: z.number().min(0).optional().describe("Product weight"),
   subtotal: z.number().optional().describe("Product subtotal amount"),

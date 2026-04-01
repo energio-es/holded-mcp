@@ -24,14 +24,12 @@ export function formatEmployeesMarkdown(employees: Employee[]): string {
   const lines = ["# Employees", "", `Found ${employees.length} employees:`, ""];
 
   for (const employee of employees) {
-    lines.push(`## ${employee.name}`);
+    lines.push(`## ${employee.name}${employee.lastName ? ` ${employee.lastName}` : ""}`);
     lines.push(`- **ID**: ${employee.id}`);
+    if (employee.mainEmail) lines.push(`- **Main Email**: ${employee.mainEmail}`);
     if (employee.email) lines.push(`- **Email**: ${employee.email}`);
     if (employee.phone) lines.push(`- **Phone**: ${employee.phone}`);
-    if (employee.position) lines.push(`- **Position**: ${employee.position}`);
-    if (employee.department) lines.push(`- **Department**: ${employee.department}`);
-    if (employee.status) lines.push(`- **Status**: ${employee.status}`);
-    if (employee.hireDate) lines.push(`- **Hire Date**: ${new Date(employee.hireDate * 1000).toLocaleDateString()}`);
+    if (employee.title) lines.push(`- **Title**: ${employee.title}`);
     lines.push("");
   }
 
@@ -42,14 +40,12 @@ export function formatEmployeesMarkdown(employees: Employee[]): string {
  * Format a single employee as markdown
  */
 export function formatEmployeeMarkdown(employee: Employee): string {
-  const lines = [`# ${employee.name}`, "", `**ID**: ${employee.id}`, ""];
+  const lines = [`# ${employee.name}${employee.lastName ? ` ${employee.lastName}` : ""}`, "", `**ID**: ${employee.id}`, ""];
 
+  if (employee.mainEmail) lines.push(`- **Main Email**: ${employee.mainEmail}`);
   if (employee.email) lines.push(`- **Email**: ${employee.email}`);
   if (employee.phone) lines.push(`- **Phone**: ${employee.phone}`);
-  if (employee.position) lines.push(`- **Position**: ${employee.position}`);
-  if (employee.department) lines.push(`- **Department**: ${employee.department}`);
-  if (employee.status) lines.push(`- **Status**: ${employee.status}`);
-  if (employee.hireDate) lines.push(`- **Hire Date**: ${new Date(employee.hireDate * 1000).toLocaleDateString()}`);
+  if (employee.title) lines.push(`- **Title**: ${employee.title}`);
 
   return lines.join("\n");
 }
@@ -87,7 +83,7 @@ Args:
   - response_format ('json' | 'markdown'): Output format (default: 'json')
 
 Returns:
-  Array of employees with id, name, email, position, department, and status.`,
+  Array of employees with id, name, lastName, email, title, and phone.`,
       get: `Get a specific employee by ID from Holded.
 
 Args:
@@ -95,7 +91,7 @@ Args:
   - response_format ('json' | 'markdown'): Output format (default: 'json')
 
 Returns:
-  Employee details including name, email, position, department, and status.`,
+  Employee details including name, lastName, email, title, and phone.`,
       create: `Create a new employee in Holded.
 
 According to Holded Team API v1.0.1, employee creation supports:
@@ -104,7 +100,7 @@ According to Holded Team API v1.0.1, employee creation supports:
   - email (string): Email address (required)
   - sendInvite (boolean): Whether to send invitation email to the employee (optional)
 
-Additional fields like phone, position, department should be set via Update Employee after creation.
+Additional fields like phone, title, etc. should be set via Update Employee after creation.
 
 Returns:
   The created employee with its assigned ID.`,

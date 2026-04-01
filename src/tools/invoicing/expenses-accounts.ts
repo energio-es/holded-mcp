@@ -15,8 +15,8 @@ import { registerCrudTools } from "../factory.js";
 interface ExpensesAccount {
   id: string;
   name: string;
-  code?: string;
-  description?: string;
+  color?: string;
+  accountNum?: number;
   [key: string]: unknown;
 }
 
@@ -33,8 +33,7 @@ export function formatExpensesAccountsMarkdown(accounts: ExpensesAccount[]): str
   for (const account of accounts) {
     lines.push(`## ${account.name}`);
     lines.push(`- **ID**: ${account.id}`);
-    if (account.code) lines.push(`- **Code**: ${account.code}`);
-    if (account.description) lines.push(`- **Description**: ${account.description}`);
+    if (account.accountNum !== undefined) lines.push(`- **Account Number**: ${account.accountNum}`);
     lines.push("");
   }
 
@@ -46,8 +45,7 @@ export function formatExpensesAccountsMarkdown(accounts: ExpensesAccount[]): str
  */
 export function formatExpensesAccountMarkdown(account: ExpensesAccount): string {
   const lines = [`# ${account.name}`, "", `**ID**: ${account.id}`, ""];
-  if (account.code) lines.push(`- **Code**: ${account.code}`);
-  if (account.description) lines.push(`- **Description**: ${account.description}`);
+  if (account.accountNum !== undefined) lines.push(`- **Account Number**: ${account.accountNum}`);
 
   return lines.join("\n");
 }

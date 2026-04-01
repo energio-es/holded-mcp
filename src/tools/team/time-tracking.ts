@@ -43,12 +43,8 @@ export function formatTimeTrackingsMarkdown(times: TimeTracking[]): string {
   for (const time of times) {
     lines.push(`## ${time.employeeName || `Employee ${time.employeeId}`}`);
     lines.push(`- **ID**: ${time.id}`);
-    lines.push(`- **Date**: ${new Date(time.date * 1000).toLocaleDateString()}`);
-    lines.push(`- **Hours**: ${time.hours}`);
-    if (time.description) lines.push(`- **Description**: ${time.description}`);
-    if (time.projectName) lines.push(`- **Project**: ${time.projectName}`);
-    if (time.taskName) lines.push(`- **Task**: ${time.taskName}`);
-    if (time.billable !== undefined) lines.push(`- **Billable**: ${time.billable ? "Yes" : "No"}`);
+    lines.push(`- **Hours**: ${(time.time / 3600).toFixed(1)}`);
+    if (time.status) lines.push(`- **Status**: ${time.status}`);
     lines.push("");
   }
 
@@ -61,12 +57,8 @@ export function formatTimeTrackingsMarkdown(times: TimeTracking[]): string {
 export function formatTimeTrackingMarkdown(time: TimeTracking): string {
   const lines = [`# Time Tracking Entry`, "", `**ID**: ${time.id}`, ""];
   lines.push(`- **Employee**: ${time.employeeName || time.employeeId}`);
-  lines.push(`- **Date**: ${new Date(time.date * 1000).toLocaleDateString()}`);
-  lines.push(`- **Hours**: ${time.hours}`);
-  if (time.description) lines.push(`- **Description**: ${time.description}`);
-  if (time.projectName) lines.push(`- **Project**: ${time.projectName} (${time.projectId})`);
-  if (time.taskName) lines.push(`- **Task**: ${time.taskName} (${time.taskId})`);
-  if (time.billable !== undefined) lines.push(`- **Billable**: ${time.billable ? "Yes" : "No"}`);
+  lines.push(`- **Hours**: ${(time.time / 3600).toFixed(1)}`);
+  if (time.status) lines.push(`- **Status**: ${time.status}`);
 
   return lines.join("\n");
 }
@@ -87,7 +79,7 @@ Args:
   - response_format ('json' | 'markdown'): Output format (default: 'json')
 
 Returns:
-  Array of time-trackings with id, employee, date, hours, and description.`,
+  Array of time-trackings with id, employee, time, and status.`,
       inputSchema: ListAllTimeTrackingsInputSchema,
       annotations: {
         readOnlyHint: true,
@@ -136,7 +128,7 @@ Args:
   - response_format ('json' | 'markdown'): Output format (default: 'json')
 
 Returns:
-  Array of time-trackings for the employee.`,
+  Array of time-trackings for the employee with id, time, and status.`,
       inputSchema: ListEmployeeTimeTrackingsInputSchema,
       annotations: {
         readOnlyHint: true,
@@ -184,7 +176,7 @@ Args:
   - response_format ('json' | 'markdown'): Output format (default: 'json')
 
 Returns:
-  Time-tracking details including employee, date, hours, and description.`,
+  Time-tracking details including employee, time, and status.`,
       inputSchema: GetTimeTrackingInputSchema,
       annotations: {
         readOnlyHint: true,
