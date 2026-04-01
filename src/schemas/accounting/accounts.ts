@@ -7,6 +7,7 @@ import {
   PaginationSchema,
   ResponseFormatSchema,
 } from "../common.js";
+import { accountingDateRangeFields } from "./date-range.js";
 
 /**
  * List accounting accounts input schema
@@ -14,7 +15,8 @@ import {
 export const ListAccountingAccountsInputSchema = z.strictObject({
     page: PaginationSchema.shape.page,
     response_format: ResponseFormatSchema,
-    include_empty: z.boolean().optional().default(true).describe("Include empty accounts in the results (default: true)"),
+    include_empty: z.boolean().optional().default(true).describe("Include accounts with zero balance in the scoped period (default: true)"),
+    ...accountingDateRangeFields,
   })
 
 export type ListAccountingAccountsInput = z.infer<typeof ListAccountingAccountsInputSchema>;

@@ -9,6 +9,7 @@ import {
   CreateAccountInputSchema,
 } from "../../schemas/accounting/accounts.js";
 import { registerCrudTools } from "../factory.js";
+import { resolveTimestamps } from "../../utils/timezone.js";
 
 /**
  * Format accounting accounts as markdown
@@ -57,17 +58,22 @@ export function registerAccountTools(server: McpServer): void {
     descriptions: {
       list: `List all accounting accounts (chart of accounts/PGC accounts) from Holded.
 
-Returns paginated list of accounting accounts. Use page parameter to navigate through results.
+Returns accounts with debit/credit/balance totals scoped to the current fiscal year by default. Pass start_date/end_date to query a different period.
 
-For date-scoped account balances (debit/credit/balance totals for a specific period), use holded_accounting_list_account_balances instead.
+For date-scoped account balances computed from individual daily ledger entries, use holded_accounting_list_account_balances instead.
 
 Args:
   - page (number): Page number for pagination (default: 1, max 500 items per page)
   - response_format ('json' | 'markdown'): Output format (default: 'json')
-  - include_empty (boolean): Include empty accounts in the results (default: true)
+  - include_empty (boolean): Include accounts with zero balance in the scoped period (default: true)
+  - start_date (string): Period start date in YYYY-MM-DD format (optional, omit for current fiscal year)
+  - end_date (string): Period end date in YYYY-MM-DD format (optional, inclusive)
+  - raw_timestamps (boolean): Set to true to use starttmp/endtmp instead of start_date/end_date
+  - starttmp (number): Period start as Unix timestamp (raw_timestamps mode only)
+  - endtmp (number): Period end as Unix timestamp (raw_timestamps mode only)
 
 Returns:
-  Array of accounting accounts with id, code, name, type, and parent account information.`,
+  Array of accounting accounts with id, num, name, group, color, debit, credit, and balance.`,
       create: `Create a new accounting account in Holded.
 
 The prefix parameter takes a 4-digit integer that matches the prefix of the corresponding account in Holded.
@@ -90,6 +96,17 @@ Returns:
     listQueryParams: (params) => {
       const qp: Record<string, unknown> = {};
       if (params.include_empty !== undefined) qp.includeEmpty = params.include_empty ? 1 : 0;
+      if (params.start_date || params.raw_timestamps) {
+        const { starttmp, endtmp } = resolveTimestamps(params as {
+          raw_timestamps: boolean;
+          starttmp?: number;
+          endtmp?: number;
+          start_date?: string;
+          end_date?: string;
+        });
+        qp.starttmp = starttmp;
+        qp.endtmp = endtmp;
+      }
       return qp;
     },
   });

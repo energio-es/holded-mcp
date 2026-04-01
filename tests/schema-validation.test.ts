@@ -1134,14 +1134,25 @@ describe('Schema Validation Against OpenAPI Specs', () => {
       }
     });
 
-    it('should reject starttmp and endtmp as unknown fields', () => {
+    it('should accept optional date range fields', () => {
       const data = {
+        start_date: '2025-01-01',
+        end_date: '2025-12-31',
+      };
+
+      const result = ListAccountingAccountsInputSchema.safeParse(data);
+      expect(result.success).toBe(true);
+    });
+
+    it('should accept raw timestamp mode', () => {
+      const data = {
+        raw_timestamps: true,
         starttmp: 1730109600,
         endtmp: 1730196000,
       };
 
       const result = ListAccountingAccountsInputSchema.safeParse(data);
-      expect(result.success).toBe(false);
+      expect(result.success).toBe(true);
     });
   });
 
