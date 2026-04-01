@@ -23,9 +23,11 @@ export function formatAccountingAccountsMarkdown(accounts: AccountingAccount[]):
   for (const account of accounts) {
     lines.push(`## ${account.name}`);
     lines.push(`- **ID**: ${account.id}`);
-    lines.push(`- **Code**: ${account.code}`);
-    if (account.type) lines.push(`- **Type**: ${account.type}`);
-    if (account.parentId) lines.push(`- **Parent ID**: ${account.parentId}`);
+    lines.push(`- **Num**: ${account.num}`);
+    lines.push(`- **Group**: ${account.group}`);
+    if (account.debit !== undefined) lines.push(`- **Debit**: ${account.debit}`);
+    if (account.credit !== undefined) lines.push(`- **Credit**: ${account.credit}`);
+    if (account.balance !== undefined) lines.push(`- **Balance**: ${account.balance}`);
     lines.push("");
   }
 

@@ -210,8 +210,8 @@ describe("formatContactMarkdown", () => {
 describe("formatAccountingAccountsMarkdown", () => {
   it("renders a list of accounts with header and field values", () => {
     const accounts = [
-      { id: "acc-001", code: "7000001", name: "Sales Revenue", type: "income" },
-      { id: "acc-002", code: "6000001", name: "Operating Costs", type: "expense", parentId: "acc-parent-01" },
+      { id: "acc-001", num: 70000001, name: "Sales Revenue", group: "Ventas e ingresos", debit: 0, credit: 100, balance: -100 },
+      { id: "acc-002", num: 60000001, name: "Operating Costs", group: "Compras y gastos", debit: 50, credit: 0, balance: 50 },
     ];
 
     const result = formatAccountingAccountsMarkdown(accounts);
@@ -220,13 +220,12 @@ describe("formatAccountingAccountsMarkdown", () => {
     expect(result).toContain("Found 2 accounts");
     expect(result).toContain("## Sales Revenue");
     expect(result).toContain("acc-001");
-    expect(result).toContain("7000001");
-    expect(result).toContain("income");
+    expect(result).toContain("70000001");
+    expect(result).toContain("Ventas e ingresos");
     expect(result).toContain("## Operating Costs");
     expect(result).toContain("acc-002");
-    expect(result).toContain("6000001");
-    expect(result).toContain("expense");
-    expect(result).toContain("acc-parent-01");
+    expect(result).toContain("60000001");
+    expect(result).toContain("Compras y gastos");
   });
 
   it("returns empty message when no accounts", () => {
@@ -235,12 +234,13 @@ describe("formatAccountingAccountsMarkdown", () => {
 
   it("omits optional fields that are absent", () => {
     const result = formatAccountingAccountsMarkdown([
-      { id: "acc-003", code: "1000001", name: "Cash" },
+      { id: "acc-003", num: 10000001, name: "Cash", group: "Cuentas financieras" },
     ]);
     expect(result).toContain("## Cash");
-    expect(result).toContain("1000001");
-    expect(result).not.toContain("Type");
-    expect(result).not.toContain("Parent ID");
+    expect(result).toContain("10000001");
+    expect(result).not.toContain("Debit");
+    expect(result).not.toContain("Credit");
+    expect(result).not.toContain("Balance");
   });
 });
 

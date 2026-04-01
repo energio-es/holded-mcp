@@ -658,10 +658,13 @@ export interface CreateEntryResponse {
 // Accounting types
 export interface AccountingAccount {
   id: string;
-  code: string;
+  num: number;
   name: string;
-  type?: string;
-  parentId?: string;
+  group: string;
+  color?: string;
+  debit?: number;
+  credit?: number;
+  balance?: number;
 }
 
 // Team types
