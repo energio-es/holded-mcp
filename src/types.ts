@@ -1,35 +1,22 @@
 /**
  * TypeScript type definitions for Holded API entities
- * 
- * API Versions targeted:
+ *
+ * All types verified against the live Holded API via direct HTTP calls (2026-04-01).
+ * See holded_api_specs/DRIFT.md for the full field inventory per endpoint.
+ *
+ * API Versions:
  * - Invoice API: v1.4
  * - CRM API: v1.0
  * - Projects API: v1.2
  * - Team API: v1.0.1
- * 
- * Documentation: https://developers.holded.com/reference
- * Last updated: 2026-02-04
- * 
- * DEPRECATION NOTICE:
- * Some type fields are marked with @deprecated. These fields exist for backwards
- * compatibility with existing code but may not be returned by the actual Holded API.
- * 
- * Migration guide:
- * - Project: Use 'desc' instead of 'description', 'price' instead of 'budget',
- *   'date' instead of 'startDate', 'dueDate' instead of 'endDate'
- * - Task: Use 'desc' instead of 'description', 'userId' instead of 'assignedTo',
- *   'status' (number) instead of 'priority' (string)
- * - ProjectLabel: Use 'id' instead of 'labelId', 'name' instead of 'labelName',
- *   'color' instead of 'labelColor'
- * - Booking: Use 'customFieldsValues' or 'customFields' instead of legacy fields
- * 
- * These deprecated fields will be removed in the next major version.
+ * - Accounting API: v1.0.0
  */
 
 // Contact types
 export interface Contact {
   id: string;
   name: string;
+  customId?: string | null;
   code?: string;
   email?: string;
   phone?: string;
@@ -46,7 +33,8 @@ export interface Contact {
   defaults?: ContactDefaults;
   socialNetworks?: SocialNetworks;
   tags?: string[];
-  notes?: string;
+  notes?: unknown[];
+  contactPersons?: unknown[];
   isperson?: boolean;
   vatnumber?: string;
   currency?: string;
@@ -57,6 +45,9 @@ export interface Contact {
   paymentMethod?: string;
   salesChannel?: string;
   shippingAddresses?: Address[];
+  createdAt?: number;
+  updatedAt?: number;
+  updatedHash?: string;
 }
 
 export interface Address {
@@ -66,6 +57,7 @@ export interface Address {
   province?: string;
   country?: string;
   countryCode?: string;
+  info?: string;
 }
 
 export interface CustomField {
@@ -74,10 +66,17 @@ export interface CustomField {
 }
 
 export interface ContactDefaults {
-  salesChannel?: string;
+  salesChannel?: number;
   paymentMethod?: string;
   paymentDay?: number;
   dueDays?: number;
+  expensesAccount?: number;
+  discount?: number;
+  language?: string;
+  currency?: string;
+  salesTax?: unknown[];
+  purchasesTax?: unknown[];
+  accumulateInForm347?: string;
 }
 
 export interface SocialNetworks {
@@ -102,14 +101,14 @@ export interface Product {
   id: string;
   name: string;
   sku?: string;
-  kind?: "product" | "service" | "pack";
-  type?: string;
+  kind?: string;
+  typeId?: string;
   desc?: string;
   price?: number;
-  costPrice?: number;
+  cost?: string | number;
   tax?: string;
   stock?: number;
-  stockControl?: boolean;
+  hasStock?: boolean;
   barcode?: string;
   weight?: number;
   packQuantity?: number;
@@ -117,6 +116,19 @@ export interface Product {
   tags?: string[];
   variants?: ProductVariant[];
   customFields?: CustomField[];
+  contactId?: string;
+  contactName?: string;
+  total?: number;
+  purchasePrice?: number;
+  categoryId?: string;
+  factoryCode?: string;
+  forSale?: number;
+  forPurchase?: number;
+  salesChannelId?: string;
+  expAccountId?: string;
+  warehouseId?: string;
+  translations?: unknown;
+  taxes?: unknown[];
 }
 
 export interface PackProduct {
@@ -130,7 +142,7 @@ export interface ProductVariant {
   sku?: string;
   barcode?: string;
   price?: number;
-  costPrice?: number;
+  cost?: string | number;
   stock?: number;
 }
 
@@ -152,7 +164,12 @@ export interface Warehouse {
   id: string;
   name: string;
   address?: Address;
-  active?: boolean;
+  default?: boolean;
+  userId?: string;
+  email?: string | null;
+  phone?: string | null;
+  mobile?: string | null;
+  warehouseRecord?: string;
   [key: string]: unknown;
 }
 
@@ -161,7 +178,7 @@ export interface Warehouse {
  * Strict union type for all available document types
  * Per holded_docs/documents.md
  */
-export type DocumentType = 
+export type DocumentType =
   | 'invoice'        // Sales invoices
   | 'salesreceipt'   // Sales receipts
   | 'creditnote'     // Sales refunds
@@ -176,10 +193,8 @@ export type DocumentType =
 
 export interface Document {
   id: string;
-  docType: string;
   docNumber?: string;
   contact?: string;
-  contactId?: string;
   contactName?: string;
   date?: number;
   dueDate?: number;
@@ -189,13 +204,25 @@ export interface Document {
   subtotal?: number;
   tax?: number;
   total?: number;
-  items?: DocumentItem[];
+  products?: DocumentItem[];
   notes?: string;
   tags?: string[];
-  paid?: boolean;
-  paidAmount?: number;
   salesChannel?: string;
   customFields?: CustomField[];
+  desc?: string;
+  discount?: number;
+  language?: string;
+  paymentsTotal?: number;
+  paymentsPending?: number;
+  paymentsRefunds?: number;
+  paymentsDetail?: unknown[];
+  accountingDate?: number;
+  approvedAt?: number;
+  draft?: boolean;
+  forecastDate?: number;
+  multipledueDate?: unknown;
+  shipping?: unknown;
+  paymentMethodId?: string;
 }
 
 export interface DocumentItem {
@@ -209,16 +236,27 @@ export interface DocumentItem {
   sku?: string;
   weight?: number;
   accountingAccount?: string;
+  price?: number;
+  taxes?: string[];
+  costPrice?: number;
+  line_id?: string;
+  account?: string;
+  projectid?: string;
+  retention?: number;
 }
 
 // Payment types
 export interface Payment {
   id: string;
-  docId: string;
+  documentId?: string;
   amount: number;
   date: number;
-  accountId?: string;
+  bankId?: string;
   desc?: string;
+  contactId?: string;
+  contactName?: string;
+  documentType?: string;
+  change?: number;
 }
 
 /**
@@ -232,20 +270,17 @@ export interface Treasury {
   accountNumber?: number;
   iban?: string;
   swift?: string;
-  bank?: string;
-  bankname?: string;
-  /** @deprecated Not in API response - may not be returned by the API */
-  currency?: string;
+  treasuryId?: string;
+  treasuryName?: string;
 }
 
 // Numbering Series types
 export interface NumberingSeries {
   id: string;
   name: string;
-  prefix?: string;
-  suffix?: string;
-  nextNumber: number;
-  docType: string;
+  format: string;
+  last: number;
+  type: string;
 }
 
 // CRM types
@@ -257,22 +292,25 @@ export interface Lead {
   contactId?: string;
   contactName?: string;
   potential?: number;
-  currency?: string;
-  status?: string;
-  probability?: number;
-  expectedCloseDate?: number;
-  assignedTo?: string;
-  notes?: string;
-  tags?: string[];
+  status?: number;
   customFields?: CustomField[];
+  value?: number;
+  userId?: string;
+  person?: string;
+  personName?: string;
+  dueDate?: number;
+  createdAt?: number;
+  updatedAt?: number;
+  updatedHash?: string;
+  events?: unknown[];
+  tasks?: unknown[];
+  files?: string[];
 }
 
 export interface LeadNote {
   id: string;
-  leadId: string;
-  content: string;
-  createdAt: number;
-  createdBy?: string;
+  title: string;
+  desc?: string;
 }
 
 export interface LeadTask {
@@ -289,25 +327,38 @@ export interface Funnel {
   id: string;
   name: string;
   stages?: FunnelStage[];
+  won?: { num: number; value: number };
+  leads?: { num: number; valueTotProbability?: number; value: number };
+  lost?: { num: number; value: number };
+  recentLeads?: { num: number; value: number };
+  recentWon?: { num: number; value: number };
+  recentLost?: { num: number; value: number };
+  labels?: unknown[];
+  preferences?: unknown[];
+  customFields?: unknown[];
 }
 
 export interface FunnelStage {
-  id: string;
+  stageId: string;
   name: string;
-  order: number;
-  probability?: number;
+  key: string;
+  desc?: string;
+  dealprobability?: number;
 }
 
 export interface CrmEvent {
   id: string;
   name: string;
-  description?: string;
-  start: number;
-  end?: number;
-  allDay?: boolean;
+  desc?: string;
+  startDate: number;
+  endDate?: number;
   leadId?: string;
   contactId?: string;
-  assignedTo?: string;
+  contactName?: string;
+  kind?: string;
+  status?: number;
+  tags?: string[];
+  locationDesc?: string;
 }
 
 /**
@@ -321,7 +372,7 @@ export interface BookingAmount {
 /**
  * Booking service nested type
  * Per Holded CRM API v1.0
- * 
+ *
  * Note: API may return subtotal/total as either object or array of objects
  */
 export interface BookingService {
@@ -365,7 +416,7 @@ export interface BookingCustomFieldValue {
 
 /**
  * Booking type - matches Holded CRM API v1.0 response
- * 
+ *
  * Note: The API returns startTime/endTime, NOT start/end
  * Note: API may return custom fields as either 'customFieldsValues' (schema) or 'customFields' (example)
  */
@@ -444,11 +495,11 @@ export interface CancelBookingResponse {
  * Per Holded Projects API v1.2
  */
 export interface ProjectList {
-  listId?: string;
   id?: string;
   key: string;
   name: string;
   desc?: string;
+  statuses?: unknown[];
 }
 
 /**
@@ -490,18 +541,22 @@ export interface ProjectDocumentRef {
  */
 export interface ProjectTimeTrackingRef {
   timeId: string;
-  time: number;
+  duration: number;
   desc?: string;
   costHour: number;
   userId?: string;
   taskId?: string;
   total: number;
+  user?: string;
+  date?: number;
+  approved?: number;
+  category?: string;
 }
 
 /**
  * Project type - matches Holded Projects API v1.2 response
- * 
- * Note: The API uses 'desc' not 'description', 'date' not 'startDate', 
+ *
+ * Note: The API uses 'desc' not 'description', 'date' not 'startDate',
  * 'dueDate' not 'endDate', 'price' not 'budget'
  */
 export interface Project {
@@ -525,30 +580,40 @@ export interface Project {
   numberOfTasks?: number;
   completedTasks?: number;
   labels?: ProjectLabel[];
-  // Legacy field names kept for backwards compatibility with existing code
-  /** @deprecated Use desc instead */
-  description?: string;
-  /** @deprecated Use price instead */
-  budget?: number;
-  /** @deprecated Not in API response */
-  currency?: string;
-  /** @deprecated Use date instead */
-  startDate?: number;
-  /** @deprecated Use dueDate instead - this is the actual API field name */
-  endDate?: number;
-  /** @deprecated Not in API response */
-  assignedTo?: string;
   customFields?: CustomField[];
+  type?: string;
+  icon?: string;
+  color?: string;
+  key?: string;
+  scope?: string;
+  users?: unknown;
+  archived?: unknown;
+  allow_notifications?: boolean;
+  purchasesorders?: unknown[];
+  salesorders?: unknown[];
 }
 
 export interface ProjectSummary {
-  projectId: string;
-  totalHours?: number;
-  totalCost?: number;
-  totalRevenue?: number;
-  tasksCompleted?: number;
-  tasksTotal?: number;
-  [key: string]: unknown;
+  name: string;
+  desc?: string;
+  projectEvolution: {
+    tasks: { total: number; completed: number };
+    dueDate: number;
+  };
+  profitability: {
+    sales: number;
+    expenses: { documents: number; personnel: number; total: number };
+    profit: number;
+  };
+  economicStatus: {
+    sales: number;
+    quoted: number;
+    difference: number;
+    estimatePrice: number;
+    billed: number;
+    collected: number;
+    remaining: number;
+  };
 }
 
 /**
@@ -564,7 +629,7 @@ export interface TaskComment {
 
 /**
  * Task type - matches Holded Projects API v1.2 response
- * 
+ *
  * Note: The API uses 'desc' not 'description', 'userId' not 'assignedTo'
  */
 export interface Task {
@@ -580,45 +645,26 @@ export interface Task {
   /** Creation timestamp */
   date?: number;
   dueDate?: number;
-  /** Assigned user ID */
-  userId?: string;
+  /** Assigned user IDs */
+  userId?: string[];
   createdAt?: number;
   updatedAt?: number;
-  /** 0 = not started, 1 = in progress, 2 = completed, etc. */
-  status?: number;
+  status?: string;
   /** 0 = not billable, 1 = billable */
-  billable?: number;
+  billable?: number | null;
   /** 0 = not featured, 1 = featured */
   featured?: number;
-  // Legacy field names kept for backwards compatibility
-  /** @deprecated Use desc instead */
-  description?: string;
-  /** @deprecated Use userId instead */
-  assignedTo?: string;
-  /** @deprecated status is a number in API */
-  priority?: string;
-  /** @deprecated Not in API response */
-  completed?: boolean;
-  /** @deprecated Not in API response */
-  estimatedHours?: number;
-  /** @deprecated Not in API response */
-  loggedHours?: number;
-}
-
-export interface DailyLedgerEntry {
-  id: string;
-  date: number;
-  account: string;
-  amount: number;
-  description?: string;
-  documentId?: string;
-  documentType?: string;
-  [key: string]: unknown;
+  priority?: string | null;
+  index?: number;
+  storypoints?: number | null;
+  type?: string;
+  reference?: string;
+  archived?: unknown;
+  archivedby?: string;
 }
 
 /**
  * What the daily ledger API actually returns per entry line.
- * Unlike DailyLedgerEntry (which was typed from docs), this matches the real API response.
  */
 export interface LedgerEntryLine {
   entryNumber: number;
@@ -670,13 +716,57 @@ export interface AccountingAccount {
 // Team types
 export interface Employee {
   id: string;
+  holdedUserId?: string;
   name: string;
+  lastName?: string;
+  dateOfBirth?: string | null;
+  nationality?: string;
+  socialSecurityNum?: string;
+  academicLevel?: string;
+  languages?: string[];
+  mainLanguage?: string;
+  code?: string;
+  gender?: string;
+  mainEmail?: string;
   email?: string;
-  phone?: string;
-  position?: string;
-  department?: string;
-  hireDate?: number;
-  status?: string;
+  phone?: string | null;
+  mobile?: string | null;
+  address?: {
+    address?: string;
+    city?: string;
+    postalCode?: string | number;
+    province?: string;
+    country?: string;
+  };
+  teamIds?: string[];
+  workplace?: string;
+  iban?: string;
+  files?: unknown[];
+  notes?: string;
+  currentContract?: unknown[];
+  reportingTo?: string;
+  timeOffSupervisors?: string[];
+  timeOffPolicyId?: string;
+  terminated?: unknown;
+  terminatedType?: unknown;
+  terminatedReason?: string;
+  fiscalResidence?: boolean | null;
+  fiscalAddress?: {
+    idNum?: string;
+    address?: string;
+    city?: string;
+    postalCode?: string;
+    province?: string;
+    country?: string;
+    deadLine?: string;
+    cityOfBirth?: string;
+    countryOfBirth?: string;
+  };
+  title?: string;
+  tags?: string[];
+  companyPhone?: string;
+  customFields?: unknown[];
+  payrollAccounts?: unknown[];
   [key: string]: unknown;
 }
 
@@ -684,14 +774,16 @@ export interface TimeTracking {
   id: string;
   employeeId: string;
   employeeName?: string;
-  projectId?: string;
-  projectName?: string;
-  taskId?: string;
-  taskName?: string;
-  date: number;
-  hours: number;
-  description?: string;
-  billable?: boolean;
+  locationStart?: unknown;
+  locationEnd?: unknown;
+  date: { date: string; timezone_type: number; timezone: string };
+  start: number;
+  end: number;
+  time: number;
+  status?: string;
+  approved?: number;
+  approvedBy?: string;
+  approvedAt?: number;
   [key: string]: unknown;
 }
 
