@@ -51,3 +51,6 @@ holded_docs/
 
 # MCP Registry
 .mcpregistry_*
+
+# Disposable API audit tests (not published)
+tests/api-audit/
