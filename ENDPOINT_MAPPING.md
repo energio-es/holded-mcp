@@ -3,7 +3,7 @@
 **Source:** [Holded API Documentation](https://developers.holded.com)  
 **Last Updated:** 2026-02-05  
 **Last Verified:** 2026-02-05 (Method-by-method verification)  
-**Total API Endpoints:** 137  
+**Total API Endpoints:** 132  
 **Implemented Tools:** 143  
 **Coverage:** 100% (all documented endpoints + 6 additional operations)
 
@@ -147,11 +147,11 @@ This document maps all Holded API endpoints to their corresponding MCP tool name
 
 | Endpoint | Method | Tool Name | Status |
 |----------|--------|-----------|--------|
-| `/contactgroups` | GET | `holded_invoicing_list_contact_groups` | ✅ |
-| `/contactgroups` | POST | `holded_invoicing_create_contact_group` | ✅ |
-| `/contactgroups/{groupId}` | GET | `holded_invoicing_get_contact_group` | ✅ |
-| `/contactgroups/{groupId}` | PUT | `holded_invoicing_update_contact_group` | ✅ |
-| `/contactgroups/{groupId}` | DELETE | `holded_invoicing_delete_contact_group` | ✅ |
+| `/contacts/groups` | GET | `holded_invoicing_list_contact_groups` | ✅ |
+| `/contacts/groups` | POST | `holded_invoicing_create_contact_group` | ✅ |
+| `/contacts/groups/{groupId}` | GET | `holded_invoicing_get_contact_group` | ✅ |
+| `/contacts/groups/{groupId}` | PUT | `holded_invoicing_update_contact_group` | ✅ |
+| `/contacts/groups/{groupId}` | DELETE | `holded_invoicing_delete_contact_group` | ✅ |
 
 ### REMITTANCES
 
@@ -195,7 +195,8 @@ This document maps all Holded API endpoints to their corresponding MCP tool name
 | `/leads/{leadId}` | DELETE | `holded_crm_delete_lead` | ✅ |
 | `/leads/{leadId}/notes` | POST | `holded_crm_create_lead_note` | ✅ |
 | `/leads/{leadId}/notes` | PUT | `holded_crm_update_lead_note` | ✅ |
-| `/leads/{leadId}/tasks` | POST | `holded_crm_update_lead_task` | ✅ |
+| `/leads/{leadId}/notes` | DELETE | `holded_crm_delete_lead_note` | ✅ |
+| `/leads/{leadId}/tasks` | POST | `holded_crm_create_lead_task` | ✅ |
 | `/leads/{leadId}/tasks` | PUT | `holded_crm_update_lead_task` | ✅ |
 | `/leads/{leadId}/tasks` | DELETE | `holded_crm_delete_lead_task` | ✅ |
 | `/leads/{leadId}/dates` | PUT | `holded_crm_update_lead_dates` | ✅ |
@@ -304,11 +305,12 @@ This document maps all Holded API endpoints to their corresponding MCP tool name
 
 | Endpoint | Method | Tool Name | Status |
 |----------|--------|-----------|--------|
-| `/accounts` | GET | `holded_accounting_list_accounts` | ✅ |
-| `/accounts` | POST | `holded_accounting_create_account` | ✅ |
-| `/accounts/{accountId}` | GET | `holded_accounting_get_account` | ✅ |
-| `/accounts/{accountId}` | PUT | `holded_accounting_update_account` | ✅ |
-| `/accounts/{accountId}` | DELETE | `holded_accounting_delete_account` | ✅ |
+| `/chartofaccounts` | GET | `holded_accounting_list_accounts` | ✅ |
+| `/account` | POST | `holded_accounting_create_account` | ✅ |
+
+> **Note:** `GET/PUT/DELETE /account/{id}` do not exist in the Holded API (return HTML 404 as HTTP 200). Only list and create are available.
+>
+> **Note:** `chartofaccounts` balances are scoped to the current fiscal year by default. Pass `starttmp`/`endtmp` query params to query other periods.
 
 ---
 
@@ -319,11 +321,11 @@ This document maps all Holded API endpoints to their corresponding MCP tool name
 | Category | Total Endpoints | Implemented | Not Implemented | Coverage |
 |----------|----------------|-------------|-----------------|----------|
 | Invoice API | 76 | 76 | 0 | 100% |
-| CRM API | 27 | 27 | 0 | 100% |
+| CRM API | 25 | 25 | 0 | 100% |
 | Projects API | 14 | 14 | 0 | 100% |
 | Team API | 15 | 15 | 0 | 100% |
-| Accounting API | 5 | 5 | 0 | 100% |
-| **Total** | **137** | **137** | **0** | **100%** |
+| Accounting API | 2 | 2 | 0 | 100% |
+| **Total** | **132** | **132** | **0** | **100%** |
 
 ### Implementation Status
 
