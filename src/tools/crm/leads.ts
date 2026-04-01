@@ -4,7 +4,6 @@
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { makeApiRequest, toStructuredContent } from "../../services/api.js";
-import { ResponseFormat } from "../../constants.js";
 import { Lead, LeadNote, LeadTask } from "../../types.js";
 import {
   ListLeadsInputSchema,
@@ -19,8 +18,6 @@ import {
   DeleteLeadTaskInputSchema,
   UpdateLeadDatesInputSchema,
   CreateLeadTaskInputSchema,
-  ListLeadNotesInputSchema,
-  ListLeadTasksInputSchema,
   DeleteLeadNoteInputSchema,
   UpdateLeadStageInput,
   CreateLeadNoteInput,
@@ -29,8 +26,6 @@ import {
   DeleteLeadTaskInput,
   UpdateLeadDatesInput,
   CreateLeadTaskInput,
-  ListLeadNotesInput,
-  ListLeadTasksInput,
   DeleteLeadNoteInput,
 } from "../../schemas/crm/leads.js";
 import { registerCrudTools } from "../factory.js";
@@ -483,118 +478,6 @@ Returns:
           },
         ],
         structuredContent: toStructuredContent(task),
-      };
-    })
-  );
-
-  // List Lead Notes
-  server.registerTool(
-    "holded_crm_list_lead_notes",
-    {
-      title: "List Holded Lead Notes",
-      description: `List all notes for a lead in Holded CRM.
-
-Args:
-  - lead_id (string): The lead ID to list notes for (required)
-  - response_format ('json' | 'markdown'): Output format (default: 'json')
-
-Returns:
-  Array of notes with id, content, and creation date.`,
-      inputSchema: ListLeadNotesInputSchema,
-      annotations: {
-        readOnlyHint: true,
-        destructiveHint: false,
-        idempotentHint: true,
-        openWorldHint: true,
-      },
-    },
-    withErrorHandling(async (params) => {
-      const typedParams = params as unknown as ListLeadNotesInput;
-      const notes = await makeApiRequest<LeadNote[]>(
-        "crm",
-        `leads/${typedParams.lead_id}/notes`,
-        "GET"
-      );
-
-      let textContent: string;
-      if (typedParams.response_format === ResponseFormat.MARKDOWN) {
-        if (!notes.length) {
-          textContent = `No notes found for lead ${typedParams.lead_id}.`;
-        } else {
-          const lines = ["# Lead Notes", "", `Found ${notes.length} notes:`, ""];
-          for (const note of notes) {
-            lines.push(`## Note ${note.id}`);
-            lines.push(`- **Content**: ${note.content}`);
-            if (note.createdAt) lines.push(`- **Created**: ${new Date(note.createdAt * 1000).toLocaleDateString()}`);
-            if (note.createdBy) lines.push(`- **Created By**: ${note.createdBy}`);
-            lines.push("");
-          }
-          textContent = lines.join("\n");
-        }
-      } else {
-        textContent = JSON.stringify(notes, null, 2);
-      }
-
-      return {
-        content: [{ type: "text", text: textContent }],
-        structuredContent: { notes, count: notes.length, leadId: typedParams.lead_id },
-      };
-    })
-  );
-
-  // List Lead Tasks
-  server.registerTool(
-    "holded_crm_list_lead_tasks",
-    {
-      title: "List Holded Lead Tasks",
-      description: `List all tasks for a lead in Holded CRM.
-
-Args:
-  - lead_id (string): The lead ID to list tasks for (required)
-  - response_format ('json' | 'markdown'): Output format (default: 'json')
-
-Returns:
-  Array of tasks with id, name, description, due date, and status.`,
-      inputSchema: ListLeadTasksInputSchema,
-      annotations: {
-        readOnlyHint: true,
-        destructiveHint: false,
-        idempotentHint: true,
-        openWorldHint: true,
-      },
-    },
-    withErrorHandling(async (params) => {
-      const typedParams = params as unknown as ListLeadTasksInput;
-      const tasks = await makeApiRequest<LeadTask[]>(
-        "crm",
-        `leads/${typedParams.lead_id}/tasks`,
-        "GET"
-      );
-
-      let textContent: string;
-      if (typedParams.response_format === ResponseFormat.MARKDOWN) {
-        if (!tasks.length) {
-          textContent = `No tasks found for lead ${typedParams.lead_id}.`;
-        } else {
-          const lines = ["# Lead Tasks", "", `Found ${tasks.length} tasks:`, ""];
-          for (const task of tasks) {
-            lines.push(`## ${task.name}`);
-            lines.push(`- **ID**: ${task.id}`);
-            if (task.description) lines.push(`- **Description**: ${task.description}`);
-            if (task.dueDate) lines.push(`- **Due Date**: ${new Date(task.dueDate * 1000).toLocaleDateString()}`);
-            if (task.completed !== undefined) lines.push(`- **Completed**: ${task.completed ? "Yes" : "No"}`);
-            if (task.assignedTo) lines.push(`- **Assigned To**: ${task.assignedTo}`);
-            lines.push("");
-          }
-          textContent = lines.join("\n");
-        }
-      } else {
-        textContent = JSON.stringify(tasks, null, 2);
-      }
-
-      return {
-        content: [{ type: "text", text: textContent }],
-        structuredContent: { tasks, count: tasks.length, leadId: typedParams.lead_id },
       };
     })
   );

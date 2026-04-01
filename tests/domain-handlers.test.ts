@@ -64,31 +64,6 @@ describe("Lead sub-resource handlers", () => {
     });
   });
 
-  describe("holded_crm_list_lead_notes", () => {
-    it("calls makeApiRequest with GET to leads/{id}/notes", async () => {
-      const mockNotes = [
-        { id: "note-1", content: "First note" },
-        { id: "note-2", content: "Second note" },
-      ];
-      mockMakeApiRequest.mockResolvedValueOnce(mockNotes);
-
-      const handler = server.tools.get("holded_crm_list_lead_notes")!.handler;
-      const result = await handler({ lead_id: "lead-abc" });
-
-      expect(mockMakeApiRequest).toHaveBeenCalledWith(
-        "crm",
-        "leads/lead-abc/notes",
-        "GET",
-      );
-      expect(result.isError).toBeUndefined();
-      expect(result.structuredContent).toEqual({
-        notes: mockNotes,
-        count: 2,
-        leadId: "lead-abc",
-      });
-    });
-  });
-
   describe("holded_crm_update_lead_note", () => {
     it("calls makeApiRequest with PUT to leads/{id}/notes with noteId and content", async () => {
       const mockNote = { id: "note-1", content: "Updated note" };
@@ -206,31 +181,6 @@ describe("Lead sub-resource handlers", () => {
         deleted: true,
         leadId: "lead-abc",
         taskId: "task-1",
-      });
-    });
-  });
-
-  describe("holded_crm_list_lead_tasks", () => {
-    it("calls makeApiRequest with GET to leads/{id}/tasks", async () => {
-      const mockTasks = [
-        { id: "task-1", name: "Follow up" },
-        { id: "task-2", name: "Review proposal" },
-      ];
-      mockMakeApiRequest.mockResolvedValueOnce(mockTasks);
-
-      const handler = server.tools.get("holded_crm_list_lead_tasks")!.handler;
-      const result = await handler({ lead_id: "lead-abc" });
-
-      expect(mockMakeApiRequest).toHaveBeenCalledWith(
-        "crm",
-        "leads/lead-abc/tasks",
-        "GET",
-      );
-      expect(result.isError).toBeUndefined();
-      expect(result.structuredContent).toEqual({
-        tasks: mockTasks,
-        count: 2,
-        leadId: "lead-abc",
       });
     });
   });

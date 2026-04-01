@@ -149,25 +149,6 @@ export const CreateLeadTaskInputSchema = z.strictObject({
 
 export type CreateLeadTaskInput = z.infer<typeof CreateLeadTaskInputSchema>;
 
-/**
- * List lead notes input schema
- */
-export const ListLeadNotesInputSchema = z.strictObject({
-  lead_id: IdSchema.describe("The lead ID to list notes for"),
-  response_format: ResponseFormatSchema,
-})
-
-export type ListLeadNotesInput = z.infer<typeof ListLeadNotesInputSchema>;
-
-/**
- * List lead tasks input schema
- */
-export const ListLeadTasksInputSchema = z.strictObject({
-  lead_id: IdSchema.describe("The lead ID to list tasks for"),
-  response_format: ResponseFormatSchema,
-})
-
-export type ListLeadTasksInput = z.infer<typeof ListLeadTasksInputSchema>;
 
 /**
  * Delete lead note input schema
