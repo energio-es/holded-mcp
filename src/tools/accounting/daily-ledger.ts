@@ -5,7 +5,7 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { makeApiRequest, toStructuredContent } from "../../services/api.js";
 import { ResponseFormat } from "../../constants.js";
-import { DailyLedgerEntry } from "../../types.js";
+import { LedgerEntryLine } from "../../types.js";
 import { withErrorHandling } from "../utilities.js";
 import {
   ListDailyLedgerInputSchema,
@@ -62,7 +62,7 @@ Returns:
         queryParams.page = typedParams.page;
       }
 
-      const entries = await makeApiRequest<DailyLedgerEntry[]>(
+      const entries = await makeApiRequest<LedgerEntryLine[]>(
         "accounting",
         "dailyledger",
         "GET",
@@ -77,11 +77,11 @@ Returns:
         } else {
           const lines = ["# Daily Ledger Entries", "", `Found ${entries.length} entries:`, ""];
           for (const entry of entries) {
-            lines.push(`## Entry ${entry.id}`);
-            lines.push(`- **ID**: ${entry.id}`);
-            lines.push(`- **Date**: ${new Date(entry.date * 1000).toLocaleDateString()}`);
+            lines.push(`## Entry ${entry.entryNumber}`);
+            lines.push(`- **Entry Number**: ${entry.entryNumber}`);
+            lines.push(`- **Date**: ${new Date(entry.timestamp * 1000).toLocaleDateString()}`);
             lines.push(`- **Account**: ${entry.account}`);
-            lines.push(`- **Amount**: ${entry.amount}`);
+            lines.push(`- **Debit**: ${entry.debit} / **Credit**: ${entry.credit}`);
             if (entry.description) lines.push(`- **Description**: ${entry.description}`);
             lines.push("");
           }
