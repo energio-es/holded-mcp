@@ -204,7 +204,7 @@ Returns:
         "chartofaccounts",
         "GET",
         undefined,
-        { starttmp, endtmp, includeEmpty: 0 },
+        { starttmp, endtmp, includeEmpty: 1 },
       );
       const metaByNum = new Map<number, AccountMetadata>();
       for (const a of accountMeta) {
