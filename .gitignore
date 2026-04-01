@@ -54,3 +54,5 @@ holded_docs/
 
 # Disposable API audit tests (not published)
 tests/api-audit/
+
+CLAUDE.md
