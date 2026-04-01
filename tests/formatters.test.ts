@@ -7,7 +7,6 @@ import { formatEmployeesMarkdown, formatEmployeeMarkdown } from "../src/tools/te
 import { formatContactsMarkdown, formatContactMarkdown } from "../src/tools/invoicing/contacts.js";
 import {
   formatAccountingAccountsMarkdown,
-  formatAccountingAccountMarkdown,
 } from "../src/tools/accounting/accounts.js";
 import { formatDocumentsMarkdown, formatDocumentMarkdown } from "../src/tools/invoicing/documents.js";
 import { formatLeadsMarkdown, formatLeadMarkdown } from "../src/tools/crm/leads.js";
@@ -240,39 +239,6 @@ describe("formatAccountingAccountsMarkdown", () => {
     ]);
     expect(result).toContain("## Cash");
     expect(result).toContain("1000001");
-    expect(result).not.toContain("Type");
-    expect(result).not.toContain("Parent ID");
-  });
-});
-
-describe("formatAccountingAccountMarkdown", () => {
-  it("renders single account with name as h1 header, code, and type", () => {
-    const account = {
-      id: "acc-001",
-      code: "7000001",
-      name: "Sales Revenue",
-      type: "income",
-      parentId: "acc-parent-01",
-    };
-
-    const result = formatAccountingAccountMarkdown(account);
-
-    expect(result).toContain("# Sales Revenue");
-    expect(result).toContain("**ID**: acc-001");
-    expect(result).toContain("7000001");
-    expect(result).toContain("income");
-    expect(result).toContain("acc-parent-01");
-  });
-
-  it("omits optional fields that are absent", () => {
-    const result = formatAccountingAccountMarkdown({
-      id: "acc-004",
-      code: "1000002",
-      name: "Bank Account",
-    });
-    expect(result).toContain("# Bank Account");
-    expect(result).toContain("**ID**: acc-004");
-    expect(result).toContain("1000002");
     expect(result).not.toContain("Type");
     expect(result).not.toContain("Parent ID");
   });

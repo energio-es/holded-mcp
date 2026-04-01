@@ -7,9 +7,6 @@ import { AccountingAccount } from "../../types.js";
 import {
   ListAccountingAccountsInputSchema,
   CreateAccountInputSchema,
-  GetAccountInputSchema,
-  UpdateAccountInputSchema,
-  DeleteAccountInputSchema,
 } from "../../schemas/accounting/accounts.js";
 import { registerCrudTools } from "../factory.js";
 
@@ -36,18 +33,6 @@ export function formatAccountingAccountsMarkdown(accounts: AccountingAccount[]):
 }
 
 /**
- * Format a single accounting account as markdown
- */
-export function formatAccountingAccountMarkdown(account: AccountingAccount): string {
-  const lines = [`# ${account.name}`, "", `**ID**: ${account.id}`, ""];
-  lines.push(`- **Code**: ${account.code}`);
-  if (account.type) lines.push(`- **Type**: ${account.type}`);
-  if (account.parentId) lines.push(`- **Parent ID**: ${account.parentId}`);
-
-  return lines.join("\n");
-}
-
-/**
  * Register all accounting account-related tools
  */
 export function registerAccountTools(server: McpServer): void {
@@ -61,17 +46,11 @@ export function registerAccountTools(server: McpServer): void {
     idParam: "account_id",
     schemas: {
       list: ListAccountingAccountsInputSchema,
-      get: GetAccountInputSchema,
       create: CreateAccountInputSchema,
-      update: UpdateAccountInputSchema,
-      delete: DeleteAccountInputSchema,
     },
     titles: {
       list: "List Holded Accounting Accounts",
-      get: "Get Holded Accounting Account",
       create: "Create Holded Accounting Account",
-      update: "Update Holded Accounting Account",
-      delete: "Delete Holded Accounting Account",
     },
     descriptions: {
       list: `List all accounting accounts (chart of accounts/PGC accounts) from Holded.
@@ -87,14 +66,6 @@ Args:
 
 Returns:
   Array of accounting accounts with id, code, name, type, and parent account information.`,
-      get: `Get a specific accounting account by ID from Holded.
-
-Args:
-  - account_id (string): The accounting account ID to retrieve (required)
-  - response_format ('json' | 'markdown'): Output format (default: 'json')
-
-Returns:
-  Accounting account details including code, name, type, and parent account.`,
       create: `Create a new accounting account in Holded.
 
 The prefix parameter takes a 4-digit integer that matches the prefix of the corresponding account in Holded.
@@ -109,28 +80,10 @@ Args:
 
 Returns:
   The created accounting account with its assigned code.`,
-      update: `Update an existing accounting account in Holded.
-
-Args:
-  - account_id (string): The accounting account ID to update (required)
-  - name (string): Account name
-  - code (string): Account code
-  - type (string): Account type
-  - parentId (string): Parent account ID
-
-Returns:
-  The updated accounting account.`,
-      delete: `Delete an accounting account from Holded.
-
-Args:
-  - account_id (string): The accounting account ID to delete (required)
-
-Returns:
-  Confirmation of deletion.`,
     },
     formatters: {
       list: formatAccountingAccountsMarkdown,
-      single: formatAccountingAccountMarkdown,
+      single: () => "",
     },
     listQueryParams: (params) => {
       const qp: Record<string, unknown> = {};

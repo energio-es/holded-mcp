@@ -4,7 +4,6 @@
 
 import { z } from "zod";
 import {
-  IdSchema,
   PaginationSchema,
   ResponseFormatSchema,
 } from "../common.js";
@@ -35,35 +34,3 @@ export const CreateAccountInputSchema = z.strictObject({
   })
 
 export type CreateAccountInput = z.infer<typeof CreateAccountInputSchema>;
-
-/**
- * Get accounting account input schema
- */
-export const GetAccountInputSchema = z.strictObject({
-    account_id: IdSchema.describe("The accounting account ID to retrieve"),
-    response_format: ResponseFormatSchema,
-  })
-
-export type GetAccountInput = z.infer<typeof GetAccountInputSchema>;
-
-/**
- * Update accounting account input schema
- */
-export const UpdateAccountInputSchema = z.strictObject({
-    account_id: IdSchema.describe("The accounting account ID to update"),
-    name: z.string().optional().describe("Account name"),
-    code: z.string().optional().describe("Account code"),
-    type: z.string().optional().describe("Account type"),
-    parentId: z.string().optional().describe("Parent account ID"),
-  })
-
-export type UpdateAccountInput = z.infer<typeof UpdateAccountInputSchema>;
-
-/**
- * Delete accounting account input schema
- */
-export const DeleteAccountInputSchema = z.strictObject({
-    account_id: IdSchema.describe("The accounting account ID to delete"),
-  })
-
-export type DeleteAccountInput = z.infer<typeof DeleteAccountInputSchema>;
