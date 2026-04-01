@@ -195,7 +195,6 @@ This document maps all Holded API endpoints to their corresponding MCP tool name
 | `/leads/{leadId}` | DELETE | `holded_crm_delete_lead` | ✅ |
 | `/leads/{leadId}/notes` | POST | `holded_crm_create_lead_note` | ✅ |
 | `/leads/{leadId}/notes` | PUT | `holded_crm_update_lead_note` | ✅ |
-| `/leads/{leadId}/notes` | DELETE | `holded_crm_delete_lead_note` | ✅ |
 | `/leads/{leadId}/tasks` | POST | `holded_crm_create_lead_task` | ✅ |
 | `/leads/{leadId}/tasks` | PUT | `holded_crm_update_lead_task` | ✅ |
 | `/leads/{leadId}/tasks` | DELETE | `holded_crm_delete_lead_task` | ✅ |
@@ -308,8 +307,6 @@ This document maps all Holded API endpoints to their corresponding MCP tool name
 | `/chartofaccounts` | GET | `holded_accounting_list_accounts` | ✅ |
 | `/account` | POST | `holded_accounting_create_account` | ✅ |
 
-> **Note:** `GET/PUT/DELETE /account/{id}` do not exist in the Holded API (return HTML 404 as HTTP 200). Only list and create are available.
->
 > **Note:** `chartofaccounts` balances are scoped to the current fiscal year by default. Pass `starttmp`/`endtmp` query params to query other periods.
 
 ---

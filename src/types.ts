@@ -435,17 +435,6 @@ export interface Booking {
   customFieldsValues?: BookingCustomFieldValue[];
   /** Custom fields - alternative field name used in some API responses */
   customFields?: BookingCustomFieldValue[];
-  // Legacy fields kept for backwards compatibility (may not be in API response)
-  /** @deprecated Use customFieldsValues or customFields instead */
-  name?: string;
-  /** @deprecated Not in API response */
-  locationId?: string;
-  /** @deprecated Not in API response */
-  contactId?: string;
-  /** @deprecated Not in API response */
-  contactName?: string;
-  /** @deprecated Not in API response */
-  notes?: string;
 }
 
 /**
