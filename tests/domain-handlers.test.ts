@@ -288,7 +288,7 @@ describe("Document custom handlers", () => {
       expect(result.content[0].text).toContain("Payment recorded successfully");
     });
 
-    it("converts account_id to accountId in the request body", async () => {
+    it("converts account_id to bankId in the request body", async () => {
       mockMakeApiRequest.mockResolvedValueOnce({ status: "ok" });
 
       const handler = server.tools.get("holded_invoicing_pay_document")!.handler;

@@ -19,20 +19,18 @@ describe("formatEmployeesMarkdown", () => {
     const employees = [
       {
         id: "emp-001",
-        name: "Alice Smith",
+        name: "Alice",
+        lastName: "Smith",
+        mainEmail: "alice@example.com",
         email: "alice@example.com",
         phone: "+34 600 111 222",
-        position: "Engineer",
-        department: "Technology",
-        status: "active",
-        hireDate: 1609459200, // 2021-01-01 UTC
+        title: "Engineer",
       },
       {
         id: "emp-002",
-        name: "Bob Jones",
+        name: "Bob",
+        lastName: "Jones",
         email: "bob@example.com",
-        position: "Designer",
-        status: "active",
       },
     ];
 
@@ -45,8 +43,6 @@ describe("formatEmployeesMarkdown", () => {
     expect(result).toContain("alice@example.com");
     expect(result).toContain("+34 600 111 222");
     expect(result).toContain("Engineer");
-    expect(result).toContain("Technology");
-    expect(result).toContain("active");
     expect(result).toContain("## Bob Jones");
     expect(result).toContain("emp-002");
   });
@@ -61,10 +57,7 @@ describe("formatEmployeesMarkdown", () => {
     expect(result).toContain("emp-003");
     expect(result).not.toContain("Email");
     expect(result).not.toContain("Phone");
-    expect(result).not.toContain("Position");
-    expect(result).not.toContain("Department");
-    expect(result).not.toContain("Status");
-    expect(result).not.toContain("Hire Date");
+    expect(result).not.toContain("Title");
   });
 });
 
@@ -72,13 +65,12 @@ describe("formatEmployeeMarkdown", () => {
   it("renders single employee with name as h1 header and all fields", () => {
     const employee = {
       id: "emp-001",
-      name: "Alice Smith",
+      name: "Alice",
+      lastName: "Smith",
+      mainEmail: "alice@example.com",
       email: "alice@example.com",
       phone: "+34 600 111 222",
-      position: "Engineer",
-      department: "Technology",
-      status: "active",
-      hireDate: 1609459200,
+      title: "Engineer",
     };
 
     const result = formatEmployeeMarkdown(employee);
@@ -88,9 +80,6 @@ describe("formatEmployeeMarkdown", () => {
     expect(result).toContain("alice@example.com");
     expect(result).toContain("+34 600 111 222");
     expect(result).toContain("Engineer");
-    expect(result).toContain("Technology");
-    expect(result).toContain("active");
-    expect(result).toContain("Hire Date");
   });
 
   it("omits optional fields that are absent", () => {
@@ -297,14 +286,13 @@ describe("formatDocumentMarkdown", () => {
   it("renders single document with line items and totals", () => {
     const doc = {
       id: "doc-001",
-      docType: "invoice",
       docNumber: "INV-001",
       contactName: "Acme Corp",
-      contactId: "cnt-001",
+      contact: "cnt-001",
       date: 1704067200,
       dueDate: 1706745600, // 2024-02-01 UTC
       status: "accepted",
-      items: [
+      products: [
         { name: "Web Development", units: 10, subtotal: 1000, tax: "21%" },
         { name: "Hosting", units: 1, subtotal: 200, tax: "21%" },
       ],
@@ -312,14 +300,13 @@ describe("formatDocumentMarkdown", () => {
       tax: 252,
       total: 1452,
       currency: "EUR",
-      paid: true,
-      paidAmount: 1452,
+      paymentsTotal: 1452,
       notes: "Thank you for your business",
     };
 
     const result = formatDocumentMarkdown(doc);
 
-    expect(result).toContain("# INVOICE: INV-001");
+    expect(result).toContain("# Document: INV-001");
     expect(result).toContain("**ID**: doc-001");
     expect(result).toContain("Acme Corp");
     expect(result).toContain("cnt-001");
@@ -331,16 +318,14 @@ describe("formatDocumentMarkdown", () => {
     expect(result).toContain("**Subtotal**: 1200");
     expect(result).toContain("**Tax**: 252");
     expect(result).toContain("**Total**: 1452 EUR");
-    expect(result).toContain("**Paid**: Yes");
-    expect(result).toContain("**Paid Amount**: 1452");
+    expect(result).toContain("**Payments Total**: 1452");
     expect(result).toContain("## Notes");
     expect(result).toContain("Thank you for your business");
   });
 
   it("uses id when docNumber is absent", () => {
-    const result = formatDocumentMarkdown({ id: "doc-099", docType: "estimate" });
+    const result = formatDocumentMarkdown({ id: "doc-099" });
     expect(result).toContain("doc-099");
-    expect(result).toContain("ESTIMATE");
   });
 });
 
@@ -354,8 +339,6 @@ describe("formatLeadsMarkdown", () => {
         name: "Big Deal",
         contactName: "Acme Corp",
         potential: 50000,
-        currency: "EUR",
-        probability: 75,
         status: "open",
       },
       {
@@ -363,7 +346,6 @@ describe("formatLeadsMarkdown", () => {
         name: "Small Opportunity",
         contactName: "Globe Ltd",
         potential: 5000,
-        probability: 30,
         status: "open",
       },
     ];
@@ -376,7 +358,6 @@ describe("formatLeadsMarkdown", () => {
     expect(result).toContain("lead-001");
     expect(result).toContain("Acme Corp");
     expect(result).toContain("50000");
-    expect(result).toContain("75%");
     expect(result).toContain("## Small Opportunity");
     expect(result).toContain("lead-002");
     expect(result).toContain("Globe Ltd");
@@ -397,13 +378,10 @@ describe("formatLeadMarkdown", () => {
       funnelId: "funnel-001",
       stageId: "stage-003",
       potential: 50000,
-      currency: "EUR",
-      probability: 75,
+      value: 50000,
       status: "open",
-      expectedCloseDate: 1717200000, // 2024-06-01 UTC
-      assignedTo: "user-042",
-      notes: "High priority deal",
-      tags: ["enterprise", "priority"],
+      userId: "user-042",
+      dueDate: 1717200000, // 2024-06-01 UTC
     };
 
     const result = formatLeadMarkdown(lead);
@@ -415,14 +393,9 @@ describe("formatLeadMarkdown", () => {
     expect(result).toContain("**Funnel ID**: funnel-001");
     expect(result).toContain("**Stage ID**: stage-003");
     expect(result).toContain("50000");
-    expect(result).toContain("EUR");
-    expect(result).toContain("75%");
     expect(result).toContain("open");
-    expect(result).toContain("Expected Close");
     expect(result).toContain("user-042");
-    expect(result).toContain("## Notes");
-    expect(result).toContain("High priority deal");
-    expect(result).toContain("enterprise, priority");
+    expect(result).toContain("Due Date");
   });
 
   it("omits optional fields that are absent", () => {
@@ -433,8 +406,6 @@ describe("formatLeadMarkdown", () => {
     expect(result).not.toContain("Funnel");
     expect(result).not.toContain("Stage");
     expect(result).not.toContain("Potential");
-    expect(result).not.toContain("Notes");
-    expect(result).not.toContain("Tags");
   });
 });
 

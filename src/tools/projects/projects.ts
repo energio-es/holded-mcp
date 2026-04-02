@@ -170,7 +170,7 @@ Args:
   - response_format ('json' | 'markdown'): Output format (default: 'json')
 
 Returns:
-  Project summary including total hours, costs, revenue, and task statistics.`,
+  Project summary including projectEvolution, profitability, economicStatus, and task statistics.`,
       inputSchema: GetProjectSummaryInputSchema,
       annotations: {
         readOnlyHint: true,

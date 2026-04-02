@@ -604,7 +604,7 @@ describe('Schema Validation Against OpenAPI Specs', () => {
         name: 'Test Product',
         sku: 'PROD-001',
         price: 99.99,
-        kind: 'product' as const,
+        kind: 'simple' as const,
       };
 
       const result = CreateProductInputSchema.safeParse(validData);
@@ -800,6 +800,7 @@ describe('Schema Validation Against OpenAPI Specs', () => {
     it('should accept valid sales channel data', () => {
       const validData = {
         name: 'Online Store',
+        accountNum: 70000001,
       };
 
       const result = CreateSalesChannelInputSchema.safeParse(validData);
@@ -833,6 +834,7 @@ describe('Schema Validation Against OpenAPI Specs', () => {
     it('should accept valid expenses account data', () => {
       const validData = {
         name: 'Office Supplies',
+        accountNum: 62000001,
       };
 
       const result = CreateExpensesAccountInputSchema.safeParse(validData);
@@ -911,24 +913,23 @@ describe('Schema Validation Against OpenAPI Specs', () => {
       expect(result.success).toBe(true);
     });
 
-    it('should accept optional stages', () => {
-      const validData = {
+    it('should reject stages in create (not part of create schema)', () => {
+      const invalidData = {
         name: 'Sales Funnel',
         stages: [
-          { name: 'Contact', order: 1, probability: 25 },
-          { name: 'Proposal', order: 2, probability: 50 },
-          { name: 'Negotiation', order: 3, probability: 75 },
+          { name: 'Contact', stageId: 's1', desc: 'First contact' },
         ],
       };
 
-      const result = CreateFunnelInputSchema.safeParse(validData);
-      expect(result.success).toBe(true);
+      const result = CreateFunnelInputSchema.safeParse(invalidData);
+      expect(result.success).toBe(false);
     });
 
     it('should validate stage schema', () => {
       const result = FunnelStageSchema.safeParse({
         name: 'Contact',
-        probability: 25,
+        stageId: 'stage-1',
+        desc: 'Initial contact stage',
       });
       expect(result.success).toBe(true);
     });
@@ -948,7 +949,7 @@ describe('Schema Validation Against OpenAPI Specs', () => {
     it('should accept valid event data', () => {
       const validData = {
         name: 'Client Meeting',
-        start: 1730109600,
+        startDate: 1730109600,
       };
 
       const result = CreateEventInputSchema.safeParse(validData);
@@ -958,11 +959,11 @@ describe('Schema Validation Against OpenAPI Specs', () => {
     it('should accept optional fields', () => {
       const validData = {
         name: 'Client Meeting',
-        start: 1730109600,
-        end: 1730113200,
-        allDay: false,
-        description: 'Discuss project requirements',
+        startDate: 1730109600,
+        duration: 3600,
+        desc: 'Discuss project requirements',
         leadId: 'lead123',
+        userId: 'user123',
       };
 
       const result = CreateEventInputSchema.safeParse(validData);
@@ -1052,6 +1053,7 @@ describe('Schema Validation Against OpenAPI Specs', () => {
         project_id: 'proj123',
         duration: 3600, // 1 hour in seconds
         costHour: 5000, // 50.00 in cents
+        userId: 'user123',
       };
 
       const result = CreateProjectTimeTrackingInputSchema.safeParse(validData);
