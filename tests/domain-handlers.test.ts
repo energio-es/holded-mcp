@@ -47,17 +47,17 @@ describe("Lead sub-resource handlers", () => {
 
   describe("holded_crm_create_lead_note", () => {
     it("calls makeApiRequest with POST to leads/{id}/notes", async () => {
-      const mockNote = { id: "note-1", content: "Test note" };
+      const mockNote = { id: "note-1", title: "Test note", desc: "Test description" };
       mockMakeApiRequest.mockResolvedValueOnce(mockNote);
 
       const handler = server.tools.get("holded_crm_create_lead_note")!.handler;
-      const result = await handler({ lead_id: "lead-abc", content: "Test note" });
+      const result = await handler({ lead_id: "lead-abc", title: "Test note", desc: "Test description" });
 
       expect(mockMakeApiRequest).toHaveBeenCalledWith(
         "crm",
         "leads/lead-abc/notes",
         "POST",
-        { content: "Test note" },
+        { title: "Test note", desc: "Test description" },
       );
       expect(result.isError).toBeUndefined();
       expect(result.content[0].text).toContain("Note added successfully");
@@ -65,47 +65,25 @@ describe("Lead sub-resource handlers", () => {
   });
 
   describe("holded_crm_update_lead_note", () => {
-    it("calls makeApiRequest with PUT to leads/{id}/notes with noteId and content", async () => {
-      const mockNote = { id: "note-1", content: "Updated note" };
+    it("calls makeApiRequest with PUT to leads/{id}/notes with noteId and title", async () => {
+      const mockNote = { id: "note-1", title: "Updated note" };
       mockMakeApiRequest.mockResolvedValueOnce(mockNote);
 
       const handler = server.tools.get("holded_crm_update_lead_note")!.handler;
       const result = await handler({
         lead_id: "lead-abc",
         note_id: "note-1",
-        content: "Updated note",
+        title: "Updated note",
       });
 
       expect(mockMakeApiRequest).toHaveBeenCalledWith(
         "crm",
         "leads/lead-abc/notes",
         "PUT",
-        { noteId: "note-1", content: "Updated note" },
+        { noteId: "note-1", title: "Updated note" },
       );
       expect(result.isError).toBeUndefined();
       expect(result.content[0].text).toContain("Note updated successfully");
-    });
-  });
-
-  describe("holded_crm_delete_lead_note", () => {
-    it("calls makeApiRequest with DELETE to leads/{id}/notes with noteId", async () => {
-      mockMakeApiRequest.mockResolvedValueOnce(undefined);
-
-      const handler = server.tools.get("holded_crm_delete_lead_note")!.handler;
-      const result = await handler({ lead_id: "lead-abc", note_id: "note-1" });
-
-      expect(mockMakeApiRequest).toHaveBeenCalledWith(
-        "crm",
-        "leads/lead-abc/notes",
-        "DELETE",
-        { noteId: "note-1" },
-      );
-      expect(result.isError).toBeUndefined();
-      expect(result.structuredContent).toEqual({
-        deleted: true,
-        leadId: "lead-abc",
-        noteId: "note-1",
-      });
     });
   });
 
@@ -325,7 +303,7 @@ describe("Document custom handlers", () => {
         "invoicing",
         "documents/invoice/doc-123/pay",
         "POST",
-        { amount: 50, accountId: "acct-456" },
+        { amount: 50, bankId: "acct-456" },
       );
     });
   });

@@ -265,7 +265,7 @@ Returns:
       let textContent: string;
       if (response_format === ResponseFormat.MARKDOWN) {
         const lines = [`# Time Tracking Entry ${time.timeId}`, ""];
-        if (time.date) lines.push(`- **Date**: ${new Date((time.date as number) * 1000).toLocaleDateString()}`);
+        if (time.date) lines.push(`- **Date**: ${new Date(time.date * 1000).toLocaleDateString()}`);
         if (time.duration !== undefined) lines.push(`- **Hours**: ${(time.duration / 3600).toFixed(1)}`);
         if (time.user) lines.push(`- **Employee**: ${time.user}`);
         if (time.desc) lines.push(`- **Description**: ${time.desc}`);

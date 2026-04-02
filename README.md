@@ -401,7 +401,6 @@ npm run dev
 - `holded_crm_list_lead_notes` - List all notes for a lead
 - `holded_crm_create_lead_note` - Add a note to a lead
 - `holded_crm_update_lead_note` - Update a lead note
-- `holded_crm_delete_lead_note` - Delete a lead note
 - `holded_crm_list_lead_tasks` - List all tasks for a lead
 - `holded_crm_create_lead_task` - Create a task for a lead
 - `holded_crm_update_lead_task` - Update a lead task

@@ -85,7 +85,7 @@ Args:
   - response_format ('json' | 'markdown'): Output format (default: 'json')
 
 Returns:
-  Array of payments with id, docId, amount, date, and account information.`,
+  Array of payments with id, documentId, amount, date, and bank information.`,
       get: `Get a specific payment by ID from Holded.
 
 Args:
