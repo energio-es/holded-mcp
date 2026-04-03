@@ -114,6 +114,12 @@ Returns:
     },
     listQueryParams: (params) => {
       const qp: Record<string, unknown> = {};
+      if (params.start_date && !params.end_date) {
+        throw new Error("Both start_date and end_date must be provided together.");
+      }
+      if (!params.start_date && params.end_date) {
+        throw new Error("Both start_date and end_date must be provided together.");
+      }
       if ((params.start_date && params.end_date) || params.raw_timestamps) {
         const { starttmp, endtmp } = resolveTimestamps(params as {
           raw_timestamps: boolean; starttmp?: number; endtmp?: number;

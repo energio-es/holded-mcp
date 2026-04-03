@@ -154,6 +154,12 @@ Returns:
       if (page > 1) {
         queryParams.page = page;
       }
+      if (typedParams.start_date && !typedParams.end_date) {
+        throw new Error("Both start_date and end_date must be provided together.");
+      }
+      if (!typedParams.start_date && typedParams.end_date) {
+        throw new Error("Both start_date and end_date must be provided together.");
+      }
       if ((typedParams.start_date && typedParams.end_date) || typedParams.raw_timestamps) {
         const { starttmp, endtmp } = resolveTimestamps(typedParams as {
           raw_timestamps: boolean; starttmp?: number; endtmp?: number;
