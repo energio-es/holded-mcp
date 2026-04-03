@@ -9,6 +9,7 @@ import {
   ResponseFormatSchema,
   TimestampSchema,
 } from "../common.js";
+import { accountingDateRangeFields } from "../accounting/date-range.js";
 
 /**
  * Create payment input schema
@@ -28,6 +29,7 @@ export type CreatePaymentInput = z.infer<typeof CreatePaymentInputSchema>;
  */
 export const ListPaymentsInputSchema = z.strictObject({
     page: PaginationSchema.shape.page,
+    ...accountingDateRangeFields,
     response_format: ResponseFormatSchema,
   })
 

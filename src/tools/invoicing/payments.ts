@@ -16,6 +16,7 @@ import {
 } from "../../schemas/invoicing/payments.js";
 import { registerCrudTools } from "../factory.js";
 import { withErrorHandling } from "../utilities.js";
+import { resolveTimestamps } from "../../utils/timezone.js";
 
 /**
  * Format payments as markdown
@@ -82,6 +83,11 @@ export function registerPaymentTools(server: McpServer): void {
 
 Args:
   - page (number): Page number for pagination (default: 1, max 500 items per page)
+  - start_date (string): Period start date in YYYY-MM-DD format (optional)
+  - end_date (string): Period end date in YYYY-MM-DD format (optional, inclusive)
+  - raw_timestamps (boolean): Set to true to use starttmp/endtmp instead of start_date/end_date
+  - starttmp (number): Period start as Unix timestamp (raw_timestamps mode only)
+  - endtmp (number): Period end as Unix timestamp (raw_timestamps mode only)
   - response_format ('json' | 'markdown'): Output format (default: 'json')
 
 Returns:
@@ -105,6 +111,18 @@ Returns:
     formatters: {
       list: formatPaymentsMarkdown,
       single: formatPaymentMarkdown,
+    },
+    listQueryParams: (params) => {
+      const qp: Record<string, unknown> = {};
+      if ((params.start_date && params.end_date) || params.raw_timestamps) {
+        const { starttmp, endtmp } = resolveTimestamps(params as {
+          raw_timestamps: boolean; starttmp?: number; endtmp?: number;
+          start_date?: string; end_date?: string;
+        });
+        qp.starttmp = starttmp;
+        qp.endtmp = endtmp;
+      }
+      return qp;
     },
   });
 
