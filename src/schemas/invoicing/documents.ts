@@ -166,6 +166,8 @@ export const SendDocumentInputSchema = z.strictObject({
   email: z.string().email().optional().describe("Recipient email (uses contact email if not provided)"),
   subject: z.string().optional().describe("Email subject"),
   message: z.string().optional().describe("Email message body"),
+  mailTemplateId: z.string().optional().describe("Mail template ID to use"),
+  docIds: z.string().optional().describe("Additional document IDs to attach"),
 })
 
 export type SendDocumentInput = z.infer<typeof SendDocumentInputSchema>;
