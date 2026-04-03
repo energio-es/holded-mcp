@@ -11,6 +11,7 @@ import {
   TimestampSchema,
   CustomFieldsSchema,
 } from "../common.js";
+import { accountingDateRangeFields } from "../accounting/date-range.js";
 
 /**
  * Document item schema
@@ -40,6 +41,10 @@ export const DocumentItemSchema = z.strictObject({
 export const ListDocumentsInputSchema = z.strictObject({
   doc_type: DocumentTypeSchema,
   page: PaginationSchema.shape.page,
+  ...accountingDateRangeFields,
+  contactid: z.string().optional().describe("Filter by contact ID"),
+  paid: z.enum(["0", "1", "2"]).optional().describe("Filter by payment status: 0=unpaid, 1=paid, 2=partial"),
+  sort: z.enum(["created-asc", "created-desc"]).optional().describe("Sort order by creation date"),
   response_format: ResponseFormatSchema,
 })
 

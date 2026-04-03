@@ -7,6 +7,7 @@ import { makeApiRequest, makeMultipartApiRequest, toStructuredContent } from "..
 import { ResponseFormat } from "../../constants.js";
 import { Document } from "../../types.js";
 import { withErrorHandling } from "../utilities.js";
+import { resolveTimestamps } from "../../utils/timezone.js";
 import {
   ListDocumentsInputSchema,
   GetDocumentInputSchema,
@@ -126,6 +127,14 @@ Available document types:
 Args:
   - doc_type (string): Document type (required)
   - page (number): Page number for pagination (default: 1, max 500 items per page)
+  - start_date (string): Period start date in YYYY-MM-DD format (optional)
+  - end_date (string): Period end date in YYYY-MM-DD format (optional, inclusive)
+  - raw_timestamps (boolean): Set to true to use starttmp/endtmp instead of start_date/end_date
+  - starttmp (number): Period start as Unix timestamp (raw_timestamps mode only)
+  - endtmp (number): Period end as Unix timestamp (raw_timestamps mode only)
+  - contactid (string): Filter by contact ID (optional)
+  - paid (string): Filter by payment status: 0=unpaid, 1=paid, 2=partial (optional)
+  - sort (string): Sort order: created-asc or created-desc (optional)
   - response_format ('json' | 'markdown'): Output format (default: 'json')
 
 Returns:
@@ -139,11 +148,23 @@ Returns:
       },
     },
     withErrorHandling(async (params) => {
-      const { doc_type, page, response_format } = params as unknown as ListDocumentsInput;
+      const typedParams = params as unknown as ListDocumentsInput;
+      const { doc_type, page, response_format } = typedParams;
       const queryParams: Record<string, unknown> = {};
       if (page > 1) {
         queryParams.page = page;
       }
+      if ((typedParams.start_date && typedParams.end_date) || typedParams.raw_timestamps) {
+        const { starttmp, endtmp } = resolveTimestamps(typedParams as {
+          raw_timestamps: boolean; starttmp?: number; endtmp?: number;
+          start_date?: string; end_date?: string;
+        });
+        queryParams.starttmp = starttmp;
+        queryParams.endtmp = endtmp;
+      }
+      if (typedParams.contactid) queryParams.contactid = typedParams.contactid;
+      if (typedParams.paid) queryParams.paid = typedParams.paid;
+      if (typedParams.sort) queryParams.sort = typedParams.sort;
 
       const documents = await makeApiRequest<Document[]>(
         "invoicing",
