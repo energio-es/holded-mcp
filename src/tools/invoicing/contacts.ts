@@ -134,9 +134,12 @@ export function registerContactTools(server: McpServer): void {
       list: `List all contacts from Holded (clients, suppliers, etc.).
 
 Returns paginated list of contacts (max 500 per page). Use page parameter to navigate through results.
+Supports filtering by exact phone or mobile number.
 
 Args:
   - page (number): Page number for pagination (default: 1, max 500 items per page)
+  - phone (string): Filter by exact phone number (include + prefix, e.g., +34612345678)
+  - mobile (string): Filter by exact mobile number (include + prefix)
   - response_format ('json' | 'markdown'): Output format (default: 'json')
 
 Returns:
@@ -182,6 +185,12 @@ Returns:
     formatters: {
       list: formatContactsMarkdown,
       single: formatContactMarkdown,
+    },
+    listQueryParams: (params) => {
+      const qp: Record<string, unknown> = {};
+      if (params.phone) qp.phone = params.phone;
+      if (params.mobile) qp.mobile = params.mobile;
+      return qp;
     },
   });
 

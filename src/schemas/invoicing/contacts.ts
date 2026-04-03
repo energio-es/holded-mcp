@@ -19,6 +19,8 @@ import {
  */
 export const ListContactsInputSchema = z.strictObject({
   page: PaginationSchema.shape.page,
+  phone: z.string().optional().describe("Filter by exact phone number (include + prefix, e.g., +34612345678)"),
+  mobile: z.string().optional().describe("Filter by exact mobile number (include + prefix)"),
   response_format: ResponseFormatSchema,
 });
 
