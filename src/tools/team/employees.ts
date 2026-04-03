@@ -60,6 +60,7 @@ export function registerEmployeeTools(server: McpServer): void {
     resource: "employee",
     resourcePlural: "employees",
     endpoint: "employees",
+    listResponseKey: "employees",
     idParam: "employee_id",
     schemas: {
       list: ListEmployeesInputSchema,

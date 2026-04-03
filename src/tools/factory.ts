@@ -50,6 +50,7 @@ export interface CrudToolConfig<T> {
   };
   listQueryParams?: (params: Record<string, unknown>) => Record<string, unknown>;
   bodyTransform?: (body: Record<string, unknown>) => Record<string, unknown>;
+  listResponseKey?: string;
 }
 
 /**
@@ -72,6 +73,7 @@ export function registerCrudTools<T>(server: McpServer, config: CrudToolConfig<T
     formatters,
     listQueryParams,
     bodyTransform,
+    listResponseKey,
   } = config;
 
   // ── List ───────────────────────────────────────────────
@@ -98,13 +100,25 @@ export function registerCrudTools<T>(server: McpServer, config: CrudToolConfig<T
           Object.assign(queryParams, listQueryParams(params));
         }
 
-        const items = await makeApiRequest<T[]>(
-          module,
-          listEndpoint ?? endpoint,
-          "GET",
-          undefined,
-          queryParams,
-        );
+        let items: T[];
+        if (listResponseKey) {
+          const response = await makeApiRequest<Record<string, unknown>>(
+            module,
+            listEndpoint ?? endpoint,
+            "GET",
+            undefined,
+            queryParams,
+          );
+          items = (response[listResponseKey] as T[]) ?? [];
+        } else {
+          items = await makeApiRequest<T[]>(
+            module,
+            listEndpoint ?? endpoint,
+            "GET",
+            undefined,
+            queryParams,
+          );
+        }
 
         return buildToolResponse(items, params.response_format as ResponseFormat, formatters.list, {
           [resourcePlural]: items,

@@ -97,13 +97,14 @@ Returns:
         queryParams.page = page;
       }
 
-      const times = await makeApiRequest<TimeTracking[]>(
+      const response = await makeApiRequest<{ employeesTimeTracking: TimeTracking[] }>(
         "team",
         "employees/times",
         "GET",
         undefined,
         queryParams
       );
+      const times = response.employeesTimeTracking ?? [];
 
       const textContent =
         response_format === ResponseFormat.MARKDOWN
@@ -146,13 +147,14 @@ Returns:
         queryParams.page = page;
       }
 
-      const times = await makeApiRequest<TimeTracking[]>(
+      const response = await makeApiRequest<{ employeesTimeTracking: TimeTracking[] }>(
         "team",
         `employees/${employee_id}/times`,
         "GET",
         undefined,
         queryParams
       );
+      const times = response.employeesTimeTracking ?? [];
 
       const textContent =
         response_format === ResponseFormat.MARKDOWN
