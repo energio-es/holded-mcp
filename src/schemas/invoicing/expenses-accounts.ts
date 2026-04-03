@@ -46,6 +46,7 @@ export const UpdateExpensesAccountInputSchema = z.strictObject({
   expenses_account_id: IdSchema.describe("The expenses account ID to update"),
   name: z.string().min(1).optional().describe("Expenses account name"),
   accountNum: z.number().int().optional().describe("Accounting account number"),
+  color: z.string().optional().describe("Color hex code (e.g., #FF5500)"),
 });
 
 export type UpdateExpensesAccountInput = z.infer<typeof UpdateExpensesAccountInputSchema>;

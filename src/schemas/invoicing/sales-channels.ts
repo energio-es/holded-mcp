@@ -46,6 +46,7 @@ export const UpdateSalesChannelInputSchema = z.strictObject({
   sales_channel_id: IdSchema.describe("The sales channel ID to update"),
   name: z.string().min(1).optional().describe("Sales channel name"),
   accountNum: z.number().int().optional().describe("Accounting account number"),
+  color: z.string().optional().describe("Color hex code (e.g., #00FF55)"),
 });
 
 export type UpdateSalesChannelInput = z.infer<typeof UpdateSalesChannelInputSchema>;
