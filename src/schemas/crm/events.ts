@@ -35,12 +35,17 @@ export type GetEventInput = z.infer<typeof GetEventInputSchema>;
  */
 export const CreateEventInputSchema = z.strictObject({
   name: z.string().min(1, { message: "Name is required" }).describe("Event name (required)"),
-  startDate: TimestampSchema.describe("Start time as Unix timestamp (required)"),
+  startDate: TimestampSchema.describe("Start time as Unix timestamp"),
   duration: z.number().int().positive().optional().describe("Duration in seconds"),
   desc: z.string().optional().describe("Event description"),
   leadId: z.string().optional().describe("Associated lead ID"),
   contactId: z.string().optional().describe("Associated contact ID"),
+  contactName: z.string().optional().describe("Contact name"),
   userId: z.string().optional().describe("User ID to assign the event to"),
+  kind: z.string().optional().describe("Event kind (e.g., 'call', 'meeting')"),
+  status: z.number().int().optional().describe("Event status"),
+  tags: z.array(z.string()).optional().describe("Event tags"),
+  locationDesc: z.string().optional().describe("Location description"),
 })
 
 export type CreateEventInput = z.infer<typeof CreateEventInputSchema>;
@@ -56,7 +61,12 @@ export const UpdateEventInputSchema = z.strictObject({
   desc: z.string().optional().describe("Event description"),
   leadId: z.string().optional().describe("Associated lead ID"),
   contactId: z.string().optional().describe("Associated contact ID"),
+  contactName: z.string().optional().describe("Contact name"),
   userId: z.string().optional().describe("User ID to assign the event to"),
+  kind: z.string().optional().describe("Event kind (e.g., 'call', 'meeting')"),
+  status: z.number().int().optional().describe("Event status"),
+  tags: z.array(z.string()).optional().describe("Event tags"),
+  locationDesc: z.string().optional().describe("Location description"),
 })
 
 export type UpdateEventInput = z.infer<typeof UpdateEventInputSchema>;
