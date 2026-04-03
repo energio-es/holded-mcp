@@ -36,12 +36,13 @@ export type GetLeadInput = z.infer<typeof GetLeadInputSchema>;
  * Create lead input schema
  */
 export const CreateLeadInputSchema = z.strictObject({
-  name: z.string().min(1, { message: "Name is required" }).describe("Lead name (required)"),
+  name: z.string().optional().describe("Lead name"),
   funnel_id: z.string().min(1, { message: "Funnel ID is required" }).describe("Funnel ID to place the lead in (required)"),
   contact_id: z.string().min(1, { message: "Contact ID is required" }).describe("Associated contact ID (required)"),
   stage_id: z.string().optional().describe("Stage ID within the funnel"),
   contact_name: z.string().optional().describe("Contact name"),
   value: z.number().min(0).optional().describe("Monetary value of the lead"),
+  potential: z.number().int().min(0).max(100).optional().describe("Deal probability percentage (0-100)"),
   due_date: TimestampSchema.describe("Due date as Unix timestamp"),
 })
 
@@ -112,7 +113,7 @@ export type UpdateLeadTaskInput = z.infer<typeof UpdateLeadTaskInputSchema>;
 export const UpdateLeadNoteInputSchema = z.strictObject({
   lead_id: IdSchema.describe("The lead ID"),
   note_id: IdSchema.describe("The note ID to update"),
-  title: z.string().min(1, { message: "Note title is required" }).describe("Note title (required)"),
+  title: z.string().optional().describe("Note title"),
   desc: z.string().optional().describe("Note description/body"),
 })
 

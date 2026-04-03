@@ -846,13 +846,12 @@ describe('Schema Validation Against OpenAPI Specs', () => {
   // ===== CRM MODULE TESTS =====
 
   describe('Lead Creation', () => {
-    it('should require name, funnel_id, and contact_id', () => {
+    it('should require funnel_id and contact_id', () => {
       const result = CreateLeadInputSchema.safeParse({});
       expect(result.success).toBe(false);
 
       if (!result.success) {
         const issues = result.error.issues.map(i => i.path[0]);
-        expect(issues).toContain('name');
         expect(issues).toContain('funnel_id');
         expect(issues).toContain('contact_id');
       }
