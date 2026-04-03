@@ -50,6 +50,19 @@ export type GetProjectInput = z.infer<typeof GetProjectInputSchema>;
  * Per Holded Projects API v1.2 documentation:
  * Only `name` is documented for project updates.
  */
+const ProjectListSchema = z.strictObject({
+  id: z.string().optional().describe("List ID (required for existing lists)"),
+  key: z.string().describe("List key"),
+  name: z.string().describe("List name"),
+  desc: z.string().optional().describe("List description"),
+});
+
+const ProjectLabelSchema = z.strictObject({
+  id: z.string().describe("Label ID"),
+  name: z.string().describe("Label name"),
+  color: z.string().describe("Label color hex code"),
+});
+
 export const UpdateProjectInputSchema = z.strictObject({
   project_id: IdSchema.describe("The project ID to update"),
   name: z.string().min(1).optional().describe("Project name"),
@@ -61,6 +74,8 @@ export const UpdateProjectInputSchema = z.strictObject({
   status: z.number().int().optional().describe("Project status"),
   billable: z.number().int().optional().describe("Billable flag (0 or 1)"),
   price: z.number().optional().describe("Project price"),
+  lists: z.array(ProjectListSchema).optional().describe("Project task lists/columns"),
+  labels: z.array(ProjectLabelSchema).optional().describe("Project labels"),
 })
 
 export type UpdateProjectInput = z.infer<typeof UpdateProjectInputSchema>;
