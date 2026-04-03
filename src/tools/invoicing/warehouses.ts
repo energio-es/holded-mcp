@@ -109,7 +109,10 @@ Returns:
 Args:
   - name (string): Warehouse name (required)
   - address (object): Warehouse address
-  - active (boolean): Whether the warehouse is active
+  - default (boolean): Whether this is the default warehouse
+  - email (string): Warehouse email
+  - phone (string): Warehouse phone number
+  - mobile (string): Warehouse mobile number
 
 Returns:
   The created warehouse with its assigned ID.`,
@@ -119,7 +122,10 @@ Args:
   - warehouse_id (string): The warehouse ID to update (required)
   - name (string): Warehouse name
   - address (object): Warehouse address
-  - active (boolean): Whether the warehouse is active
+  - default (boolean): Whether this is the default warehouse
+  - email (string): Warehouse email
+  - phone (string): Warehouse phone number
+  - mobile (string): Warehouse mobile number
 
 Returns:
   The updated warehouse.`,

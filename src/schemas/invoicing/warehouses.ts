@@ -8,7 +8,6 @@ import {
   PaginationSchema,
   ResponseFormatSchema,
   AddressSchema,
-  OptionalBooleanSchema,
 } from "../common.js";
 
 /**
@@ -37,7 +36,10 @@ export type GetWarehouseInput = z.infer<typeof GetWarehouseInputSchema>;
 export const CreateWarehouseInputSchema = z.strictObject({
   name: z.string().min(1, { message: "Name is required" }).describe("Warehouse name (required)"),
   address: AddressSchema.optional().describe("Warehouse address"),
-  active: OptionalBooleanSchema.describe("Whether the warehouse is active"),
+  default: z.boolean().optional().describe("Whether this is the default warehouse"),
+  email: z.string().email().optional().describe("Warehouse email"),
+  phone: z.string().optional().describe("Warehouse phone number"),
+  mobile: z.string().optional().describe("Warehouse mobile number"),
 });
 
 export type CreateWarehouseInput = z.infer<typeof CreateWarehouseInputSchema>;
@@ -49,7 +51,10 @@ export const UpdateWarehouseInputSchema = z.strictObject({
   warehouse_id: IdSchema.describe("The warehouse ID to update"),
   name: z.string().min(1).optional().describe("Warehouse name"),
   address: AddressSchema.optional(),
-  active: OptionalBooleanSchema,
+  default: z.boolean().optional().describe("Whether this is the default warehouse"),
+  email: z.string().email().optional().describe("Warehouse email"),
+  phone: z.string().optional().describe("Warehouse phone number"),
+  mobile: z.string().optional().describe("Warehouse mobile number"),
 });
 
 export type UpdateWarehouseInput = z.infer<typeof UpdateWarehouseInputSchema>;
