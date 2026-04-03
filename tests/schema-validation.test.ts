@@ -675,7 +675,8 @@ describe('Schema Validation Against OpenAPI Specs', () => {
       if (!result.success) {
         const issues = result.error.issues.map(i => i.path[0]);
         expect(issues).toContain('amount');
-        expect(issues).toContain('doc_id');
+        // doc_id is now optional, so it should NOT be in required issues
+        expect(issues).not.toContain('doc_id');
       }
     });
 

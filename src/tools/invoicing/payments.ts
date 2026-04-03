@@ -133,10 +133,11 @@ Returns:
     "holded_invoicing_create_payment",
     {
       title: "Create Holded Payment",
-      description: `Create a payment for a document in Holded.
+      description: `Create a payment in Holded.
 
 Args:
-  - doc_id (string): The document ID to apply the payment to (required)
+  - doc_id (string): The document ID to apply the payment to
+  - contact_id (string): The contact ID to apply the payment to
   - amount (number): Payment amount (required)
   - date (number): Payment date as Unix timestamp
   - account_id (string): Treasury/Bank account ID
@@ -153,9 +154,11 @@ Returns:
       },
     },
     withErrorHandling(async (params) => {
-      const { doc_id, account_id, ...paymentData } = params as unknown as CreatePaymentInput;
+      const { doc_id, contact_id, account_id, ...paymentData } = params as unknown as CreatePaymentInput;
       const requestData = {
         ...paymentData,
+        ...(doc_id ? { documentId: doc_id } : {}),
+        ...(contact_id ? { contactId: contact_id } : {}),
         ...(account_id ? { bankId: account_id } : {}),
       };
 
@@ -163,7 +166,7 @@ Returns:
         "invoicing",
         "payments",
         "POST",
-        { documentId: doc_id, ...requestData }
+        requestData
       );
 
       return {
