@@ -22,6 +22,7 @@ export type ListFunnelsInput = z.infer<typeof ListFunnelsInputSchema>;
  */
 export const FunnelStageSchema = z.strictObject({
   stageId: z.string().optional().describe("Stage ID (required for existing stages)"),
+  key: z.string().optional().describe("Stage key identifier"),
   name: z.string().min(1).describe("Stage name (required)"),
   desc: z.string().optional().describe("Stage description"),
 })
