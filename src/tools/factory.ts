@@ -160,6 +160,9 @@ export function registerCrudTools<T>(server: McpServer, config: CrudToolConfig<T
   const Resource = resource.charAt(0).toUpperCase() + resource.slice(1);
 
   // ── Create ─────────────────────────────────────────────
+  // Note: Some APIs (e.g., CRM) return {status, info, id} instead of the
+  // full resource object. The handler JSON-stringifies whatever comes back,
+  // so this works for both response shapes.
   if (schemas.create) {
     server.registerTool(
       `${toolPrefix}_create_${resource}`,
@@ -198,6 +201,9 @@ export function registerCrudTools<T>(server: McpServer, config: CrudToolConfig<T
   }
 
   // ── Update ─────────────────────────────────────────────
+  // Note: Some APIs (e.g., CRM) return {status, info, id} instead of the
+  // full resource object. The handler JSON-stringifies whatever comes back,
+  // so this works for both response shapes.
   if (schemas.update) {
     server.registerTool(
       `${toolPrefix}_update_${resource}`,
