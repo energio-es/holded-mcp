@@ -73,7 +73,7 @@ export const UpdateProjectInputSchema = z.strictObject({
   dueDate: z.number().int().optional().describe("Due date as Unix timestamp"),
   status: z.number().int().optional().describe("Project status"),
   billable: z.number().int().optional().describe("Billable flag (0 or 1)"),
-  price: z.number().optional().describe("Project price"),
+  price: z.number().int().optional().describe("Project price"),
   lists: z.array(ProjectListSchema).optional().describe("Project task lists/columns"),
   labels: z.array(ProjectLabelSchema).optional().describe("Project labels"),
 })
