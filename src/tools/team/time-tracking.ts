@@ -141,18 +141,12 @@ Returns:
       },
     },
     withErrorHandling(async (params) => {
-      const { employee_id, page, response_format } = params as unknown as ListEmployeeTimeTrackingsInput;
-      const queryParams: Record<string, unknown> = {};
-      if (page > 1) {
-        queryParams.page = page;
-      }
+      const { employee_id, response_format } = params as unknown as ListEmployeeTimeTrackingsInput;
 
       const response = await makeApiRequest<{ employeesTimeTracking: TimeTracking[] }>(
         "team",
         `employees/${employee_id}/times`,
         "GET",
-        undefined,
-        queryParams
       );
       const times = response.employeesTimeTracking ?? [];
 
@@ -163,7 +157,7 @@ Returns:
 
       return {
         content: [{ type: "text", text: textContent }],
-        structuredContent: { timeTrackings: times, count: times.length, page },
+        structuredContent: { timeTrackings: times, count: times.length },
       };
     })
   );
