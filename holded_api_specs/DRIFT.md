@@ -25,13 +25,6 @@ By severity: **0 Critical**, **0 Medium**, **16 Low**
 
 ## Invoice API
 
-### DRIFT-INV-4: Create payment -- spec missing documentId field
-
-- **Spec says:** POST `/payments` body has: `bankId`, `contactId`, `amount`, `desc`, `date`
-- **API behavior:** API accepts `documentId` even though it's not in the spec
-- **Conclusion:** Drift is in **the spec** (missing `documentId`)
-- **Severity:** Low
-
 
 ### DRIFT-INV-6: Send document -- API accepts both email and emails field names
 

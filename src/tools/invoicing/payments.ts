@@ -139,10 +139,9 @@ Returns:
     "holded_invoicing_create_payment",
     {
       title: "Create Holded Payment",
-      description: `Create a payment in Holded.
+      description: `Create a standalone payment in Holded. To record a payment for a document, use holded_invoicing_pay_document instead.
 
 Args:
-  - doc_id (string): The document ID to apply the payment to
   - contact_id (string): The contact ID to apply the payment to
   - amount (number): Payment amount (required)
   - date (number): Payment date as Unix timestamp
@@ -160,10 +159,9 @@ Returns:
       },
     },
     withErrorHandling(async (params) => {
-      const { doc_id, contact_id, account_id, ...paymentData } = params as unknown as CreatePaymentInput;
+      const { contact_id, account_id, ...paymentData } = params as unknown as CreatePaymentInput;
       const requestData = {
         ...paymentData,
-        ...(doc_id ? { documentId: doc_id } : {}),
         ...(contact_id ? { contactId: contact_id } : {}),
         ...(account_id ? { bankId: account_id } : {}),
       };

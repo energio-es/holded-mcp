@@ -14,17 +14,13 @@ import { accountingDateRangeFields } from "../accounting/date-range.js";
 /**
  * Create payment input schema
  */
-export const CreatePaymentInputSchema = z.object({
-    doc_id: z.string().optional().describe("The document ID to apply the payment to"),
+export const CreatePaymentInputSchema = z.strictObject({
     contact_id: z.string().optional().describe("The contact ID to apply the payment to"),
     amount: z.number().positive().describe("Payment amount"),
     date: TimestampSchema.describe("Payment date as Unix timestamp"),
     account_id: z.string().optional().describe("Treasury/Bank account ID"),
     desc: z.string().optional().describe("Payment description"),
-  }).strict().refine(
-    (data) => data.doc_id || data.contact_id,
-    { message: "Either doc_id or contact_id must be provided" }
-  )
+  })
 
 export type CreatePaymentInput = z.infer<typeof CreatePaymentInputSchema>;
 

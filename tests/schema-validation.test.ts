@@ -675,14 +675,11 @@ describe('Schema Validation Against OpenAPI Specs', () => {
       if (!result.success) {
         const issues = result.error.issues.map(i => i.path[0]);
         expect(issues).toContain('amount');
-        // doc_id is now optional, so it should NOT be in required issues
-        expect(issues).not.toContain('doc_id');
       }
     });
 
     it('should require positive amount', () => {
       const invalidData = {
-        doc_id: 'doc123',
         amount: -100,
         date: 1730109600,
       };
@@ -691,9 +688,18 @@ describe('Schema Validation Against OpenAPI Specs', () => {
       expect(result.success).toBe(false);
     });
 
+    it('should reject unknown fields', () => {
+      const result = CreatePaymentInputSchema.safeParse({
+        doc_id: 'doc123',
+        amount: 500.50,
+        date: 1730109600,
+      });
+      expect(result.success).toBe(false);
+    });
+
     it('should accept valid payment data', () => {
       const validData = {
-        doc_id: 'doc123',
+        contact_id: 'contact123',
         amount: 500.50,
         date: 1730109600,
       };
