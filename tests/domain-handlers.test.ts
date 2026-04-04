@@ -96,15 +96,13 @@ describe("Lead sub-resource handlers", () => {
       const result = await handler({
         lead_id: "lead-abc",
         name: "Follow up",
-        due_date: 1700000000,
-        assigned_to: "user-42",
       });
 
       expect(mockMakeApiRequest).toHaveBeenCalledWith(
         "crm",
         "leads/lead-abc/tasks",
         "POST",
-        { name: "Follow up", dueDate: 1700000000, assignedTo: "user-42" },
+        { name: "Follow up" },
       );
       expect(result.isError).toBeUndefined();
       expect(result.content[0].text).toContain("Task created successfully");
@@ -112,7 +110,7 @@ describe("Lead sub-resource handlers", () => {
   });
 
   describe("holded_crm_update_lead_task", () => {
-    it("calls makeApiRequest with PUT to leads/{id}/tasks with snake_to_camel conversion", async () => {
+    it("calls makeApiRequest with PUT to leads/{id}/tasks with taskId", async () => {
       const mockTask = { id: "task-1", name: "Updated task" };
       mockMakeApiRequest.mockResolvedValueOnce(mockTask);
 
@@ -121,20 +119,13 @@ describe("Lead sub-resource handlers", () => {
         lead_id: "lead-abc",
         task_id: "task-1",
         name: "Updated task",
-        due_date: 1700000000,
-        assigned_to: "user-99",
       });
 
       expect(mockMakeApiRequest).toHaveBeenCalledWith(
         "crm",
         "leads/lead-abc/tasks",
         "PUT",
-        expect.objectContaining({
-          taskId: "task-1",
-          name: "Updated task",
-          dueDate: 1700000000,
-          assignedTo: "user-99",
-        }),
+        { taskId: "task-1", name: "Updated task" },
       );
       expect(result.isError).toBeUndefined();
       expect(result.content[0].text).toContain("Task updated successfully");

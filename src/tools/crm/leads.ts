@@ -259,10 +259,6 @@ Args:
   - lead_id (string): The lead ID (required)
   - task_id (string): The task ID to update (required)
   - name (string): Task name
-  - description (string): Task description
-  - due_date (number): Due date as Unix timestamp
-  - completed (boolean): Whether the task is completed
-  - assigned_to (string): User ID to assign the task to
 
 Returns:
   The updated task.`,
@@ -275,16 +271,13 @@ Returns:
       },
     },
     withErrorHandling(async (params) => {
-      const { lead_id, task_id, due_date, assigned_to, ...rest } = params as unknown as UpdateLeadTaskInput;
-      const requestData: Record<string, unknown> = { ...rest };
-      if (due_date) requestData.dueDate = due_date;
-      if (assigned_to) requestData.assignedTo = assigned_to;
+      const { lead_id, task_id, ...rest } = params as unknown as UpdateLeadTaskInput;
 
       const task = await makeApiRequest<{ id: string; name: string }>(
         "crm",
         `leads/${lead_id}/tasks`,
         "PUT",
-        { taskId: task_id, ...requestData }
+        { taskId: task_id, ...rest }
       );
 
       return {
@@ -439,9 +432,6 @@ Returns:
 Args:
   - lead_id (string): The lead ID to add the task to (required)
   - name (string): Task name (required)
-  - description (string): Task description
-  - due_date (number): Due date as Unix timestamp
-  - assigned_to (string): User ID to assign the task to
 
 Returns:
   The created task.`,
@@ -454,16 +444,13 @@ Returns:
       },
     },
     withErrorHandling(async (params) => {
-      const { lead_id, due_date, assigned_to, ...rest } = params as unknown as CreateLeadTaskInput;
-      const requestData: Record<string, unknown> = { ...rest };
-      if (due_date) requestData.dueDate = due_date;
-      if (assigned_to) requestData.assignedTo = assigned_to;
+      const { lead_id, ...rest } = params as unknown as CreateLeadTaskInput;
 
       const task = await makeApiRequest<LeadTask>(
         "crm",
         `leads/${lead_id}/tasks`,
         "POST",
-        requestData
+        rest
       );
 
       return {

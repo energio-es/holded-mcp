@@ -99,10 +99,6 @@ export const UpdateLeadTaskInputSchema = z.strictObject({
   lead_id: IdSchema.describe("The lead ID"),
   task_id: IdSchema.describe("The task ID to update"),
   name: z.string().min(1).optional().describe("Task name"),
-  description: z.string().optional().describe("Task description"),
-  due_date: TimestampSchema.describe("Due date as Unix timestamp"),
-  completed: z.boolean().optional().describe("Whether the task is completed"),
-  assigned_to: z.string().optional().describe("User ID to assign the task to"),
 })
 
 export type UpdateLeadTaskInput = z.infer<typeof UpdateLeadTaskInputSchema>;
@@ -145,9 +141,6 @@ export type UpdateLeadDatesInput = z.infer<typeof UpdateLeadDatesInputSchema>;
 export const CreateLeadTaskInputSchema = z.strictObject({
   lead_id: IdSchema.describe("The lead ID to add the task to"),
   name: z.string().min(1, { message: "Task name is required" }).describe("Task name (required)"),
-  description: z.string().optional().describe("Task description"),
-  due_date: TimestampSchema.describe("Due date as Unix timestamp"),
-  assigned_to: z.string().optional().describe("User ID to assign the task to"),
 })
 
 export type CreateLeadTaskInput = z.infer<typeof CreateLeadTaskInputSchema>;
