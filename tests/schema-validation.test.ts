@@ -1060,10 +1060,10 @@ describe('Schema Validation Against OpenAPI Specs', () => {
       expect(result.success).toBe(true);
     });
 
-    it('should require positive duration', () => {
+    it('should reject non-integer duration', () => {
       const invalidData = {
         project_id: 'proj123',
-        duration: -100,
+        duration: 36.5,
         costHour: 5000,
       };
 

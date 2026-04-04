@@ -8,7 +8,6 @@ import {
   PaginationSchema,
   ResponseFormatSchema,
   OptionalStringSchema,
-  OptionalNumberSchema,
   OptionalBooleanSchema,
 } from "../common.js";
 
@@ -35,7 +34,7 @@ export type ListProjectTimeTrackingsInput = z.infer<typeof ListProjectTimeTracki
  */
 export const CreateProjectTimeTrackingInputSchema = z.strictObject({
   project_id: IdSchema.describe("The project ID (required)"),
-  duration: z.number().int().positive().describe("Duration in seconds (required)"),
+  duration: z.number().int().describe("Duration in seconds (required)"),
   costHour: z.number().int().describe("Cost per hour (required)"),
   desc: OptionalStringSchema.describe("Description of work"),
   userId: z.string().min(1).describe("User/Employee ID (required)"),
@@ -57,7 +56,7 @@ export type CreateProjectTimeTrackingInput = z.infer<typeof CreateProjectTimeTra
 export const UpdateProjectTimeTrackingInputSchema = z.strictObject({
   project_id: IdSchema.describe("The project ID"),
   time_id: IdSchema.describe("The time-tracking ID to update"),
-  duration: z.number().int().positive().optional().describe("Duration in seconds"),
+  duration: z.number().int().optional().describe("Duration in seconds"),
   costHour: z.number().int().optional().describe("Cost per hour"),
   desc: OptionalStringSchema.describe("Description of work"),
   userId: OptionalStringSchema.describe("User/Employee ID"),
@@ -91,8 +90,8 @@ export type GetProjectTimeTrackingInput = z.infer<typeof GetProjectTimeTrackingI
  * List all project times input schema
  */
 export const ListAllProjectTimesInputSchema = z.strictObject({
-  start: OptionalNumberSchema.describe("Start date as Unix timestamp"),
-  end: OptionalNumberSchema.describe("End date as Unix timestamp"),
+  start: z.number().int().optional().describe("Start date as Unix timestamp"),
+  end: z.number().int().optional().describe("End date as Unix timestamp"),
   archived: OptionalBooleanSchema.describe("Include archived projects"),
   response_format: ResponseFormatSchema,
 });
