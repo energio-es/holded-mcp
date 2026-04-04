@@ -160,9 +160,6 @@ export function registerCrudTools<T>(server: McpServer, config: CrudToolConfig<T
   const Resource = resource.charAt(0).toUpperCase() + resource.slice(1);
 
   // ── Create ─────────────────────────────────────────────
-  // Note: Some APIs (e.g., CRM) return {status, info, id} instead of the
-  // full resource object. The handler JSON-stringifies whatever comes back,
-  // so this works for both response shapes.
   if (schemas.create) {
     server.registerTool(
       `${toolPrefix}_create_${resource}`,
@@ -180,7 +177,7 @@ export function registerCrudTools<T>(server: McpServer, config: CrudToolConfig<T
       withErrorHandling(async (params) => {
         const { response_format: _response_format, ...body } = params;
         const requestBody = bodyTransform ? bodyTransform(body) : body;
-        const item = await makeApiRequest<T>(
+        const item = await makeApiRequest<Record<string, unknown>>(
           module,
           endpoint,
           "POST",
@@ -201,9 +198,6 @@ export function registerCrudTools<T>(server: McpServer, config: CrudToolConfig<T
   }
 
   // ── Update ─────────────────────────────────────────────
-  // Note: Some APIs (e.g., CRM) return {status, info, id} instead of the
-  // full resource object. The handler JSON-stringifies whatever comes back,
-  // so this works for both response shapes.
   if (schemas.update) {
     server.registerTool(
       `${toolPrefix}_update_${resource}`,
@@ -222,7 +216,7 @@ export function registerCrudTools<T>(server: McpServer, config: CrudToolConfig<T
         const id = params[idParam] as string;
         const { [idParam]: _id, response_format: _rf, ...updateData } = params;
         const requestBody = bodyTransform ? bodyTransform(updateData) : updateData;
-        const item = await makeApiRequest<T>(
+        const item = await makeApiRequest<Record<string, unknown>>(
           module,
           `${endpoint}/${id}`,
           "PUT",
