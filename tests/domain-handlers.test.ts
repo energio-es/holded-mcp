@@ -279,7 +279,7 @@ describe("Document custom handlers", () => {
       expect(result.content[0].text).toContain("Payment recorded successfully");
     });
 
-    it("converts account_id to bankId in the request body", async () => {
+    it("converts account_id to treasury in the request body", async () => {
       mockMakeApiRequest.mockResolvedValueOnce({ status: "ok" });
 
       const handler = server.tools.get("holded_invoicing_pay_document")!.handler;
@@ -294,7 +294,7 @@ describe("Document custom handlers", () => {
         "invoicing",
         "documents/invoice/doc-123/pay",
         "POST",
-        { amount: 50, bankId: "acct-456" },
+        { amount: 50, treasury: "acct-456" },
       );
     });
   });
