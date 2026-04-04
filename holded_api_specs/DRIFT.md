@@ -32,16 +32,6 @@ By severity: **0 Critical**, **0 Medium**, **16 Low**
 - **Conclusion:** Drift is in **the spec** (missing `documentId`)
 - **Severity:** Low
 
-### DRIFT-INV-5: Pay document sends bankId, spec says treasury
-
-- **Spec says:** POST `/documents/{docType}/{documentId}/pay` body has field `treasury` (string, "Your treasury holded's id")
-- **Our code does:** Sends `bankId` (mapped from `account_id`)
-- **API verification:** Both field names work. Tested on a live invoice:
-  - `curl ... -d '{"date":...,"amount":0.50,"bankId":"686284e3bb1105ac4a086b84"}'` -- `{"status":1,...,"paymentId":"..."}`
-  - `curl ... -d '{"date":...,"amount":0.50,"treasury":"686284e3bb1105ac4a086b84"}'` -- `{"status":1,...,"paymentId":"..."}`
-- **Conclusion:** Drift is in **the spec** (incomplete -- API accepts both field names). Our code works correctly.
-- **Severity:** Low
-- **File:** `src/tools/invoicing/documents.ts`
 
 ### DRIFT-INV-6: Send document -- API accepts both email and emails field names
 
