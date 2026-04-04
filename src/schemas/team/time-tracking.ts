@@ -25,7 +25,6 @@ export type ListAllTimeTrackingsInput = z.infer<typeof ListAllTimeTrackingsInput
  */
 export const ListEmployeeTimeTrackingsInputSchema = z.strictObject({
   employee_id: IdSchema.describe("The employee ID"),
-  page: PaginationSchema.shape.page,
   response_format: ResponseFormatSchema,
 });
 
