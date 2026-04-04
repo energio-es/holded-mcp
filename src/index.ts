@@ -66,7 +66,7 @@ function getEnabledModules(): ModuleName[] {
  */
 const server = new McpServer({
   name: "@energio/holded-mcp",
-  version: "1.1.1",
+  version: "1.2.0",
 });
 
 // Register only enabled modules
