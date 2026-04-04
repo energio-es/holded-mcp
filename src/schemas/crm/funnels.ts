@@ -4,6 +4,7 @@
 
 import { z } from "zod";
 import {
+  CustomFieldsSchema,
   IdSchema,
   ResponseFormatSchema,
 } from "../common.js";
@@ -43,6 +44,8 @@ export const UpdateFunnelInputSchema = z.strictObject({
   funnel_id: IdSchema.describe("The funnel ID to update"),
   name: z.string().min(1).optional().describe("Funnel name"),
   stages: z.array(FunnelStageSchema).optional().describe("Updated funnel stages"),
+  preferences: z.record(z.string(), z.unknown()).optional().describe("Funnel preferences"),
+  customFields: CustomFieldsSchema,
 })
 
 export type UpdateFunnelInput = z.infer<typeof UpdateFunnelInputSchema>;

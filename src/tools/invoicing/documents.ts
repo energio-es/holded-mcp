@@ -425,7 +425,7 @@ Returns:
 Args:
   - doc_type (string): Document type (required)
   - document_id (string): The document ID to send (required)
-  - email (string): Recipient email (uses contact email if not provided)
+  - emails (string): Recipient email(s), comma-separated (required)
   - subject (string): Email subject
   - message (string): Email message body
 

@@ -1,21 +1,20 @@
 # Holded API Drift Report
 
 Compared: OpenAPI specs in `holded_api_specs/` vs MCP server implementation
-Date: 2026-04-03
+Date: 2026-04-04
 Verified against: live Holded API via curl using `HOLDED_TEST_API_KEY_ENERGIO`
 
 ## Summary
 
 | Module | Code Drifts | Spec Drifts | Total |
 |--------|-------------|-------------|-------|
-| Invoice API | 0 | 6 | 6 |
+| Invoice API | 0 | 3 | 3 |
 | CRM API | 0 | 3 | 3 |
 | Projects API | 0 | 3 | 3 |
-| Team API | 0 | 1 | 1 |
 | Accounting API | 1 | 2 | 3 |
-| **Total** | **1** | **15** | **16** |
+| **Total** | **1** | **11** | **12** |
 
-By severity: **0 Critical**, **0 Medium**, **16 Low**
+By severity: **0 Critical**, **0 Medium**, **12 Low**
 
 **Drift location key:**
 - **Code drift** -- our implementation doesn't match the spec and the API confirms the spec is correct
@@ -25,36 +24,28 @@ By severity: **0 Critical**, **0 Medium**, **16 Low**
 
 ## Invoice API
 
-
-### DRIFT-INV-6: Send document -- API accepts both email and emails field names
-
-- **Spec says:** POST `/documents/{docType}/{documentId}/send` requires `emails` (plural)
-- **API behavior:** API accepts both `email` (singular) and `emails` (plural)
-- **Conclusion:** Drift is in **the spec** (API accepts both field names)
-- **Severity:** Low
-
 ### DRIFT-INV-7: Expenses accounts create -- spec says desc required, API doesn't require it
 
 - **Spec says:** POST `/expensesaccounts` requires `name`, `desc`, `accountNum`
 - **Our code does:** Only requires `name` and `accountNum` (no `desc`)
-- **API verification:** `curl -s -X POST ".../expensesaccounts" -d '{"name":"__DRIFT_TEST__","accountNum":99990000}'` -- `{"status":201,"info":"Created","id":"..."}`. Created successfully without `desc`.
-- **Conclusion:** Drift is in **the spec** (desc is not actually required)
+- **API verification:** Created successfully without `desc`. When `desc` is provided, the API accepts it silently but does not persist it -- GET response only returns `id`, `name`, `color`, `accountNum`.
+- **Conclusion:** Drift is in **the spec** (`desc` is not only optional but a no-op -- the API ignores it entirely)
 - **Severity:** Low
 
 ### DRIFT-INV-9: Sales channels create -- spec says desc required, API doesn't require it
 
 - **Spec says:** POST `/saleschannels` requires `name`, `desc`, `accountNum`
 - **Our code does:** Only requires `name` and `accountNum` (no `desc`)
-- **API verification:** `curl -s -X POST ".../saleschannels" -d '{"name":"__DRIFT_TEST__","accountNum":99990001}'` -- `{"status":201,"info":"Created","id":"..."}`. Created successfully without `desc`.
-- **Conclusion:** Drift is in **the spec** (desc is not actually required)
+- **API verification:** Created successfully without `desc`. When `desc` is provided, the API accepts it silently but does not persist it -- GET response only returns `id`, `name`, `color`, `accountNum`.
+- **Conclusion:** Drift is in **the spec** (`desc` is not only optional but a no-op -- the API ignores it entirely)
 - **Severity:** Low
 
 ### DRIFT-INV-12: Contact create/update has extra fields not in spec
 
 - **Spec says:** POST `/contacts` create body does not include `tradeName` or expanded `socialNetworks` (only `website`)
 - **Our code does:** Includes `tradeName`, and `SocialNetworksSchema` has `facebook`, `twitter`, `linkedin`, `instagram`
-- **API verification:** Not directly tested. Extra fields are typically accepted by the API.
-- **Conclusion:** Drift is in **the spec** (API likely accepts these fields, they appear in response objects). Our code provides more functionality than documented.
+- **API verification:** Created contact with `tradeName` and full `socialNetworks` (`website`, `facebook`, `twitter`, `linkedin`, `instagram`). All fields persisted on create. On update, `tradeName` persists but `socialNetworks` is silently ignored -- the API returns success but does not modify the stored values.
+- **Conclusion:** Drift is in **the spec** (API accepts these fields on create). However, `socialNetworks` is read-only on update despite returning success.
 - **Severity:** Low
 
 ---
@@ -74,15 +65,16 @@ By severity: **0 Critical**, **0 Medium**, **16 Low**
 
 - **Spec says:** POST `/events` body accepts `funnelId`
 - **API verification:** Sent `funnelId="..."` when creating an event. `funnelId` was **NOT stored** (missing in GET response even when sent).
+- **Consequence:** Without a `funnelId`, events don't appear in the CRM calendar -- only on the contact's activity page.
 - **Conclusion:** Drift is in **the spec** (`funnelId` is not functional for events)
 - **Severity:** Low
 
-### DRIFT-CRM-5: Update funnel -- labels, preferences, customFields appear read-only
+### DRIFT-CRM-5: Update funnel -- labels appear read-only
 
 - **Spec says:** PUT `/funnels/{funnelId}` body accepts: `name`, `stages`, `labels`, `preferences`, `customFields`
-- **Our code does:** `UpdateFunnelInputSchema` only has `funnel_id`, `name`, `stages`. Missing `labels`, `preferences`, `customFields`.
-- **API verification:** Created funnel, then updated with `labels=[{labelId,labelName,labelColor}]`. Update returned success, but GET shows `labels=[]` (not stored), `preferences=0`, `customFields=0`. The API does NOT store these fields via PUT despite the spec documenting them.
-- **Conclusion:** Drift is in **the spec** (these fields appear read-only or managed via a different mechanism). Our code is correct to not include them.
+- **Our code does:** `UpdateFunnelInputSchema` has `funnel_id`, `name`, `stages`, `preferences`, `customFields`. Missing `labels`.
+- **API verification:** Created funnel, then updated all fields. `labels` was silently ignored (not stored despite returning success).
+- **Conclusion:** Drift is in **the spec** for `labels` (read-only or managed via a different mechanism).
 - **Severity:** Low
 - **File:** `src/schemas/crm/funnels.ts`
 
@@ -114,19 +106,8 @@ By severity: **0 Critical**, **0 Medium**, **16 Low**
   - `{"desc":"updated"}` (no duration/costHour) → `{"status":1,"info":"Updated"}` -- **works**
   - `{"duration":1800}` (no costHour) → `{"status":1,"info":"Updated"}` -- **works**
   - `{"costHour":100}` (no duration) → `{"status":1,"info":"Updated"}` -- **works**
+- **Note:** `costHour` appears silently ignored on both create and update (always returns 0), likely overridden by the project's per-user hourly rate setting.
 - **Conclusion:** Drift is in **the spec** (API accepts partial updates). Our code is correct.
-- **Severity:** Low
-
----
-
-## Team API
-
-### DRIFT-TEAM-5: Employee fiscalAddress field name mismatch
-
-- **Spec says:** `fiscalAddress` contains `endSituationDate` (string)
-- **Our code does:** Uses `endSituationDate` matching the spec
-- **API verification:** GET employee response shows `"deadLine":""` instead of `endSituationDate` in `fiscalAddress`
-- **Conclusion:** Drift is in **the spec** (API uses `deadLine`, spec says `endSituationDate`)
 - **Severity:** Low
 
 ---

@@ -108,6 +108,8 @@ Args:
   - funnel_id (string): The funnel ID to update (required)
   - name (string): Funnel name
   - stages (array): Updated funnel stages
+  - preferences (object): Funnel preferences
+  - customFields (array): Custom fields with field/value pairs
 
 Returns:
   The updated funnel.`,

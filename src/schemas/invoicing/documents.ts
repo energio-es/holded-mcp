@@ -163,7 +163,7 @@ export type PayDocumentInput = z.infer<typeof PayDocumentInputSchema>;
 export const SendDocumentInputSchema = z.strictObject({
   doc_type: DocumentTypeSchema,
   document_id: IdSchema.describe("The document ID to send"),
-  email: z.string().email().optional().describe("Recipient email (uses contact email if not provided)"),
+  emails: z.string().describe("Recipient email(s), comma-separated"),
   subject: z.string().optional().describe("Email subject"),
   message: z.string().optional().describe("Email message body"),
   mailTemplateId: z.string().optional().describe("Mail template ID to use"),

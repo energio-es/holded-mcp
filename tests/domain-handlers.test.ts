@@ -307,7 +307,7 @@ describe("Document custom handlers", () => {
       const result = await handler({
         doc_type: "estimate",
         document_id: "doc-456",
-        email: "client@example.com",
+        emails: "client@example.com",
         subject: "Your estimate",
         message: "Please review",
       });
@@ -316,7 +316,7 @@ describe("Document custom handlers", () => {
         "invoicing",
         "documents/estimate/doc-456/send",
         "POST",
-        { email: "client@example.com", subject: "Your estimate", message: "Please review" },
+        { emails: "client@example.com", subject: "Your estimate", message: "Please review" },
       );
       expect(result.isError).toBeUndefined();
       expect(result.content[0].text).toContain("Document sent successfully");
