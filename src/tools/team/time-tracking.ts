@@ -127,7 +127,6 @@ Returns:
 
 Args:
   - employee_id (string): The employee ID (required)
-  - page (number): Page number for pagination (default: 1, max 500 items per page)
   - response_format ('json' | 'markdown'): Output format (default: 'json')
 
 Returns:
