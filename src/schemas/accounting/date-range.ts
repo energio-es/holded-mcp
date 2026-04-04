@@ -63,6 +63,19 @@ export function accountingDateRangeRefinement(
   }
 }
 
+/**
+ * Like accountingDateRangeRefinement but allows omitting all date fields.
+ * Use for endpoints where date range is optional (e.g., chart of accounts).
+ */
+export function optionalAccountingDateRangeRefinement(
+  data: { raw_timestamps: boolean; start_date?: string; end_date?: string; starttmp?: number; endtmp?: number },
+): boolean {
+  const hasAnyDate = data.start_date !== undefined || data.end_date !== undefined
+    || data.starttmp !== undefined || data.endtmp !== undefined;
+  if (!hasAnyDate && !data.raw_timestamps) return true;
+  return accountingDateRangeRefinement(data);
+}
+
 export const ACCOUNTING_DATE_RANGE_ERROR =
   "Invalid date range input. " +
   "Date mode (default): provide start_date and end_date (YYYY-MM-DD), do not include starttmp/endtmp. " +

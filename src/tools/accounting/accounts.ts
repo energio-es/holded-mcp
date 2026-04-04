@@ -63,9 +63,8 @@ Returns accounts with debit/credit/balance totals scoped to the current fiscal y
 For date-scoped account balances computed from individual daily ledger entries, use holded_accounting_list_account_balances instead.
 
 Args:
-  - page (number): Page number for pagination (default: 1, max 500 items per page)
   - response_format ('json' | 'markdown'): Output format (default: 'json')
-  - include_empty (boolean): Include accounts with zero balance in the scoped period (default: true)
+  - include_empty (boolean): Include accounts with zero balance (API default: false)
   - start_date (string): Period start date in YYYY-MM-DD format (optional, omit for current fiscal year)
   - end_date (string): Period end date in YYYY-MM-DD format (optional, inclusive)
   - raw_timestamps (boolean): Set to true to use starttmp/endtmp instead of start_date/end_date

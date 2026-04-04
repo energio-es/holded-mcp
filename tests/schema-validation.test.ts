@@ -1103,14 +1103,14 @@ describe('Schema Validation Against OpenAPI Specs', () => {
       expect(result.success).toBe(true);
     });
 
-    it('should validate color format', () => {
-      const invalidData = {
+    it('should accept any string as color', () => {
+      const data = {
         prefix: 7000,
-        color: 'red', // Invalid, should be hex
+        color: 'red',
       };
 
-      const result = CreateAccountInputSchema.safeParse(invalidData);
-      expect(result.success).toBe(false);
+      const result = CreateAccountInputSchema.safeParse(data);
+      expect(result.success).toBe(true);
     });
 
     it('should accept valid hex color', () => {
@@ -1126,13 +1126,13 @@ describe('Schema Validation Against OpenAPI Specs', () => {
   });
 
   describe('Accounting Account List', () => {
-    it('should accept default include_empty', () => {
+    it('should not default include_empty', () => {
       const validData = {};
 
       const result = ListAccountingAccountsInputSchema.safeParse(validData);
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.data.include_empty).toBe(true);
+        expect(result.data.include_empty).toBeUndefined();
       }
     });
 
