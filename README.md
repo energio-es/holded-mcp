@@ -670,6 +670,8 @@ The tool handlers automatically transform parameters to the format expected by t
 
 ### Custom fields
 
+> **Breaking in v1.4.0:** The `customFields` parameter shape changed from `[{field, value}]` to a flat `{key: value}` object. Replace each `[{field: "k", value: "v"}]` with `{"k": "v"}` in calls to `create_document`, `update_document`, `update_lead`, and `update_funnel`. Responses use the same map shape. The old array shape is rejected by the Zod schema.
+
 Tools that accept or return `customFields` (documents, leads, funnels) use a flat `{key: value}` map:
 
 ```json

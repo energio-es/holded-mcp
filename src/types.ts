@@ -12,6 +12,8 @@
  * - Accounting API: v1.0.0
  */
 
+import type { CustomFieldsMap } from "./utils/custom-fields.js";
+
 // Contact types
 export interface Contact {
   id: string;
@@ -29,7 +31,7 @@ export interface Contact {
   clientRecord?: number;
   supplierRecord?: number;
   billAddress?: Address;
-  customFields?: CustomField[];
+  customFields?: CustomFieldsMap;
   defaults?: ContactDefaults;
   socialNetworks?: SocialNetworks;
   tags?: string[];
@@ -60,6 +62,11 @@ export interface Address {
   info?: string;
 }
 
+/**
+ * @deprecated Use `CustomFieldsMap` from `./utils/custom-fields.js` instead.
+ * Retained for legacy interfaces (e.g. `Product`) whose runtime shape has not
+ * yet been refactored to the flat `{key: value}` map.
+ */
 export interface CustomField {
   field: string;
   value: string;
@@ -208,7 +215,7 @@ export interface Document {
   notes?: string;
   tags?: string[];
   salesChannel?: string;
-  customFields?: CustomField[];
+  customFields?: CustomFieldsMap;
   desc?: string;
   discount?: number;
   language?: string;
@@ -293,7 +300,7 @@ export interface Lead {
   contactName?: string;
   potential?: number;
   status?: number;
-  customFields?: CustomField[];
+  customFields?: CustomFieldsMap;
   value?: number;
   userId?: string;
   person?: string;
@@ -335,7 +342,7 @@ export interface Funnel {
   recentLost?: { num: number; value: number };
   labels?: unknown[];
   preferences?: unknown[];
-  customFields?: unknown[];
+  customFields?: CustomFieldsMap;
 }
 
 export interface FunnelStage {
@@ -569,7 +576,7 @@ export interface Project {
   numberOfTasks?: number;
   completedTasks?: number;
   labels?: ProjectLabel[];
-  customFields?: CustomField[];
+  customFields?: CustomFieldsMap;
   type?: string;
   icon?: string;
   color?: string;
