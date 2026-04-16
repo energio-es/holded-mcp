@@ -570,7 +570,7 @@ describe('Schema Validation Against OpenAPI Specs', () => {
         approveDoc: true,
         shippingAddress: '123 Main St',
         shippingCity: 'Madrid',
-        customFields: [{ field: 'ref', value: '123' }],
+        customFields: { ref: '123' },
         tags: ['urgent'],
       };
 

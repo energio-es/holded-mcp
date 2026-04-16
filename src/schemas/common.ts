@@ -128,17 +128,13 @@ export const ContactPersonSchema = z.strictObject({
 });
 
 /**
- * Custom field schema
- */
-export const CustomFieldSchema = z.strictObject({
-  field: z.string().describe("Custom field name"),
-  value: z.string().describe("Custom field value"),
-});
-
-/**
- * Custom fields array schema
+ * Custom fields schema — a flat key/value map.
+ *
+ * The underlying Holded wire shape varies per resource/method; the MCP
+ * server absorbs that variance (see `src/utils/custom-fields.ts` and the
+ * design doc `docs/superpowers/specs/2026-04-16-customfields-map-interface-design.md`).
  */
 export const CustomFieldsSchema = z
-  .array(CustomFieldSchema)
+  .record(z.string(), z.string())
   .optional()
-  .describe("Array of custom fields");
+  .describe("Custom fields as a flat {key: value} map");
