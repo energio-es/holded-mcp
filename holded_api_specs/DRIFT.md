@@ -8,14 +8,14 @@ Verified against: live Holded API via curl using `HOLDED_TEST_API_KEY_ENERGIO`
 
 | Module | Code Drifts | Spec Drifts | Total |
 |--------|-------------|-------------|-------|
-| Invoice API | 1 | 3 | 4 |
+| Invoice API | 1 | 5 | 6 |
 | CRM API | 0 | 3 | 3 |
 | Projects API | 0 | 3 | 3 |
 | Accounting API | 1 | 2 | 3 |
 | API Client | 1 | 0 | 1 |
-| **Total** | **3** | **11** | **14** |
+| **Total** | **3** | **13** | **16** |
 
-By severity: **0 Critical**, **2 Medium**, **12 Low**
+By severity: **0 Critical**, **4 Medium**, **12 Low**
 
 **Drift location key:**
 - **Code drift** -- our implementation doesn't match the spec and the API confirms the spec is correct
@@ -56,6 +56,22 @@ By severity: **0 Critical**, **2 Medium**, **12 Low**
 - **API verification (2026-04-16):** Verified via real-API smoke test (`HOLDED_TEST_API_KEY_ENERGIO`). The endpoint returns Holded's HTML 404 page with HTTP 200 status. Probed 8 URL variants (`/attachments`, `/attach`, `/attachments/save|upload|create|add|post|new`, PUT method, alternate field name `attachment`, `/files`, trailing slash) -- all return the same HTML 404. The endpoint is not exposed in the public v1 API.
 - **Conclusion:** Drift is in **our code**. Removed the tool, its schema, its tests, and the README entry (`list_contact_attachments` and `get_contact_attachment` remain -- both are documented in the OpenAPI spec). Document attachments (`documents/{docType}/{documentId}/attach`) and product images (`products/{productId}/image`) remain -- both are documented and verified working.
 - **Severity:** Medium (a tool that never worked is more harmful than a missing tool -- it misleads LLM consumers).
+
+### DRIFT-INV-14: `POST /documents/{docType}` decomposes customFields entries
+
+- **Spec says:** `customFields` accepts `[{field: string, value: string}]` on create (see `holded_api_specs/invoice-api.json:266-280, 4810-4823`).
+- **API does:** Decomposes each entry via `Object.entries` — every own-prop becomes a separate row. Sending `[{field: "src", value: "val"}]` stores `[{field:"field", value:"src"}, {field:"value", value:"val"}]` (doubled, original key/value pairing lost).
+- **API verification (2026-04-16):** Live probe on `purchase`, `invoice`, `salesreceipt`, `estimate` against `HOLDED_TEST_API_KEY_ENERGIO`. All four doc types mangle identically. Ten different payload shapes tested; only `[{k: v}]` (single-key map per entry) round-trips, because Holded's decomposer unpacks it to `[{field: k, value: v}]`.
+- **Conclusion:** Drift is in **the API**. Fixed client-side in `src/utils/custom-fields.ts` — create handler serializes the caller's `{k: v}` map as `[{k: v}]` on the wire. Update path (`PUT /documents/{docType}/{id}`) accepts the documented shape and is unaffected; update uses the documented serialization.
+- **Severity:** Medium (silent data corruption for idempotency-by-customFields workflows).
+
+### DRIFT-INV-15: `POST /contacts` and `PUT /contacts/{id}` decompose customFields
+
+- **Spec says:** Contact create/update `customFields` accepts `[{field, value}]` (see `holded_api_specs/invoice-api.json:266-280, 940-953`).
+- **API does:** Both POST and PUT decompose each entry, same pattern as documents. Note: `PUT /documents/{docType}/{id}` is **not** affected — only contacts have the bug on the update path too.
+- **API verification (2026-04-16):** Same live probe, extended to contact endpoints. Documented shape mangles on both methods; `[{k: v}]` map-per-entry round-trips on both.
+- **Conclusion:** Drift is in **the API**. Fixed client-side — contact handlers would serialize `{k: v}` maps as `[{k: v}]` on both POST and PUT. **Note:** our current Zod schemas (`CreateContactInputSchema`, `UpdateContactInputSchema`) do not expose `customFields`, so the bug is not reachable via the MCP server's contact tools today. The read-side repair is wired so Holded-native customFields (set via UI or direct API) round-trip correctly on `get_contact` / `list_contacts`.
+- **Severity:** Medium (latent — becomes reachable the moment contact schemas add `customFields`).
 
 ---
 
