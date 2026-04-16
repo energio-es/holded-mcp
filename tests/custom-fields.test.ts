@@ -86,7 +86,7 @@ describe("parse", () => {
     expect(parse([{ field: "a", value: "1" }, { field: "a", value: "2" }])).toEqual({ a: "2" });
   });
 
-  it("parse is idempotent on an already-parsed map", () => {
+  it("parse returns {} when given an already-parsed map (not idempotent)", () => {
     // parse accepts raw (unknown); passing a map-shaped object through yields {}.
     // Callers should not re-parse — this test guards against accidental double-apply in list repair.
     const already: CustomFieldsMap = { a: "1" };

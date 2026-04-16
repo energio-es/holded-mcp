@@ -576,7 +576,7 @@ export interface Project {
   numberOfTasks?: number;
   completedTasks?: number;
   labels?: ProjectLabel[];
-  customFields?: CustomFieldsMap;
+  customFields?: unknown[];
   type?: string;
   icon?: string;
   color?: string;
