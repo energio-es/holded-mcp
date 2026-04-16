@@ -360,3 +360,70 @@ describe("Document custom handlers", () => {
     });
   });
 });
+
+// ============================================================
+// Document customFields serialization
+// ============================================================
+
+describe("Document customFields wire transforms", () => {
+  let server: ReturnType<typeof createMockServer>;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    server = createMockServer();
+    registerDocumentTools(server as any);
+  });
+
+  it("holded_invoicing_create_document sends customFields as map-per-entry", async () => {
+    mockMakeApiRequest.mockResolvedValueOnce({ status: 1, id: "d1" });
+    const handler = server.tools.get("holded_invoicing_create_document")!.handler;
+    await handler({
+      doc_type: "purchase",
+      contactId: "c1",
+      date: 1776000000,
+      items: [{ name: "x", units: 1, subtotal: 1 }],
+      customFields: { source_path: "/tmp/a.pdf", source: "skill@v1" },
+    });
+    const [, , , body] = mockMakeApiRequest.mock.calls[0];
+    expect((body as any).customFields).toEqual([
+      { source_path: "/tmp/a.pdf" },
+      { source: "skill@v1" },
+    ]);
+  });
+
+  it("holded_invoicing_update_document sends customFields as documented {field,value}", async () => {
+    mockMakeApiRequest.mockResolvedValueOnce({ status: 1 });
+    const handler = server.tools.get("holded_invoicing_update_document")!.handler;
+    await handler({
+      doc_type: "purchase",
+      document_id: "d1",
+      customFields: { source_path: "/tmp/a.pdf" },
+    });
+    const [, , , body] = mockMakeApiRequest.mock.calls[0];
+    expect((body as any).customFields).toEqual([{ field: "source_path", value: "/tmp/a.pdf" }]);
+  });
+
+  it("holded_invoicing_get_document repairs mangled customFields on read", async () => {
+    mockMakeApiRequest.mockResolvedValueOnce({
+      id: "d1",
+      customFields: [
+        { field: "field", value: "source_path" },
+        { field: "value", value: "/tmp/a.pdf" },
+      ],
+    });
+    const handler = server.tools.get("holded_invoicing_get_document")!.handler;
+    const result = await handler({ doc_type: "purchase", document_id: "d1", response_format: "json" });
+    expect(result.structuredContent.customFields).toEqual({ source_path: "/tmp/a.pdf" });
+  });
+
+  it("holded_invoicing_list_documents repairs customFields on each item", async () => {
+    mockMakeApiRequest.mockResolvedValueOnce([
+      { id: "d1", customFields: [{ field: "a", value: "1" }] },
+      { id: "d2", customFields: [{ b: "2" }] },
+    ]);
+    const handler = server.tools.get("holded_invoicing_list_documents")!.handler;
+    const result = await handler({ doc_type: "purchase", page: 1, response_format: "json" });
+    expect(result.structuredContent.documents[0].customFields).toEqual({ a: "1" });
+    expect(result.structuredContent.documents[1].customFields).toEqual({ b: "2" });
+  });
+});

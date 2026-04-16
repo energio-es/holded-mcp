@@ -9,6 +9,7 @@ import { ResponseFormat } from "../../constants.js";
 import { Document } from "../../types.js";
 import { withErrorHandling } from "../utilities.js";
 import { resolveTimestamps } from "../../utils/timezone.js";
+import { serialize, parse } from "../../utils/custom-fields.js";
 import {
   ListDocumentsInputSchema,
   GetDocumentInputSchema,
@@ -181,6 +182,14 @@ Returns:
         queryParams
       );
 
+      for (const doc of documents) {
+        if (doc && typeof doc === "object" && "customFields" in doc) {
+          (doc as unknown as { customFields: unknown }).customFields = parse(
+            (doc as unknown as { customFields: unknown }).customFields,
+          );
+        }
+      }
+
       const textContent =
         response_format === ResponseFormat.MARKDOWN
           ? formatDocumentsMarkdown(documents, doc_type)
@@ -223,6 +232,12 @@ Returns:
         "GET"
       );
 
+      if (document && typeof document === "object" && "customFields" in document) {
+        (document as unknown as { customFields: unknown }).customFields = parse(
+          (document as unknown as { customFields: unknown }).customFields,
+        );
+      }
+
       const textContent =
         response_format === ResponseFormat.MARKDOWN
           ? formatDocumentMarkdown(document)
@@ -263,11 +278,17 @@ Returns:
     },
     withErrorHandling(async (params) => {
       const { doc_type, ...documentData } = params as unknown as CreateDocumentInput;
+      const body: Record<string, unknown> = { ...documentData };
+      if (documentData.customFields !== undefined) {
+        const wire = serialize(documentData.customFields, "map-per-entry");
+        if (wire) body.customFields = wire;
+        else delete body.customFields;
+      }
       const document = await makeApiRequest<Document>(
         "invoicing",
         `documents/${doc_type}`,
         "POST",
-        documentData
+        body,
       );
 
       return {
@@ -306,11 +327,17 @@ Returns:
     },
     withErrorHandling(async (params) => {
       const { doc_type, document_id, ...updateData } = params as unknown as UpdateDocumentInput;
+      const body: Record<string, unknown> = { ...updateData };
+      if (updateData.customFields !== undefined) {
+        const wire = serialize(updateData.customFields, "documented");
+        if (wire) body.customFields = wire;
+        else delete body.customFields;
+      }
       const document = await makeApiRequest<Document>(
         "invoicing",
         `documents/${doc_type}/${document_id}`,
         "PUT",
-        updateData
+        body,
       );
 
       return {
