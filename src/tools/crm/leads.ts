@@ -28,6 +28,8 @@ import {
 } from "../../schemas/crm/leads.js";
 import { registerCrudTools } from "../factory.js";
 import { snakeToCamel, withErrorHandling } from "../utilities.js";
+import { serialize, parse } from "../../utils/custom-fields.js";
+import type { CustomFieldsMap } from "../../utils/custom-fields.js";
 
 /**
  * Format leads as markdown
@@ -135,7 +137,7 @@ Args:
   - value (number): Monetary value
   - due_date (number): Due date as Unix timestamp
   - status (number): Lead status indicator
-  - customFields (array): Custom field key-value pairs
+  - customFields (object): Flat {key: value} map of custom fields
 
 Returns:
   The updated lead.`,
@@ -157,6 +159,21 @@ Returns:
       return qp;
     },
     bodyTransform: snakeToCamel,
+    updateBodyTransform: (body) => {
+      const transformed = snakeToCamel(body);
+      if (transformed.customFields !== undefined) {
+        const wire = serialize(transformed.customFields as CustomFieldsMap | undefined, "documented");
+        if (wire) transformed.customFields = wire;
+        else delete transformed.customFields;
+      }
+      return transformed;
+    },
+    responseTransform: (item) => {
+      if ("customFields" in item) {
+        item.customFields = parse(item.customFields);
+      }
+      return item;
+    },
   });
 
   // ── Manual tools (sub-resource endpoints) ───────────────

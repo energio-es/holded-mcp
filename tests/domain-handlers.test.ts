@@ -440,3 +440,38 @@ describe("Document customFields wire transforms", () => {
     expect(result.structuredContent.documents[1].customFields).toEqual({ b: "2" });
   });
 });
+
+// ============================================================
+// Lead customFields wire transforms (factory-driven)
+// ============================================================
+
+describe("Lead customFields wire transforms", () => {
+  let server: ReturnType<typeof createMockServer>;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    server = createMockServer();
+    registerLeadTools(server as any);
+  });
+
+  it("holded_crm_update_lead sends customFields as documented {field,value}", async () => {
+    mockMakeApiRequest.mockResolvedValueOnce({ id: "l1" });
+    const handler = server.tools.get("holded_crm_update_lead")!.handler;
+    await handler({ lead_id: "l1", customFields: { tag: "vip" } });
+    const [, , , body] = mockMakeApiRequest.mock.calls[0];
+    expect((body as any).customFields).toEqual([{ field: "tag", value: "vip" }]);
+  });
+
+  it("holded_crm_get_lead repairs mangled customFields on read", async () => {
+    mockMakeApiRequest.mockResolvedValueOnce({
+      id: "l1",
+      customFields: [
+        { field: "field", value: "tag" },
+        { field: "value", value: "vip" },
+      ],
+    });
+    const handler = server.tools.get("holded_crm_get_lead")!.handler;
+    const result = await handler({ lead_id: "l1", response_format: "json" });
+    expect(result.structuredContent.customFields).toEqual({ tag: "vip" });
+  });
+});
