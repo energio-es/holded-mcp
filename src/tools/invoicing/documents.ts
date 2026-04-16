@@ -4,6 +4,7 @@
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { makeApiRequest, makeMultipartApiRequest, toStructuredContent } from "../../services/api.js";
+import { resolveAttachmentInput } from "../../services/files.js";
 import { ResponseFormat } from "../../constants.js";
 import { Document } from "../../types.js";
 import { withErrorHandling } from "../utilities.js";
@@ -749,12 +750,17 @@ Returns:
       title: "Attach File to Holded Document",
       description: `Attach a file to a specific document in Holded.
 
+Provide the file via either an absolute local file path (preferred) or a base64-encoded string.
+
 Args:
   - doc_type (string): Document type (required)
   - document_id (string): The document ID to attach file to (required)
-  - file_content (string): File content as base64 encoded string (required)
-  - file_name (string): File name (required)
+  - file_path (string): Absolute local path to the file, e.g. /Users/me/invoice.pdf or ~/Downloads/invoice.pdf. Preferred for large files — avoids base64 token overhead.
+  - file_content (string): File content as base64-encoded string. Fallback when no local path is available.
+  - file_name (string): File name. Required when file_content is used; with file_path, defaults to the path basename. Provide explicitly to rename on upload.
   - set_main (boolean): Set this file as the main attachment
+
+Exactly one of file_path or file_content must be provided.
 
 Returns:
   Confirmation of file attachment with status and info.`,
@@ -767,17 +773,15 @@ Returns:
       },
     },
     withErrorHandling(async (params) => {
-      const { doc_type, document_id, file_content, file_name, set_main } = params as unknown as AttachDocumentFileInput;
-
-      // Convert base64 to buffer
-      const fileBuffer = Buffer.from(file_content, "base64");
+      const typedParams = params as unknown as AttachDocumentFileInput;
+      const { buffer, fileName } = await resolveAttachmentInput(typedParams);
 
       const result = await makeMultipartApiRequest<{ status: number; info: string; [key: string]: unknown }>(
         "invoicing",
-        `documents/${doc_type}/${document_id}/attach`,
-        fileBuffer,
-        file_name,
-        set_main
+        `documents/${typedParams.doc_type}/${typedParams.document_id}/attach`,
+        buffer,
+        fileName,
+        typedParams.set_main
       );
 
       return {
@@ -787,7 +791,7 @@ Returns:
             text: `File attached successfully.\n\n${JSON.stringify(result, null, 2)}`,
           },
         ],
-        structuredContent: { attached: true, documentId: document_id, docType: doc_type, fileName: file_name, ...result },
+        structuredContent: { attached: true, documentId: typedParams.document_id, docType: typedParams.doc_type, fileName, ...result },
       };
     })
   );
