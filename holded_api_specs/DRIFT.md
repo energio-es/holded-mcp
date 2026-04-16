@@ -53,7 +53,7 @@ By severity: **0 Critical**, **1 Medium**, **12 Low**
 - **Spec says:** Only `GET /contacts/{contactId}/attachments/list` and `GET /contacts/{contactId}/attachments/get` are documented for contact attachments. No upload route is documented.
 - **Our code did:** Exposed `holded_invoicing_upload_contact_attachment` posting to `POST /contacts/{contactId}/attachments` (an undocumented URL).
 - **API verification (2026-04-16):** Verified via real-API smoke test (`HOLDED_TEST_API_KEY_ENERGIO`). The endpoint returns Holded's HTML 404 page with HTTP 200 status. Probed 8 URL variants (`/attachments`, `/attach`, `/attachments/save|upload|create|add|post|new`, PUT method, alternate field name `attachment`, `/files`, trailing slash) -- all return the same HTML 404. The endpoint is not exposed in the public v1 API.
-- **Conclusion:** Drift is in **our code**. Removed the tool, its schema, its tests, and the README entry. Document attachments (`documents/{docType}/{documentId}/attach`) and product images (`products/{productId}/image`) remain -- both are documented and verified working.
+- **Conclusion:** Drift is in **our code**. Removed the tool, its schema, its tests, and the README entry (`list_contact_attachments` and `get_contact_attachment` remain -- both are documented in the OpenAPI spec). Document attachments (`documents/{docType}/{documentId}/attach`) and product images (`products/{productId}/image`) remain -- both are documented and verified working.
 - **Severity:** Medium (a tool that never worked is more harmful than a missing tool -- it misleads LLM consumers).
 
 ---

@@ -89,5 +89,17 @@ describeSmoke("Attachments smoke (file_path → documents attach)", () => {
     );
 
     expect(result.status).toBe(1);
+
+    // 6. Verify the file actually landed (defense against silent HTML-200 false positives).
+    //    GET /documents/{docType}/{documentId}/attachments/list returns
+    //    `{ status: 1, attachments: ["<filename>", ...] }` (verified via probe 2026-04-16).
+    const listing = await makeApiRequest<{ status: number; attachments: string[] }>(
+      "invoicing",
+      `documents/estimate/${documentId}/attachments/list`,
+      "GET"
+    );
+    expect(listing.status).toBe(1);
+    expect(Array.isArray(listing.attachments)).toBe(true);
+    expect(listing.attachments).toContain("smoke.txt");
   });
 }, 60000);
