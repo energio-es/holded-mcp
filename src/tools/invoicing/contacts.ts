@@ -24,6 +24,7 @@ import {
 } from "../../schemas/invoicing/contacts.js";
 import { registerCrudTools } from "../factory.js";
 import { withErrorHandling } from "../utilities.js";
+import { parse } from "../../utils/custom-fields.js";
 
 /**
  * Format contacts as markdown
@@ -183,6 +184,12 @@ Returns:
     formatters: {
       list: formatContactsMarkdown,
       single: formatContactMarkdown,
+    },
+    responseTransform: (item) => {
+      if ("customFields" in item) {
+        item.customFields = parse(item.customFields);
+      }
+      return item;
     },
     listQueryParams: (params) => {
       const qp: Record<string, unknown> = {};

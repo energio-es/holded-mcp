@@ -21,6 +21,7 @@ import { registerLeadTools } from "../src/tools/crm/leads.js";
 import { registerBookingTools } from "../src/tools/crm/bookings.js";
 import { registerFunnelTools } from "../src/tools/crm/funnels.js";
 import { registerDocumentTools } from "../src/tools/invoicing/documents.js";
+import { registerContactTools } from "../src/tools/invoicing/contacts.js";
 
 function createMockServer() {
   const tools = new Map<string, { config: any; handler: Function }>();
@@ -509,5 +510,33 @@ describe("Funnel customFields wire transforms", () => {
     const handler = server.tools.get("holded_crm_get_funnel")!.handler;
     const result = await handler({ funnel_id: "f1", response_format: "json" });
     expect(result.structuredContent.customFields).toEqual({ stage_meta: "pipeline-v2" });
+  });
+});
+
+// ============================================================
+// Contact response customFields repair
+// ============================================================
+
+describe("Contact customFields response repair", () => {
+  let server: ReturnType<typeof createMockServer>;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    server = createMockServer();
+    registerContactTools(server as any);
+  });
+
+  it("holded_invoicing_get_contact repairs mangled customFields", async () => {
+    mockMakeApiRequest.mockResolvedValueOnce({
+      id: "c1",
+      name: "Acme",
+      customFields: [
+        { field: "field", value: "vat_region" },
+        { field: "value", value: "EU" },
+      ],
+    });
+    const handler = server.tools.get("holded_invoicing_get_contact")!.handler;
+    const result = await handler({ contact_id: "c1", response_format: "json" });
+    expect(result.structuredContent.customFields).toEqual({ vat_region: "EU" });
   });
 });
