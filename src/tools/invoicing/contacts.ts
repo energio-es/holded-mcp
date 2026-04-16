@@ -4,6 +4,7 @@
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { makeApiRequest, makeMultipartApiRequest } from "../../services/api.js";
+import { resolveAttachmentInput } from "../../services/files.js";
 import { ResponseFormat } from "../../constants.js";
 import { Contact, ContactGroup } from "../../types.js";
 import {
@@ -375,10 +376,15 @@ Returns:
       title: "Upload Holded Contact Attachment",
       description: `Upload an attachment to a contact in Holded.
 
+Provide the file via either an absolute local file path (preferred) or a base64-encoded string.
+
 Args:
   - contact_id (string): The contact ID to upload attachment to (required)
-  - file_content (string): File content as base64 encoded string (required)
-  - file_name (string): File name (required)
+  - file_path (string): Absolute local path to the file, e.g. /Users/me/invoice.pdf or ~/Downloads/invoice.pdf. Preferred for large files — avoids base64 token overhead.
+  - file_content (string): File content as base64-encoded string. Fallback when no local path is available.
+  - file_name (string): File name. Required when file_content is used; with file_path, defaults to the path basename. Provide explicitly to rename on upload.
+
+Exactly one of file_path or file_content must be provided.
 
 Returns:
   Confirmation of attachment upload with status and info.`,
@@ -391,16 +397,14 @@ Returns:
       },
     },
     withErrorHandling(async (params) => {
-      const { contact_id, file_content, file_name } = params as unknown as UploadContactAttachmentInput;
-
-      // Convert base64 to buffer
-      const fileBuffer = Buffer.from(file_content, "base64");
+      const typedParams = params as unknown as UploadContactAttachmentInput;
+      const { buffer, fileName } = await resolveAttachmentInput(typedParams);
 
       const result = await makeMultipartApiRequest<{ status: number; info: string; [key: string]: unknown }>(
         "invoicing",
-        `contacts/${contact_id}/attachments`,
-        fileBuffer,
-        file_name
+        `contacts/${typedParams.contact_id}/attachments`,
+        buffer,
+        fileName
       );
 
       return {
@@ -410,7 +414,7 @@ Returns:
             text: `Contact attachment uploaded successfully.\n\n${JSON.stringify(result, null, 2)}`,
           },
         ],
-        structuredContent: { uploaded: true, contactId: contact_id, fileName: file_name, ...result },
+        structuredContent: { uploaded: true, contactId: typedParams.contact_id, fileName, ...result },
       };
     })
   );
