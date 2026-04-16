@@ -18,16 +18,6 @@ export const invalidPaginationZero = {
   page: 0,
 };
 
-export const validCustomField = {
-  field: 'custom_field_name',
-  value: 'custom_field_value',
-};
-
-export const validCustomFields = [
-  { field: 'field1', value: 'value1' },
-  { field: 'field2', value: 'value2' },
-];
-
 export const validTags = ['tag1', 'tag2', 'tag3'];
 
 export const validCurrency = 'EUR';
