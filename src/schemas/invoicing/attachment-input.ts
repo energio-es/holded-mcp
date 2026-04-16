@@ -23,7 +23,6 @@ import { z } from "zod";
  */
 export function attachmentInputFields(noun: "file" | "image" = "file") {
   const exampleName = noun === "image" ? "photo.png" : "invoice.pdf";
-  const Capital = noun === "image" ? "Image" : "File";
   const longContent = noun === "image" ? "Image file content" : "File content";
   const longName = noun === "image" ? "Image file name" : "File name";
 
