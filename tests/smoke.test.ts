@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import { makeApiRequest, initializeApi } from "../src/services/api.js";
 
 const API_KEY = process.env.HOLDED_TEST_API_KEY;
@@ -55,6 +55,88 @@ describeSmoke("Smoke Tests (Real API)", () => {
     it("lists chart of accounts", async () => {
       const accounts = await makeApiRequest<unknown[]>("accounting", "chartofaccounts", "GET");
       expect(Array.isArray(accounts)).toBe(true);
+    });
+  });
+
+  describe("customFields round-trip", () => {
+    // Use a single throwaway contact as the owner of all test purchase docs.
+    let testContactId: string;
+
+    beforeAll(async () => {
+      const stamp = Math.floor(Date.now() / 1000);
+      const resp = await makeApiRequest<{ id: string }>(
+        "invoicing",
+        "contacts",
+        "POST",
+        { name: `CF-SMOKE-${stamp}`, type: "supplier" },
+      );
+      testContactId = resp.id;
+    });
+
+    afterAll(async () => {
+      if (testContactId) {
+        await makeApiRequest("invoicing", `contacts/${testContactId}`, "DELETE");
+      }
+    });
+
+    it("document purchase round-trips customFields map", async () => {
+      const stamp = Math.floor(Date.now() / 1000);
+      const invoiceNum = `CFSMOKE-${stamp}-doc`;
+      const { serialize, parse } = await import("../src/utils/custom-fields.js");
+      const cf = { source_path: "/tmp/smoke.pdf", source: "smoke@v1" };
+      const created = await makeApiRequest<{ id: string }>(
+        "invoicing",
+        "documents/purchase",
+        "POST",
+        {
+          contactId: testContactId,
+          invoiceNum,
+          date: stamp,
+          dueDate: stamp,
+          currency: "eur",
+          approveDoc: false,
+          items: [{ name: "smoke", units: 1, subtotal: 1 }],
+          customFields: serialize(cf, "map-per-entry"),
+        },
+      );
+      try {
+        const read = await makeApiRequest<{ customFields: unknown }>(
+          "invoicing",
+          `documents/purchase/${created.id}`,
+          "GET",
+        );
+        expect(parse(read.customFields)).toEqual(cf);
+      } finally {
+        await makeApiRequest("invoicing", `documents/purchase/${created.id}`, "DELETE");
+      }
+    });
+
+    it("funnel update round-trips customFields map", async () => {
+      const stamp = Math.floor(Date.now() / 1000);
+      const { serialize, parse } = await import("../src/utils/custom-fields.js");
+      const funnel = await makeApiRequest<{ id: string }>(
+        "crm",
+        "funnels",
+        "POST",
+        { name: `CF-SMOKE-F-${stamp}` },
+      );
+      try {
+        const cf = { stage_meta: "pipeline-v2", owner: "qa" };
+        await makeApiRequest(
+          "crm",
+          `funnels/${funnel.id}`,
+          "PUT",
+          { customFields: serialize(cf, "map-per-entry") },
+        );
+        const read = await makeApiRequest<{ customFields: unknown }>(
+          "crm",
+          `funnels/${funnel.id}`,
+          "GET",
+        );
+        expect(parse(read.customFields)).toEqual(cf);
+      } finally {
+        await makeApiRequest("crm", `funnels/${funnel.id}`, "DELETE");
+      }
     });
   });
 }, 30000);
