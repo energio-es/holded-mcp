@@ -668,6 +668,21 @@ This MCP server uses a consistent parameter naming convention:
 
 The tool handlers automatically transform parameters to the format expected by the Holded API.
 
+### Custom fields
+
+Tools that accept or return `customFields` (documents, leads, funnels) use a flat `{key: value}` map:
+
+```json
+{
+  "customFields": {
+    "source_path": "/tmp/invoice.pdf",
+    "source": "invoices-to-holded@v1/file"
+  }
+}
+```
+
+The server normalizes Holded's internal wire shape (which varies per endpoint and has a known bug in `POST /documents/{docType}` — see `holded_api_specs/DRIFT.md#DRIFT-INV-14`) so the map form round-trips consistently. On reads, previously-mangled records are repaired transparently.
+
 ## Workflow Examples
 
 This section demonstrates common real-world workflows combining multiple API operations.
