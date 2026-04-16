@@ -20,7 +20,7 @@ import { UpdateProductStockInputSchema, CreateProductInputSchema, UploadProductI
 import { CreateEmployeeTimeTrackingInputSchema } from '../src/schemas/team/time-tracking.js';
 
 // Invoicing schemas
-import { CreateContactInputSchema, UpdateContactInputSchema, UploadContactAttachmentInputSchema } from '../src/schemas/invoicing/contacts.js';
+import { CreateContactInputSchema, UpdateContactInputSchema } from '../src/schemas/invoicing/contacts.js';
 import { AttachDocumentFileInputSchema, CreateDocumentInputSchema, DocumentItemSchema } from '../src/schemas/invoicing/documents.js';
 import { CreateServiceInputSchema } from '../src/schemas/invoicing/services.js';
 import { CreatePaymentInputSchema } from '../src/schemas/invoicing/payments.js';
@@ -1477,70 +1477,6 @@ describe('Schema Validation Against OpenAPI Specs', () => {
       const result = ContactPersonSchema.safeParse({ name: 'John', email: 'not-email' });
       expect(result.success).toBe(false);
     });
-  });
-});
-
-describe('UploadContactAttachmentInputSchema (file_path + base64)', () => {
-  const validId = '507f1f77bcf86cd799439011';
-
-  it('accepts file_path alone (file_name auto-inferred at runtime)', () => {
-    const result = UploadContactAttachmentInputSchema.safeParse({
-      contact_id: validId,
-      file_path: '/tmp/invoice.pdf',
-    });
-    expect(result.success).toBe(true);
-  });
-
-  it('accepts file_path + explicit file_name (rename case)', () => {
-    const result = UploadContactAttachmentInputSchema.safeParse({
-      contact_id: validId,
-      file_path: '/tmp/invoice.pdf',
-      file_name: 'renamed.pdf',
-    });
-    expect(result.success).toBe(true);
-  });
-
-  it('accepts file_content + file_name (legacy base64 path)', () => {
-    const result = UploadContactAttachmentInputSchema.safeParse({
-      contact_id: validId,
-      file_content: 'aGVsbG8=',
-      file_name: 'invoice.pdf',
-    });
-    expect(result.success).toBe(true);
-  });
-
-  it('rejects when both file_path and file_content are provided', () => {
-    const result = UploadContactAttachmentInputSchema.safeParse({
-      contact_id: validId,
-      file_path: '/tmp/invoice.pdf',
-      file_content: 'aGVsbG8=',
-      file_name: 'invoice.pdf',
-    });
-    expect(result.success).toBe(false);
-    if (!result.success) {
-      expect(result.error.issues.some(i => /exactly one of file_path or file_content/.test(i.message))).toBe(true);
-    }
-  });
-
-  it('rejects when neither file_path nor file_content is provided', () => {
-    const result = UploadContactAttachmentInputSchema.safeParse({
-      contact_id: validId,
-    });
-    expect(result.success).toBe(false);
-    if (!result.success) {
-      expect(result.error.issues.some(i => /exactly one of file_path or file_content/.test(i.message))).toBe(true);
-    }
-  });
-
-  it('rejects file_content without file_name', () => {
-    const result = UploadContactAttachmentInputSchema.safeParse({
-      contact_id: validId,
-      file_content: 'aGVsbG8=',
-    });
-    expect(result.success).toBe(false);
-    if (!result.success) {
-      expect(result.error.issues.some(i => /file_name is required when file_content/.test(i.message))).toBe(true);
-    }
   });
 });
 

@@ -3,8 +3,7 @@
  */
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { makeApiRequest, makeMultipartApiRequest } from "../../services/api.js";
-import { resolveAttachmentInput } from "../../services/files.js";
+import { makeApiRequest } from "../../services/api.js";
 import { ResponseFormat } from "../../constants.js";
 import { Contact, ContactGroup } from "../../types.js";
 import {
@@ -20,10 +19,8 @@ import {
   DeleteContactGroupInputSchema,
   ListContactAttachmentsInputSchema,
   GetContactAttachmentInputSchema,
-  UploadContactAttachmentInputSchema,
   ListContactAttachmentsInput,
   GetContactAttachmentInput,
-  UploadContactAttachmentInput,
 } from "../../schemas/invoicing/contacts.js";
 import { registerCrudTools } from "../factory.js";
 import { withErrorHandling } from "../utilities.js";
@@ -369,53 +366,4 @@ Returns:
     })
   );
 
-  // Upload Contact Attachment
-  server.registerTool(
-    "holded_invoicing_upload_contact_attachment",
-    {
-      title: "Upload Holded Contact Attachment",
-      description: `Upload an attachment to a contact in Holded.
-
-Provide the file via either an absolute local file path (preferred) or a base64-encoded string.
-
-Args:
-  - contact_id (string): The contact ID to upload attachment to (required)
-  - file_path (string): Absolute local path to the file, e.g. /Users/me/invoice.pdf or ~/Downloads/invoice.pdf. Preferred for large files — avoids base64 token overhead.
-  - file_content (string): File content as base64-encoded string. Fallback when no local path is available.
-  - file_name (string): File name. Required when file_content is used; with file_path, defaults to the path basename. Provide explicitly to rename on upload.
-
-Exactly one of file_path or file_content must be provided.
-
-Returns:
-  Confirmation of attachment upload with status and info.`,
-      inputSchema: UploadContactAttachmentInputSchema,
-      annotations: {
-        readOnlyHint: false,
-        destructiveHint: false,
-        idempotentHint: false,
-        openWorldHint: true,
-      },
-    },
-    withErrorHandling(async (params) => {
-      const typedParams = params as unknown as UploadContactAttachmentInput;
-      const { buffer, fileName } = await resolveAttachmentInput(typedParams);
-
-      const result = await makeMultipartApiRequest<{ status: number; info: string; [key: string]: unknown }>(
-        "invoicing",
-        `contacts/${typedParams.contact_id}/attachments`,
-        buffer,
-        fileName
-      );
-
-      return {
-        content: [
-          {
-            type: "text",
-            text: `Contact attachment uploaded successfully.\n\n${JSON.stringify(result, null, 2)}`,
-          },
-        ],
-        structuredContent: { uploaded: true, contactId: typedParams.contact_id, fileName, ...result },
-      };
-    })
-  );
 }

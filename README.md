@@ -308,7 +308,6 @@ npm run dev
 - `holded_invoicing_delete_contact_group` - Delete a contact group
 - `holded_invoicing_list_contact_attachments` - List attachments for a contact
 - `holded_invoicing_get_contact_attachment` - Get a specific contact attachment
-- `holded_invoicing_upload_contact_attachment` - Upload an attachment to a contact
 
 ### Product Tools
 - `holded_invoicing_list_products` - List all products

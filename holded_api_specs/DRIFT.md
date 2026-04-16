@@ -8,13 +8,13 @@ Verified against: live Holded API via curl using `HOLDED_TEST_API_KEY_ENERGIO`
 
 | Module | Code Drifts | Spec Drifts | Total |
 |--------|-------------|-------------|-------|
-| Invoice API | 0 | 3 | 3 |
+| Invoice API | 1 | 3 | 4 |
 | CRM API | 0 | 3 | 3 |
 | Projects API | 0 | 3 | 3 |
 | Accounting API | 1 | 2 | 3 |
-| **Total** | **1** | **11** | **12** |
+| **Total** | **2** | **11** | **13** |
 
-By severity: **0 Critical**, **0 Medium**, **12 Low**
+By severity: **0 Critical**, **1 Medium**, **12 Low**
 
 **Drift location key:**
 - **Code drift** -- our implementation doesn't match the spec and the API confirms the spec is correct
@@ -47,6 +47,14 @@ By severity: **0 Critical**, **0 Medium**, **12 Low**
 - **API verification:** Created contact with `tradeName` and full `socialNetworks` (`website`, `facebook`, `twitter`, `linkedin`, `instagram`). All fields persisted on create. On update, `tradeName` persists but `socialNetworks` is silently ignored -- the API returns success but does not modify the stored values.
 - **Conclusion:** Drift is in **the spec** (API accepts these fields on create). However, `socialNetworks` is read-only on update despite returning success.
 - **Severity:** Low
+
+### DRIFT-INV-13: Contact attachment upload endpoint does not exist
+
+- **Spec says:** Only `GET /contacts/{contactId}/attachments/list` and `GET /contacts/{contactId}/attachments/get` are documented for contact attachments. No upload route is documented.
+- **Our code did:** Exposed `holded_invoicing_upload_contact_attachment` posting to `POST /contacts/{contactId}/attachments` (an undocumented URL).
+- **API verification (2026-04-16):** Verified via real-API smoke test (`HOLDED_TEST_API_KEY_ENERGIO`). The endpoint returns Holded's HTML 404 page with HTTP 200 status. Probed 8 URL variants (`/attachments`, `/attach`, `/attachments/save|upload|create|add|post|new`, PUT method, alternate field name `attachment`, `/files`, trailing slash) -- all return the same HTML 404. The endpoint is not exposed in the public v1 API.
+- **Conclusion:** Drift is in **our code**. Removed the tool, its schema, its tests, and the README entry. Document attachments (`documents/{docType}/{documentId}/attach`) and product images (`products/{productId}/image`) remain -- both are documented and verified working.
+- **Severity:** Medium (a tool that never worked is more harmful than a missing tool -- it misleads LLM consumers).
 
 ---
 

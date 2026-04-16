@@ -13,7 +13,6 @@ import {
   NumberingSeriesSchema,
   ContactPersonSchema,
 } from "../common.js";
-import { attachmentInputFields, attachmentInputSuperRefine } from "./attachment-input.js";
 
 /**
  * List contacts input schema
@@ -227,20 +226,3 @@ export const GetContactAttachmentInputSchema = z.strictObject({
 });
 
 export type GetContactAttachmentInput = z.infer<typeof GetContactAttachmentInputSchema>;
-
-/**
- * Upload contact attachment input schema.
- *
- * Accepts either a local absolute file path (`file_path`, preferred — avoids
- * base64 token overhead) or a base64-encoded string (`file_content`, legacy).
- * Exactly one source must be provided. With `file_path`, `file_name` is
- * optional and defaults to the path basename.
- */
-export const UploadContactAttachmentInputSchema = z
-  .strictObject({
-    contact_id: IdSchema.describe("The contact ID to upload attachment to"),
-    ...attachmentInputFields(),
-  })
-  .superRefine(attachmentInputSuperRefine);
-
-export type UploadContactAttachmentInput = z.infer<typeof UploadContactAttachmentInputSchema>;
