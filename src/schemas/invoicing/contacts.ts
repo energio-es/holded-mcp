@@ -13,6 +13,7 @@ import {
   NumberingSeriesSchema,
   ContactPersonSchema,
 } from "../common.js";
+import { attachmentInputFields, attachmentInputSuperRefine } from "./attachment-input.js";
 
 /**
  * List contacts input schema
@@ -238,32 +239,8 @@ export type GetContactAttachmentInput = z.infer<typeof GetContactAttachmentInput
 export const UploadContactAttachmentInputSchema = z
   .strictObject({
     contact_id: IdSchema.describe("The contact ID to upload attachment to"),
-    file_path: z.string().min(1).optional().describe(
-      "Absolute local path to the file (e.g., /Users/me/invoice.pdf or ~/Downloads/invoice.pdf). Preferred over file_content for large files."
-    ),
-    file_content: z.string().min(1).optional().describe(
-      "File content as base64-encoded string. Use file_path instead for large files to avoid token overhead."
-    ),
-    file_name: z.string().min(1).optional().describe(
-      "File name. Required when file_content is used; with file_path, defaults to the path basename."
-    ),
+    ...attachmentInputFields(),
   })
-  .superRefine((val, ctx) => {
-    const hasPath = Boolean(val.file_path);
-    const hasContent = Boolean(val.file_content);
-    if (hasPath === hasContent) {
-      ctx.addIssue({
-        code: "custom",
-        message: "Provide exactly one of file_path or file_content",
-      });
-    }
-    if (hasContent && !val.file_name) {
-      ctx.addIssue({
-        code: "custom",
-        message: "file_name is required when file_content is used",
-        path: ["file_name"],
-      });
-    }
-  });
+  .superRefine(attachmentInputSuperRefine);
 
 export type UploadContactAttachmentInput = z.infer<typeof UploadContactAttachmentInputSchema>;
