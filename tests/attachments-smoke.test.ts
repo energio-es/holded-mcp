@@ -22,6 +22,19 @@ const describeSmoke = API_KEY ? describe : describe.skip;
 describeSmoke("Attachments smoke (file_path → documents attach)", () => {
   let tmpDir: string;
 
+  async function fetchAllPaged<T>(endpoint: string): Promise<T[]> {
+    const all: T[] = [];
+    for (let page = 1; ; page++) {
+      const batch = await makeApiRequest<T[]>("invoicing", endpoint, "GET", undefined, { page });
+      if (!Array.isArray(batch) || batch.length === 0) break;
+      all.push(...batch);
+      // Safety break: Holded's default page size is 500. If we get a partial
+      // page, we know there are no more.
+      if (batch.length < 500) break;
+    }
+    return all;
+  }
+
   beforeAll(() => {
     initializeApi(API_KEY!);
     tmpDir = mkdtempSync(join(tmpdir(), "holded-attach-smoke-"));
@@ -32,20 +45,14 @@ describeSmoke("Attachments smoke (file_path → documents attach)", () => {
     // can produce duplicate contacts. Sweep by name pattern so we delete every
     // attachment-smoke-* resource regardless of which IDs we captured.
     try {
-      const allContacts = await makeApiRequest<Array<{ id: string; name?: string }>>(
-        "invoicing",
-        "contacts",
-        "GET"
-      );
+      const allContacts = await fetchAllPaged<{ id: string; name?: string }>("contacts");
       const ours = allContacts.filter(c => c.name?.startsWith("attachment-smoke-"));
 
       // Delete each contact's estimates first (foreign-key-style cleanup).
       if (ours.length > 0) {
         try {
-          const allEstimates = await makeApiRequest<Array<{ id: string; contact?: { id?: string } }>>(
-            "invoicing",
-            "documents/estimate",
-            "GET"
+          const allEstimates = await fetchAllPaged<{ id: string; contact?: { id?: string } }>(
+            "documents/estimate"
           );
           const ourContactIds = new Set(ours.map(c => c.id));
           const ourEstimates = allEstimates.filter(e => e.contact?.id && ourContactIds.has(e.contact.id));
@@ -56,8 +63,8 @@ describeSmoke("Attachments smoke (file_path → documents attach)", () => {
               // best-effort
             }
           }
-        } catch {
-          // best-effort
+        } catch (err) {
+          console.warn(`[smoke cleanup] Failed to fetch estimates for FK cleanup: ${err instanceof Error ? err.message : String(err)}`);
         }
       }
 
@@ -68,8 +75,8 @@ describeSmoke("Attachments smoke (file_path → documents attach)", () => {
           // best-effort
         }
       }
-    } catch {
-      // best-effort
+    } catch (err) {
+      console.warn(`[smoke cleanup] Failed to sweep attachment-smoke-* resources: ${err instanceof Error ? err.message : String(err)}`);
     }
 
     rmSync(tmpDir, { recursive: true, force: true });
@@ -81,7 +88,7 @@ describeSmoke("Attachments smoke (file_path → documents attach)", () => {
       "invoicing",
       "contacts",
       "POST",
-      { name: `attachment-smoke-${Date.now()}` }
+      { name: `attachment-smoke-${Date.now()}-${process.pid}` }
     );
     expect(contact.id).toBeTruthy();
     const contactId = contact.id;
