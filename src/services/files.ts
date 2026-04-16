@@ -60,3 +60,34 @@ function expandTilde(p: string): string {
   if (p.startsWith("~/")) return homedir() + p.slice(1);
   return p;
 }
+
+/**
+ * Input shape for an attachment that may come from either a local file path
+ * or a base64-encoded string. Schema refines guarantee that exactly one of
+ * `file_path` / `file_content` is set, and that `file_name` is set when
+ * `file_content` is used.
+ */
+export interface AttachmentInput {
+  file_path?: string;
+  file_content?: string;
+  file_name?: string;
+}
+
+/**
+ * Resolve a path/base64 attachment input into the buffer + fileName that the
+ * multipart upload layer needs. Trusts the schema refine to have enforced the
+ * input invariants.
+ */
+export async function resolveAttachmentInput(
+  input: AttachmentInput
+): Promise<{ buffer: Buffer; fileName: string }> {
+  if (input.file_path) {
+    const { buffer, basename } = await readAttachmentFromPath(input.file_path);
+    return { buffer, fileName: input.file_name ?? basename };
+  }
+
+  return {
+    buffer: Buffer.from(input.file_content!, "base64"),
+    fileName: input.file_name!,
+  };
+}

@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { mkdtempSync, writeFileSync, mkdirSync, rmSync, chmodSync } from "node:fs";
 import { tmpdir, homedir } from "node:os";
 import { join, basename } from "node:path";
-import { readAttachmentFromPath } from "../src/services/files.js";
+import { readAttachmentFromPath, resolveAttachmentInput } from "../src/services/files.js";
 
 describe("readAttachmentFromPath", () => {
   let tmpDir: string;
@@ -78,5 +78,50 @@ describe("readAttachmentFromPath", () => {
     } finally {
       chmodSync(filePath, 0o644); // restore so afterEach cleanup works
     }
+  });
+});
+
+describe("resolveAttachmentInput", () => {
+  let tmpDir: string;
+
+  beforeEach(() => {
+    tmpDir = mkdtempSync(join(tmpdir(), "holded-resolve-test-"));
+  });
+
+  afterEach(() => {
+    rmSync(tmpDir, { recursive: true, force: true });
+  });
+
+  it("returns buffer and inferred basename when only file_path is provided", async () => {
+    const filePath = join(tmpDir, "report.pdf");
+    writeFileSync(filePath, Buffer.from("payload"));
+
+    const result = await resolveAttachmentInput({ file_path: filePath });
+
+    expect(result.buffer.toString()).toBe("payload");
+    expect(result.fileName).toBe("report.pdf");
+  });
+
+  it("uses explicit file_name to override the basename", async () => {
+    const filePath = join(tmpDir, "report.pdf");
+    writeFileSync(filePath, Buffer.from("payload"));
+
+    const result = await resolveAttachmentInput({
+      file_path: filePath,
+      file_name: "renamed.pdf",
+    });
+
+    expect(result.fileName).toBe("renamed.pdf");
+  });
+
+  it("decodes base64 file_content and uses provided file_name", async () => {
+    const original = Buffer.from("base64 payload");
+    const result = await resolveAttachmentInput({
+      file_content: original.toString("base64"),
+      file_name: "uploaded.pdf",
+    });
+
+    expect(result.buffer.equals(original)).toBe(true);
+    expect(result.fileName).toBe("uploaded.pdf");
   });
 });
