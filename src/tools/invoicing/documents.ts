@@ -9,7 +9,7 @@ import { ResponseFormat } from "../../constants.js";
 import { Document } from "../../types.js";
 import { withErrorHandling } from "../utilities.js";
 import { resolveTimestamps } from "../../utils/timezone.js";
-import { serialize, parse } from "../../utils/custom-fields.js";
+import { serialize, repairCustomFieldsInPlace } from "../../utils/custom-fields.js";
 import {
   ListDocumentsInputSchema,
   GetDocumentInputSchema,
@@ -182,13 +182,7 @@ Returns:
         queryParams
       );
 
-      for (const doc of documents) {
-        if (doc && typeof doc === "object" && "customFields" in doc) {
-          (doc as unknown as { customFields: unknown }).customFields = parse(
-            (doc as unknown as { customFields: unknown }).customFields,
-          );
-        }
-      }
+      for (const doc of documents) repairCustomFieldsInPlace(doc);
 
       const textContent =
         response_format === ResponseFormat.MARKDOWN
@@ -232,11 +226,7 @@ Returns:
         "GET"
       );
 
-      if (document && typeof document === "object" && "customFields" in document) {
-        (document as unknown as { customFields: unknown }).customFields = parse(
-          (document as unknown as { customFields: unknown }).customFields,
-        );
-      }
+      repairCustomFieldsInPlace(document);
 
       const textContent =
         response_format === ResponseFormat.MARKDOWN
@@ -291,11 +281,7 @@ Returns:
         body,
       );
 
-      if (document && typeof document === "object" && "customFields" in document) {
-        (document as unknown as { customFields: unknown }).customFields = parse(
-          (document as unknown as { customFields: unknown }).customFields,
-        );
-      }
+      repairCustomFieldsInPlace(document);
 
       return {
         content: [
@@ -346,11 +332,7 @@ Returns:
         body,
       );
 
-      if (document && typeof document === "object" && "customFields" in document) {
-        (document as unknown as { customFields: unknown }).customFields = parse(
-          (document as unknown as { customFields: unknown }).customFields,
-        );
-      }
+      repairCustomFieldsInPlace(document);
 
       return {
         content: [

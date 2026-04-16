@@ -24,7 +24,7 @@ import {
 } from "../../schemas/invoicing/contacts.js";
 import { registerCrudTools } from "../factory.js";
 import { withErrorHandling } from "../utilities.js";
-import { parse } from "../../utils/custom-fields.js";
+import { repairCustomFieldsInPlace } from "../../utils/custom-fields.js";
 
 /**
  * Format contacts as markdown
@@ -185,12 +185,7 @@ Returns:
       list: formatContactsMarkdown,
       single: formatContactMarkdown,
     },
-    responseTransform: (item) => {
-      if ("customFields" in item) {
-        item.customFields = parse(item.customFields);
-      }
-      return item;
-    },
+    responseTransform: (item) => repairCustomFieldsInPlace(item),
     listQueryParams: (params) => {
       const qp: Record<string, unknown> = {};
       if (params.phone) qp.phone = params.phone;

@@ -28,7 +28,7 @@ import {
 } from "../../schemas/crm/leads.js";
 import { registerCrudTools } from "../factory.js";
 import { snakeToCamel, withErrorHandling } from "../utilities.js";
-import { serialize, parse } from "../../utils/custom-fields.js";
+import { serialize, repairCustomFieldsInPlace } from "../../utils/custom-fields.js";
 import type { CustomFieldsMap } from "../../utils/custom-fields.js";
 
 /**
@@ -168,12 +168,7 @@ Returns:
       }
       return transformed;
     },
-    responseTransform: (item) => {
-      if ("customFields" in item) {
-        item.customFields = parse(item.customFields);
-      }
-      return item;
-    },
+    responseTransform: (item) => repairCustomFieldsInPlace(item),
   });
 
   // ── Manual tools (sub-resource endpoints) ───────────────

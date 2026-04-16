@@ -102,6 +102,24 @@ export function parse(raw: unknown): CustomFieldsMap {
   return out;
 }
 
+/**
+ * Mutate-in-place: if `item` is an object with a `customFields` property,
+ * overwrite it with `parse(item.customFields)`. No-op otherwise. Returns
+ * `item` for chaining.
+ *
+ * Call sites:
+ *   - Direct handlers (documents): after `makeApiRequest`, call on each
+ *     returned document.
+ *   - Factory `responseTransform`: return `repairCustomFieldsInPlace(item)`.
+ */
+export function repairCustomFieldsInPlace<T>(item: T): T {
+  if (item && typeof item === "object" && "customFields" in (item as object)) {
+    const target = item as unknown as { customFields: unknown };
+    target.customFields = parse(target.customFields);
+  }
+  return item;
+}
+
 type RowObject = Record<string, unknown>;
 
 function isRowObject(v: unknown): v is RowObject {

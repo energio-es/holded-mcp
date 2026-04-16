@@ -12,7 +12,7 @@ import {
   DeleteFunnelInputSchema,
 } from "../../schemas/crm/funnels.js";
 import { registerCrudTools } from "../factory.js";
-import { serialize, parse } from "../../utils/custom-fields.js";
+import { serialize, repairCustomFieldsInPlace } from "../../utils/custom-fields.js";
 import type { CustomFieldsMap } from "../../utils/custom-fields.js";
 
 /**
@@ -135,11 +135,6 @@ Returns:
       }
       return body;
     },
-    responseTransform: (item) => {
-      if ("customFields" in item) {
-        item.customFields = parse(item.customFields);
-      }
-      return item;
-    },
+    responseTransform: (item) => repairCustomFieldsInPlace(item),
   });
 }

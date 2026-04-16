@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { serialize, parse, type CustomFieldsMap } from "../src/utils/custom-fields.js";
+import { serialize, parse, repairCustomFieldsInPlace, type CustomFieldsMap } from "../src/utils/custom-fields.js";
 
 describe("serialize", () => {
   it("returns undefined for undefined input", () => {
@@ -91,5 +91,35 @@ describe("parse", () => {
     // Callers should not re-parse — this test guards against accidental double-apply in list repair.
     const already: CustomFieldsMap = { a: "1" };
     expect(parse(already)).toEqual({});
+  });
+});
+
+describe("repairCustomFieldsInPlace", () => {
+  it("mutates customFields on an object with the key", () => {
+    const item = {
+      id: "x",
+      customFields: [
+        { field: "field", value: "a" },
+        { field: "value", value: "1" },
+      ],
+    };
+    const result = repairCustomFieldsInPlace(item);
+    expect(result).toBe(item); // same reference
+    expect(item.customFields as unknown).toEqual({ a: "1" });
+  });
+
+  it("is a no-op on objects without customFields", () => {
+    const item = { id: "x", name: "y" } as Record<string, unknown>;
+    const result = repairCustomFieldsInPlace(item);
+    expect(result).toBe(item);
+    expect(item).toEqual({ id: "x", name: "y" });
+  });
+
+  it("is a no-op on null, undefined, primitives, and arrays", () => {
+    expect(repairCustomFieldsInPlace(null)).toBeNull();
+    expect(repairCustomFieldsInPlace(undefined)).toBeUndefined();
+    expect(repairCustomFieldsInPlace("x")).toBe("x");
+    expect(repairCustomFieldsInPlace(42)).toBe(42);
+    expect(repairCustomFieldsInPlace([1, 2])).toEqual([1, 2]);
   });
 });
