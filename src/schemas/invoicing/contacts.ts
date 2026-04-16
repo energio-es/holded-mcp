@@ -228,12 +228,42 @@ export const GetContactAttachmentInputSchema = z.strictObject({
 export type GetContactAttachmentInput = z.infer<typeof GetContactAttachmentInputSchema>;
 
 /**
- * Upload contact attachment input schema
+ * Upload contact attachment input schema.
+ *
+ * Accepts either a local absolute file path (`file_path`, preferred — avoids
+ * base64 token overhead) or a base64-encoded string (`file_content`, legacy).
+ * Exactly one source must be provided. With `file_path`, `file_name` is
+ * optional and defaults to the path basename.
  */
-export const UploadContactAttachmentInputSchema = z.strictObject({
-  contact_id: IdSchema.describe("The contact ID to upload attachment to"),
-  file_content: z.string().min(1, { message: "File content is required" }).describe("File content as base64 encoded string (required)"),
-  file_name: z.string().min(1, { message: "File name is required" }).describe("File name (required)"),
-});
+export const UploadContactAttachmentInputSchema = z
+  .strictObject({
+    contact_id: IdSchema.describe("The contact ID to upload attachment to"),
+    file_path: z.string().min(1).optional().describe(
+      "Absolute local path to the file (e.g., /Users/me/invoice.pdf or ~/Downloads/invoice.pdf). Preferred over file_content for large files."
+    ),
+    file_content: z.string().min(1).optional().describe(
+      "File content as base64-encoded string. Use file_path instead for large files to avoid token overhead."
+    ),
+    file_name: z.string().min(1).optional().describe(
+      "File name. Required when file_content is used; with file_path, defaults to the path basename."
+    ),
+  })
+  .superRefine((val, ctx) => {
+    const hasPath = Boolean(val.file_path);
+    const hasContent = Boolean(val.file_content);
+    if (hasPath === hasContent) {
+      ctx.addIssue({
+        code: "custom",
+        message: "Provide exactly one of file_path or file_content",
+      });
+    }
+    if (hasContent && !val.file_name) {
+      ctx.addIssue({
+        code: "custom",
+        message: "file_name is required when file_content is used",
+        path: ["file_name"],
+      });
+    }
+  });
 
 export type UploadContactAttachmentInput = z.infer<typeof UploadContactAttachmentInputSchema>;
