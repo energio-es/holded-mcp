@@ -12,6 +12,8 @@ import {
   DeleteFunnelInputSchema,
 } from "../../schemas/crm/funnels.js";
 import { registerCrudTools } from "../factory.js";
+import { serialize, parse } from "../../utils/custom-fields.js";
+import type { CustomFieldsMap } from "../../utils/custom-fields.js";
 
 /**
  * Format funnels as markdown
@@ -109,7 +111,7 @@ Args:
   - name (string): Funnel name
   - stages (array): Updated funnel stages
   - preferences (object): Funnel preferences
-  - customFields (array): Custom fields with field/value pairs
+  - customFields (object): Flat {key: value} map of custom fields
 
 Returns:
   The updated funnel.`,
@@ -124,6 +126,20 @@ Returns:
     formatters: {
       list: formatFunnelsMarkdown,
       single: formatFunnelMarkdown,
+    },
+    updateBodyTransform: (body) => {
+      if (body.customFields !== undefined) {
+        const wire = serialize(body.customFields as CustomFieldsMap | undefined, "map-per-entry");
+        if (wire) body.customFields = wire;
+        else delete body.customFields;
+      }
+      return body;
+    },
+    responseTransform: (item) => {
+      if ("customFields" in item) {
+        item.customFields = parse(item.customFields);
+      }
+      return item;
     },
   });
 }

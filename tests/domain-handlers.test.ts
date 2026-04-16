@@ -19,6 +19,7 @@ const mockMakeApiRequest = vi.mocked(makeApiRequest);
 
 import { registerLeadTools } from "../src/tools/crm/leads.js";
 import { registerBookingTools } from "../src/tools/crm/bookings.js";
+import { registerFunnelTools } from "../src/tools/crm/funnels.js";
 import { registerDocumentTools } from "../src/tools/invoicing/documents.js";
 
 function createMockServer() {
@@ -473,5 +474,40 @@ describe("Lead customFields wire transforms", () => {
     const handler = server.tools.get("holded_crm_get_lead")!.handler;
     const result = await handler({ lead_id: "l1", response_format: "json" });
     expect(result.structuredContent.customFields).toEqual({ tag: "vip" });
+  });
+});
+
+// ============================================================
+// Funnel customFields wire transforms
+// ============================================================
+
+describe("Funnel customFields wire transforms", () => {
+  let server: ReturnType<typeof createMockServer>;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    server = createMockServer();
+    registerFunnelTools(server as any);
+  });
+
+  it("holded_crm_update_funnel sends customFields as map-per-entry", async () => {
+    mockMakeApiRequest.mockResolvedValueOnce({ id: "f1" });
+    const handler = server.tools.get("holded_crm_update_funnel")!.handler;
+    await handler({ funnel_id: "f1", customFields: { stage_meta: "pipeline-v2" } });
+    const [, , , body] = mockMakeApiRequest.mock.calls[0];
+    expect((body as any).customFields).toEqual([{ stage_meta: "pipeline-v2" }]);
+  });
+
+  it("holded_crm_get_funnel repairs customFields on read", async () => {
+    mockMakeApiRequest.mockResolvedValueOnce({
+      id: "f1",
+      customFields: [
+        { field: "field", value: "stage_meta" },
+        { field: "value", value: "pipeline-v2" },
+      ],
+    });
+    const handler = server.tools.get("holded_crm_get_funnel")!.handler;
+    const result = await handler({ funnel_id: "f1", response_format: "json" });
+    expect(result.structuredContent.customFields).toEqual({ stage_meta: "pipeline-v2" });
   });
 });
