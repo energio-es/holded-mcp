@@ -374,10 +374,17 @@ describe("Document customFields wire transforms", () => {
     registerDocumentTools(server as any);
   });
 
-  it("holded_invoicing_create_document sends customFields as map-per-entry", async () => {
-    mockMakeApiRequest.mockResolvedValueOnce({ status: 1, id: "d1" });
+  it("holded_invoicing_create_document sends customFields as map-per-entry and repairs response", async () => {
+    mockMakeApiRequest.mockResolvedValueOnce({
+      status: 1,
+      id: "d1",
+      customFields: [
+        { field: "field", value: "source_path" },
+        { field: "value", value: "/tmp/a.pdf" },
+      ],
+    });
     const handler = server.tools.get("holded_invoicing_create_document")!.handler;
-    await handler({
+    const result = await handler({
       doc_type: "purchase",
       contactId: "c1",
       date: 1776000000,
@@ -389,18 +396,24 @@ describe("Document customFields wire transforms", () => {
       { source_path: "/tmp/a.pdf" },
       { source: "skill@v1" },
     ]);
+    expect(result.structuredContent.customFields).toEqual({ source_path: "/tmp/a.pdf" });
   });
 
-  it("holded_invoicing_update_document sends customFields as documented {field,value}", async () => {
-    mockMakeApiRequest.mockResolvedValueOnce({ status: 1 });
+  it("holded_invoicing_update_document sends customFields as documented {field,value} and repairs response", async () => {
+    mockMakeApiRequest.mockResolvedValueOnce({
+      status: 1,
+      id: "d1",
+      customFields: [{ field: "source_path", value: "/tmp/a.pdf" }],
+    });
     const handler = server.tools.get("holded_invoicing_update_document")!.handler;
-    await handler({
+    const result = await handler({
       doc_type: "purchase",
       document_id: "d1",
       customFields: { source_path: "/tmp/a.pdf" },
     });
     const [, , , body] = mockMakeApiRequest.mock.calls[0];
     expect((body as any).customFields).toEqual([{ field: "source_path", value: "/tmp/a.pdf" }]);
+    expect(result.structuredContent.customFields).toEqual({ source_path: "/tmp/a.pdf" });
   });
 
   it("holded_invoicing_get_document repairs mangled customFields on read", async () => {

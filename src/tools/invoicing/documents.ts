@@ -291,6 +291,12 @@ Returns:
         body,
       );
 
+      if (document && typeof document === "object" && "customFields" in document) {
+        (document as unknown as { customFields: unknown }).customFields = parse(
+          (document as unknown as { customFields: unknown }).customFields,
+        );
+      }
+
       return {
         content: [
           {
@@ -339,6 +345,12 @@ Returns:
         "PUT",
         body,
       );
+
+      if (document && typeof document === "object" && "customFields" in document) {
+        (document as unknown as { customFields: unknown }).customFields = parse(
+          (document as unknown as { customFields: unknown }).customFields,
+        );
+      }
 
       return {
         content: [
