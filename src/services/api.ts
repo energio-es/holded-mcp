@@ -252,6 +252,22 @@ function getBaseUrl(module: ApiModule): string {
 }
 
 /**
+ * Holded sometimes returns HTTP 200 with an HTML error page instead of a
+ * proper JSON response (e.g. for non-existent resources). Detect this and
+ * throw so the normal error-handling path is used. Called from both
+ * makeApiRequest and makeMultipartApiRequest.
+ */
+function assertNotHtmlResponse(method: string, url: string, data: unknown): void {
+  if (typeof data === "string" && data.includes("<!DOCTYPE html>")) {
+    throw new Error(
+      `Unexpected HTML response from ${method} ${url}. ` +
+      "The API returned an HTML page instead of JSON data. " +
+      "This usually means the requested resource does not exist."
+    );
+  }
+}
+
+/**
  * Make an API request to the Holded API with automatic retry for transient errors
  * 
  * Retries automatically on:
@@ -295,17 +311,7 @@ export async function makeApiRequest<T>(
 
       const response = await client.request<T>(config);
 
-      // Holded sometimes returns HTTP 200 with an HTML error page instead of
-      // a proper JSON error response (e.g. for non-existent resources).
-      // Detect this and throw so the normal error-handling path is used.
-      if (typeof response.data === "string" && response.data.includes("<!DOCTYPE html>")) {
-        throw new Error(
-          `Unexpected HTML response from ${method} ${url}. ` +
-          "The API returned an HTML page instead of JSON data. " +
-          "This usually means the requested resource does not exist."
-        );
-      }
-
+      assertNotHtmlResponse(method, url, response.data);
       return response.data;
     } catch (error) {
       lastError = error;
@@ -379,17 +385,7 @@ export async function makeMultipartApiRequest<T>(
 
       const response = await client.post<T>(url, formData);
 
-      // Holded sometimes returns HTTP 200 with an HTML error page instead of
-      // a proper JSON response (e.g. for non-existent resources). Detect this
-      // and throw so the normal error-handling path is used.
-      if (typeof response.data === "string" && response.data.includes("<!DOCTYPE html>")) {
-        throw new Error(
-          `Unexpected HTML response from POST ${url}. ` +
-          "The API returned an HTML page instead of JSON data. " +
-          "This usually means the requested resource does not exist."
-        );
-      }
-
+      assertNotHtmlResponse("POST", url, response.data);
       return response.data;
     } catch (error) {
       lastError = error;
