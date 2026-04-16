@@ -320,7 +320,7 @@ npm run dev
 - `holded_invoicing_get_product_image` - Get main product image
 - `holded_invoicing_list_product_images` - List all product images
 - `holded_invoicing_get_product_secondary_image` - Get a secondary product image
-- `holded_invoicing_upload_product_image` - Upload an image to a product
+- `holded_invoicing_upload_product_image` - Upload an image to a product (accepts `file_path` for large files; `file_content` base64 still supported)
 
 ### Document Tools
 - `holded_invoicing_list_documents` - List documents by type
@@ -336,7 +336,7 @@ npm run dev
 - `holded_invoicing_ship_all_items` - Ship all items from a sales order
 - `holded_invoicing_ship_items_by_line` - Ship specific items by line from a sales order
 - `holded_invoicing_get_shipped_items` - Get shipped items for a document
-- `holded_invoicing_attach_document_file` - Attach a file to a document
+- `holded_invoicing_attach_document_file` - Attach a file to a document (accepts `file_path` for large files; `file_content` base64 still supported)
 
 ### Payment & Treasury Tools
 - `holded_invoicing_list_payments` - List all payments
