@@ -8,6 +8,7 @@ import {
   PaginationSchema,
   ResponseFormatSchema,
 } from "../common.js";
+import { attachmentInputFields, attachmentInputSuperRefine } from "./attachment-input.js";
 
 /**
  * List products input schema
@@ -180,13 +181,19 @@ export const GetProductSecondaryImageInputSchema = z.strictObject({
 export type GetProductSecondaryImageInput = z.infer<typeof GetProductSecondaryImageInputSchema>;
 
 /**
- * Upload product image input schema
+ * Upload product image input schema.
+ *
+ * Accepts either a local absolute file path (`file_path`, preferred — avoids
+ * base64 token overhead) or a base64-encoded string (`file_content`, legacy).
+ * Exactly one source must be provided. With `file_path`, `file_name` is
+ * optional and defaults to the path basename.
  */
-export const UploadProductImageInputSchema = z.strictObject({
-  product_id: IdSchema.describe("The product ID to upload image to"),
-  file_content: z.string().min(1, { message: "File content is required" }).describe("Image file content as base64 encoded string (required)"),
-  file_name: z.string().min(1, { message: "File name is required" }).describe("Image file name (required)"),
-  set_main: z.boolean().optional().describe("Set this image as the main product image"),
-});
+export const UploadProductImageInputSchema = z
+  .strictObject({
+    product_id: IdSchema.describe("The product ID to upload image to"),
+    ...attachmentInputFields("image"),
+    set_main: z.boolean().optional().describe("Set this image as the main product image"),
+  })
+  .superRefine(attachmentInputSuperRefine);
 
 export type UploadProductImageInput = z.infer<typeof UploadProductImageInputSchema>;

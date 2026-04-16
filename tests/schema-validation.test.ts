@@ -16,7 +16,7 @@ import { CreateTaskInputSchema } from '../src/schemas/projects/tasks.js';
 import { CreateBookingInputSchema } from '../src/schemas/crm/bookings.js';
 import { CreateNumberingSeriesInputSchema } from '../src/schemas/invoicing/numbering-series.js';
 import { EntryLineSchema } from '../src/schemas/accounting/daily-ledger.js';
-import { UpdateProductStockInputSchema, CreateProductInputSchema } from '../src/schemas/invoicing/products.js';
+import { UpdateProductStockInputSchema, CreateProductInputSchema, UploadProductImageInputSchema } from '../src/schemas/invoicing/products.js';
 import { CreateEmployeeTimeTrackingInputSchema } from '../src/schemas/team/time-tracking.js';
 
 // Invoicing schemas
@@ -1596,5 +1596,58 @@ describe('AttachDocumentFileInputSchema (file_path + base64)', () => {
       file_content: 'aGVsbG8=',
     });
     expect(r.success).toBe(false);
+  });
+});
+
+describe('UploadProductImageInputSchema (file_path + base64)', () => {
+  const validId = '507f1f77bcf86cd799439011';
+  const baseFields = { product_id: validId };
+
+  it('accepts file_path alone', () => {
+    expect(
+      UploadProductImageInputSchema.safeParse({ ...baseFields, file_path: '/tmp/img.png' }).success
+    ).toBe(true);
+  });
+
+  it('accepts file_path + file_name + set_main', () => {
+    expect(
+      UploadProductImageInputSchema.safeParse({
+        ...baseFields,
+        file_path: '/tmp/img.png',
+        file_name: 'renamed.png',
+        set_main: true,
+      }).success
+    ).toBe(true);
+  });
+
+  it('accepts file_content + file_name (legacy)', () => {
+    expect(
+      UploadProductImageInputSchema.safeParse({
+        ...baseFields,
+        file_content: 'aGVsbG8=',
+        file_name: 'img.png',
+      }).success
+    ).toBe(true);
+  });
+
+  it('rejects both sources', () => {
+    expect(
+      UploadProductImageInputSchema.safeParse({
+        ...baseFields,
+        file_path: '/tmp/img.png',
+        file_content: 'aGVsbG8=',
+        file_name: 'img.png',
+      }).success
+    ).toBe(false);
+  });
+
+  it('rejects neither source', () => {
+    expect(UploadProductImageInputSchema.safeParse({ ...baseFields }).success).toBe(false);
+  });
+
+  it('rejects file_content without file_name', () => {
+    expect(
+      UploadProductImageInputSchema.safeParse({ ...baseFields, file_content: 'aGVsbG8=' }).success
+    ).toBe(false);
   });
 });
