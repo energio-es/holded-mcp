@@ -12,9 +12,10 @@ Verified against: live Holded API via curl using `HOLDED_TEST_API_KEY_ENERGIO`
 | CRM API | 0 | 3 | 3 |
 | Projects API | 0 | 3 | 3 |
 | Accounting API | 1 | 2 | 3 |
-| **Total** | **2** | **11** | **13** |
+| API Client | 1 | 0 | 1 |
+| **Total** | **3** | **11** | **14** |
 
-By severity: **0 Critical**, **1 Medium**, **12 Low**
+By severity: **0 Critical**, **2 Medium**, **12 Low**
 
 **Drift location key:**
 - **Code drift** -- our implementation doesn't match the spec and the API confirms the spec is correct
@@ -144,3 +145,15 @@ By severity: **0 Critical**, **1 Medium**, **12 Low**
 - **Our code does:** Enforces `.min(2)`, each line must have either debit or credit, totals must balance
 - **Conclusion:** Drift is in **the spec** (underspecified -- double-entry bookkeeping inherently requires >= 2 balanced lines)
 - **Severity:** Low
+
+---
+
+## API Client
+
+### DRIFT-CLIENT-1: API client did not validate response Content-Type on multipart uploads
+
+- **Spec says:** Holded's API documents JSON responses for all multipart upload endpoints.
+- **Our code did:** `makeMultipartApiRequest` returned `response.data` without checking whether Holded had returned the documented JSON or an HTML error page. `makeApiRequest` already had this guard (introduced earlier); the multipart variant did not.
+- **API verification (2026-04-16):** Triggered the bug while smoke-testing `POST /contacts/{contactId}/attachments` (a non-existent endpoint, see DRIFT-INV-13). The endpoint returned HTML 404 with HTTP 200; without the guard, the function returned the HTML string typed as the expected `{status, info}` shape. Smoke test only failed because `expect(result.status).toBe(1)` happened to fail on the missing field; a less specific assertion would have passed silently.
+- **Conclusion:** Drift is in **our code**. Added matching HTML-detection guard to `makeMultipartApiRequest` (mirrors the existing logic in `makeApiRequest:298-307`). Both functions now throw with a clear message if Holded returns an HTML body where JSON was expected.
+- **Severity:** Medium (a missing guard for an entire response class; would have masked any future endpoint-removal regression).

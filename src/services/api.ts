@@ -378,6 +378,18 @@ export async function makeMultipartApiRequest<T>(
       }
 
       const response = await client.post<T>(url, formData);
+
+      // Holded sometimes returns HTTP 200 with an HTML error page instead of
+      // a proper JSON response (e.g. for non-existent resources). Detect this
+      // and throw so the normal error-handling path is used.
+      if (typeof response.data === "string" && response.data.includes("<!DOCTYPE html>")) {
+        throw new Error(
+          `Unexpected HTML response from POST ${url}. ` +
+          "The API returned an HTML page instead of JSON data. " +
+          "This usually means the requested resource does not exist."
+        );
+      }
+
       return response.data;
     } catch (error) {
       lastError = error;

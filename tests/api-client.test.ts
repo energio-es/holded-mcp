@@ -1079,5 +1079,22 @@ describe('API Client Tests', () => {
         expect.anything()
       );
     });
+
+    it('should throw on HTML response (Holded 200 with HTML error page)', async () => {
+      const htmlBody = '<!DOCTYPE html><html><head><title>404 · Holded</title></head><body></body></html>';
+      // @ts-expect-error - Mock function type inference issue
+      const mockPost = vi.fn().mockResolvedValue({ data: htmlBody, status: 200 });
+      const mockAxiosInstance = {
+        post: mockPost,
+      };
+      mockedAxios.create.mockReturnValue(mockAxiosInstance as any);
+
+      const fileBuffer = Buffer.from('x');
+      const fileName = 'x.txt';
+
+      await expect(
+        makeMultipartApiRequest('invoicing', 'contacts/123/attachments', fileBuffer, fileName)
+      ).rejects.toThrow(/Unexpected HTML response/);
+    });
   });
 });
