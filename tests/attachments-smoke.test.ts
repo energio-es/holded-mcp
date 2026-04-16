@@ -21,8 +21,6 @@ const describeSmoke = API_KEY ? describe : describe.skip;
 
 describeSmoke("Attachments smoke (file_path → documents attach)", () => {
   let tmpDir: string;
-  let contactId: string | null = null;
-  let documentId: string | null = null;
 
   beforeAll(() => {
     initializeApi(API_KEY!);
@@ -30,20 +28,50 @@ describeSmoke("Attachments smoke (file_path → documents attach)", () => {
   });
 
   afterAll(async () => {
-    if (documentId) {
-      try {
-        await makeApiRequest("invoicing", `documents/estimate/${documentId}`, "DELETE");
-      } catch {
-        // best-effort cleanup
+    // Defense-in-depth cleanup: the API client retries on slow POSTs, which
+    // can produce duplicate contacts. Sweep by name pattern so we delete every
+    // attachment-smoke-* resource regardless of which IDs we captured.
+    try {
+      const allContacts = await makeApiRequest<Array<{ id: string; name?: string }>>(
+        "invoicing",
+        "contacts",
+        "GET"
+      );
+      const ours = allContacts.filter(c => c.name?.startsWith("attachment-smoke-"));
+
+      // Delete each contact's estimates first (foreign-key-style cleanup).
+      if (ours.length > 0) {
+        try {
+          const allEstimates = await makeApiRequest<Array<{ id: string; contact?: { id?: string } }>>(
+            "invoicing",
+            "documents/estimate",
+            "GET"
+          );
+          const ourContactIds = new Set(ours.map(c => c.id));
+          const ourEstimates = allEstimates.filter(e => e.contact?.id && ourContactIds.has(e.contact.id));
+          for (const e of ourEstimates) {
+            try {
+              await makeApiRequest("invoicing", `documents/estimate/${e.id}`, "DELETE");
+            } catch {
+              // best-effort
+            }
+          }
+        } catch {
+          // best-effort
+        }
       }
-    }
-    if (contactId) {
-      try {
-        await makeApiRequest("invoicing", `contacts/${contactId}`, "DELETE");
-      } catch {
-        // best-effort cleanup
+
+      for (const c of ours) {
+        try {
+          await makeApiRequest("invoicing", `contacts/${c.id}`, "DELETE");
+        } catch {
+          // best-effort
+        }
       }
+    } catch {
+      // best-effort
     }
+
     rmSync(tmpDir, { recursive: true, force: true });
   });
 
@@ -56,7 +84,7 @@ describeSmoke("Attachments smoke (file_path → documents attach)", () => {
       { name: `attachment-smoke-${Date.now()}` }
     );
     expect(contact.id).toBeTruthy();
-    contactId = contact.id;
+    const contactId = contact.id;
 
     // 2. Create a throwaway draft estimate (estimates avoid touching invoice numbering).
     const estimate = await makeApiRequest<{ status: number; id: string }>(
@@ -70,7 +98,7 @@ describeSmoke("Attachments smoke (file_path → documents attach)", () => {
       }
     );
     expect(estimate.id).toBeTruthy();
-    documentId = estimate.id;
+    const documentId = estimate.id;
 
     // 3. Write a tiny temp file.
     const filePath = join(tmpDir, "smoke.txt");
