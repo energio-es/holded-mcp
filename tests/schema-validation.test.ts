@@ -21,7 +21,7 @@ import { CreateEmployeeTimeTrackingInputSchema } from '../src/schemas/team/time-
 
 // Invoicing schemas
 import { CreateContactInputSchema, UpdateContactInputSchema, UploadContactAttachmentInputSchema } from '../src/schemas/invoicing/contacts.js';
-import { CreateDocumentInputSchema, DocumentItemSchema } from '../src/schemas/invoicing/documents.js';
+import { AttachDocumentFileInputSchema, CreateDocumentInputSchema, DocumentItemSchema } from '../src/schemas/invoicing/documents.js';
 import { CreateServiceInputSchema } from '../src/schemas/invoicing/services.js';
 import { CreatePaymentInputSchema } from '../src/schemas/invoicing/payments.js';
 import { GetTaxesInputSchema } from '../src/schemas/invoicing/taxes.js';
@@ -1541,5 +1541,60 @@ describe('UploadContactAttachmentInputSchema (file_path + base64)', () => {
     if (!result.success) {
       expect(result.error.issues.some(i => /file_name is required when file_content/.test(i.message))).toBe(true);
     }
+  });
+});
+
+describe('AttachDocumentFileInputSchema (file_path + base64)', () => {
+  const validId = '507f1f77bcf86cd799439011';
+  const baseFields = { doc_type: 'invoice' as const, document_id: validId };
+
+  it('accepts file_path alone', () => {
+    expect(
+      AttachDocumentFileInputSchema.safeParse({ ...baseFields, file_path: '/tmp/invoice.pdf' }).success
+    ).toBe(true);
+  });
+
+  it('accepts file_path + file_name + set_main', () => {
+    expect(
+      AttachDocumentFileInputSchema.safeParse({
+        ...baseFields,
+        file_path: '/tmp/invoice.pdf',
+        file_name: 'renamed.pdf',
+        set_main: true,
+      }).success
+    ).toBe(true);
+  });
+
+  it('accepts file_content + file_name (legacy)', () => {
+    expect(
+      AttachDocumentFileInputSchema.safeParse({
+        ...baseFields,
+        file_content: 'aGVsbG8=',
+        file_name: 'invoice.pdf',
+      }).success
+    ).toBe(true);
+  });
+
+  it('rejects both sources', () => {
+    const r = AttachDocumentFileInputSchema.safeParse({
+      ...baseFields,
+      file_path: '/tmp/x.pdf',
+      file_content: 'aGVsbG8=',
+      file_name: 'x.pdf',
+    });
+    expect(r.success).toBe(false);
+  });
+
+  it('rejects neither source', () => {
+    const r = AttachDocumentFileInputSchema.safeParse({ ...baseFields });
+    expect(r.success).toBe(false);
+  });
+
+  it('rejects file_content without file_name', () => {
+    const r = AttachDocumentFileInputSchema.safeParse({
+      ...baseFields,
+      file_content: 'aGVsbG8=',
+    });
+    expect(r.success).toBe(false);
   });
 });

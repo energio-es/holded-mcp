@@ -12,6 +12,7 @@ import {
   CustomFieldsSchema,
 } from "../common.js";
 import { accountingDateRangeFields } from "../accounting/date-range.js";
+import { attachmentInputFields, attachmentInputSuperRefine } from "./attachment-input.js";
 
 /**
  * Document item schema
@@ -264,14 +265,20 @@ export const GetShippedItemsInputSchema = z.strictObject({
 export type GetShippedItemsInput = z.infer<typeof GetShippedItemsInputSchema>;
 
 /**
- * Attach file to document input schema
+ * Attach file to document input schema.
+ *
+ * Accepts either a local absolute file path (`file_path`, preferred — avoids
+ * base64 token overhead) or a base64-encoded string (`file_content`, legacy).
+ * Exactly one source must be provided. With `file_path`, `file_name` is
+ * optional and defaults to the path basename.
  */
-export const AttachDocumentFileInputSchema = z.strictObject({
-  doc_type: DocumentTypeSchema,
-  document_id: IdSchema.describe("The document ID to attach file to"),
-  file_content: z.string().min(1, { message: "File content is required" }).describe("File content as base64 encoded string (required)"),
-  file_name: z.string().min(1, { message: "File name is required" }).describe("File name (required)"),
-  set_main: z.boolean().optional().describe("Set this file as the main attachment"),
-});
+export const AttachDocumentFileInputSchema = z
+  .strictObject({
+    doc_type: DocumentTypeSchema,
+    document_id: IdSchema.describe("The document ID to attach file to"),
+    ...attachmentInputFields(),
+    set_main: z.boolean().optional().describe("Set this file as the main attachment"),
+  })
+  .superRefine(attachmentInputSuperRefine);
 
 export type AttachDocumentFileInput = z.infer<typeof AttachDocumentFileInputSchema>;
