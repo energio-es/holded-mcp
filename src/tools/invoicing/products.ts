@@ -4,6 +4,7 @@
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { makeApiRequest, makeMultipartApiRequest } from "../../services/api.js";
+import { resolveAttachmentInput } from "../../services/files.js";
 import { ResponseFormat } from "../../constants.js";
 import { Product, ProductStock } from "../../types.js";
 import {
@@ -426,11 +427,16 @@ Returns:
       title: "Upload Holded Product Image",
       description: `Upload an image to a product in Holded.
 
+Provide the image via either an absolute local file path (preferred) or a base64-encoded string.
+
 Args:
   - product_id (string): The product ID to upload image to (required)
-  - file_content (string): Image file content as base64 encoded string (required)
-  - file_name (string): Image file name (required)
+  - file_path (string): Absolute local path to the image, e.g. /Users/me/photo.png or ~/Downloads/photo.png. Preferred for large files — avoids base64 token overhead.
+  - file_content (string): Image file content as base64-encoded string. Fallback when no local path is available.
+  - file_name (string): Image file name. Required when file_content is used; with file_path, defaults to the path basename. Provide explicitly to rename on upload.
   - set_main (boolean): Set this image as the main product image
+
+Exactly one of file_path or file_content must be provided.
 
 Returns:
   Confirmation of image upload with status and info.`,
@@ -443,17 +449,15 @@ Returns:
       },
     },
     withErrorHandling(async (params) => {
-      const { product_id, file_content, file_name, set_main } = params as unknown as UploadProductImageInput;
-
-      // Convert base64 to buffer
-      const fileBuffer = Buffer.from(file_content, "base64");
+      const typedParams = params as unknown as UploadProductImageInput;
+      const { buffer, fileName } = await resolveAttachmentInput(typedParams);
 
       const result = await makeMultipartApiRequest<{ status: number; info: string; [key: string]: unknown }>(
         "invoicing",
-        `products/${product_id}/image`,
-        fileBuffer,
-        file_name,
-        set_main
+        `products/${typedParams.product_id}/image`,
+        buffer,
+        fileName,
+        typedParams.set_main
       );
 
       return {
@@ -463,7 +467,7 @@ Returns:
             text: `Product image uploaded successfully.\n\n${JSON.stringify(result, null, 2)}`,
           },
         ],
-        structuredContent: { uploaded: true, productId: product_id, fileName: file_name, ...result },
+        structuredContent: { uploaded: true, productId: typedParams.product_id, fileName, ...result },
       };
     })
   );
