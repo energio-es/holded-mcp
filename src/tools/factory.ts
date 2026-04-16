@@ -49,7 +49,22 @@ export interface CrudToolConfig<T> {
     single: (item: T) => string;
   };
   listQueryParams?: (params: Record<string, unknown>) => Record<string, unknown>;
+  /**
+   * Transform applied to create + update bodies when no per-method transform
+   * is set. Kept for backward-compat; prefer `createBodyTransform` /
+   * `updateBodyTransform` when the two methods need different serialization
+   * (e.g. Holded's customFields decomposition bug — different wire shape on
+   * POST vs PUT for documents).
+   */
   bodyTransform?: (body: Record<string, unknown>) => Record<string, unknown>;
+  createBodyTransform?: (body: Record<string, unknown>) => Record<string, unknown>;
+  updateBodyTransform?: (body: Record<string, unknown>) => Record<string, unknown>;
+  /**
+   * Transform applied to each single-item response body (from create, update,
+   * get) and to each item inside a list response before formatting. Used to
+   * normalize wire shapes like customFields back to the caller interface.
+   */
+  responseTransform?: (item: Record<string, unknown>) => Record<string, unknown>;
   listResponseKey?: string;
 }
 
@@ -73,6 +88,9 @@ export function registerCrudTools<T>(server: McpServer, config: CrudToolConfig<T
     formatters,
     listQueryParams,
     bodyTransform,
+    createBodyTransform,
+    updateBodyTransform,
+    responseTransform,
     listResponseKey,
   } = config;
 
@@ -120,9 +138,12 @@ export function registerCrudTools<T>(server: McpServer, config: CrudToolConfig<T
           );
         }
 
-        return buildToolResponse(items, params.response_format as ResponseFormat, formatters.list, {
-          [resourcePlural]: items,
-          count: items.length,
+        const transformedItems = responseTransform
+          ? items.map((it) => responseTransform(it as Record<string, unknown>) as unknown as T)
+          : items;
+        return buildToolResponse(transformedItems, params.response_format as ResponseFormat, formatters.list, {
+          [resourcePlural]: transformedItems,
+          count: transformedItems.length,
           page: params.page,
         });
       }),
@@ -146,11 +167,14 @@ export function registerCrudTools<T>(server: McpServer, config: CrudToolConfig<T
       },
       withErrorHandling(async (params) => {
         const id = params[idParam] as string;
-        const item = await makeApiRequest<T>(
+        const rawItem = await makeApiRequest<T>(
           module,
           `${endpoint}/${id}`,
           "GET",
         );
+        const item = responseTransform
+          ? (responseTransform(rawItem as unknown as Record<string, unknown>) as unknown as T)
+          : rawItem;
 
         return buildToolResponse(item, params.response_format as ResponseFormat, formatters.single);
       }),
@@ -176,13 +200,15 @@ export function registerCrudTools<T>(server: McpServer, config: CrudToolConfig<T
       },
       withErrorHandling(async (params) => {
         const { response_format: _response_format, ...body } = params;
-        const requestBody = bodyTransform ? bodyTransform(body) : body;
-        const item = await makeApiRequest<Record<string, unknown>>(
+        const transform = createBodyTransform ?? bodyTransform;
+        const requestBody = transform ? transform(body) : body;
+        const rawItem = await makeApiRequest<Record<string, unknown>>(
           module,
           endpoint,
           "POST",
           requestBody,
         );
+        const item = responseTransform ? responseTransform(rawItem) : rawItem;
 
         return {
           content: [
@@ -215,13 +241,15 @@ export function registerCrudTools<T>(server: McpServer, config: CrudToolConfig<T
       withErrorHandling(async (params) => {
         const id = params[idParam] as string;
         const { [idParam]: _id, response_format: _rf, ...updateData } = params;
-        const requestBody = bodyTransform ? bodyTransform(updateData) : updateData;
-        const item = await makeApiRequest<Record<string, unknown>>(
+        const transform = updateBodyTransform ?? bodyTransform;
+        const requestBody = transform ? transform(updateData) : updateData;
+        const rawItem = await makeApiRequest<Record<string, unknown>>(
           module,
           `${endpoint}/${id}`,
           "PUT",
           requestBody,
         );
+        const item = responseTransform ? responseTransform(rawItem) : rawItem;
 
         return {
           content: [
