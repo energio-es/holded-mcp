@@ -21,7 +21,12 @@ export const DocumentItemSchema = z.strictObject({
   name: z.string().min(1).describe("Item name (required)"),
   desc: z.string().optional().describe("Item description"),
   units: z.number().positive().optional().describe("Quantity"),
-  subtotal: z.number().optional().describe("Subtotal before tax"),
+  subtotal: z.number().optional().describe(
+    "Subtotal before tax. Interpretation DIFFERS by operation: " +
+    "on create this is in the document currency (Holded divides by " +
+    "currencyChange to store EUR base); on update this is the EUR base " +
+    "itself (stored verbatim). See the tool description for the full rule."
+  ),
   tax: z.string().optional().describe("Tax rate ID or percentage (single tax)"),
   taxes: z.array(z.string()).optional().describe("Multiple tax keys (e.g., ['s_iva_21'])"),
   discount: z.number().min(0).max(100).optional().describe("Discount percentage"),
