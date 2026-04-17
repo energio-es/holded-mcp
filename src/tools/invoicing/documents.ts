@@ -247,6 +247,16 @@ Returns:
       title: "Create Holded Document",
       description: `Create a new document in Holded (invoice, estimate, purchase, etc.).
 
+Known quirks (important when calling this tool):
+- items[].subtotal is in the DOCUMENT currency, not EUR. Holded stores EUR
+  base internally as subtotal / currencyChange. Never pre-convert amounts
+  to EUR when currency != EUR — that causes double-conversion.
+- When you want items[].accountingAccountId to take effect, pass
+  applyContactDefaults: false. With the default (true), contact-level
+  defaults override line-level accounts — your accountingAccountId is
+  silently discarded. This tool rejects that combination at validation
+  time; see the error message for the fix.
+
 Args:
   - doc_type (string): Document type (required)
   - items (array): Line items with name, units, subtotal, tax (required)
@@ -254,6 +264,8 @@ Args:
   - date (number): Document date as Unix timestamp
   - dueDate (number): Due date as Unix timestamp
   - notes (string): Document notes
+  - applyContactDefaults (boolean): Apply contact defaults (default true).
+    Pass false when items[].accountingAccountId is set.
   - And other optional fields
 
 Returns:
@@ -302,12 +314,13 @@ Returns:
       title: "Update Holded Document",
       description: `Update an existing document in Holded. Only provided fields will be updated.
 
-Known limitation — exchange rate is NOT updateable:
-  The Holded API does not support changing 'currencyChange' after a document
-  is created; the PUT endpoint silently drops the field. To change the
-  exchange rate, delete the document and recreate it with the new rate.
-  Attempting to pass 'currencyChange' on update is rejected by this tool
-  (Zod validation) to prevent silent data loss.
+Known quirks (important when calling this tool):
+- items[].subtotal is treated as the EUR BASE on update (asymmetric with
+  create). Re-pass values you read from GET to preserve state. Passing
+  invoice-currency values over-books the EUR total.
+- currencyChange is immutable. The Holded PUT endpoint silently drops it.
+  To change the rate: delete the document and recreate. This tool
+  rejects the currencyChange field at validation time.
 
 Args:
   - doc_type (string): Document type (required)
