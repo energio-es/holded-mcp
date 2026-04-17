@@ -302,6 +302,13 @@ Returns:
       title: "Update Holded Document",
       description: `Update an existing document in Holded. Only provided fields will be updated.
 
+Known limitation — exchange rate is NOT updateable:
+  The Holded API does not support changing 'currencyChange' after a document
+  is created; the PUT endpoint silently drops the field. To change the
+  exchange rate, delete the document and recreate it with the new rate.
+  Attempting to pass 'currencyChange' on update is rejected by this tool
+  (Zod validation) to prevent silent data loss.
+
 Args:
   - doc_type (string): Document type (required)
   - document_id (string): The document ID to update (required)
