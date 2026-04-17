@@ -685,6 +685,10 @@ Tools that accept or return `customFields` (documents, leads, funnels) use a fla
 
 The server normalizes Holded's internal wire shape (which varies per endpoint and has a known bug in `POST /documents/{docType}` — see `holded_api_specs/DRIFT.md#DRIFT-INV-14`) so the map form round-trips consistently. On reads, previously-mangled records are repaired transparently.
 
+### Updating an invoice's exchange rate
+
+> **Breaking in v1.5.0:** `update_document` no longer accepts `currencyChange`. Holded's PUT endpoint silently drops the field, so attempting an exchange-rate update produced a success response but no change. To change an invoice's exchange rate, delete the invoice and recreate it with the new `currencyChange` at creation time (the create path honors it and recomputes totals).
+
 ## Workflow Examples
 
 This section demonstrates common real-world workflows combining multiple API operations.
