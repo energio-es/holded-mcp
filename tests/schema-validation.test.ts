@@ -21,7 +21,7 @@ import { CreateEmployeeTimeTrackingInputSchema } from '../src/schemas/team/time-
 
 // Invoicing schemas
 import { CreateContactInputSchema, UpdateContactInputSchema } from '../src/schemas/invoicing/contacts.js';
-import { AttachDocumentFileInputSchema, CreateDocumentInputSchema, DocumentItemSchema } from '../src/schemas/invoicing/documents.js';
+import { AttachDocumentFileInputSchema, CreateDocumentInputSchema, DocumentItemSchema, UpdateDocumentInputSchema } from '../src/schemas/invoicing/documents.js';
 import { CreateServiceInputSchema } from '../src/schemas/invoicing/services.js';
 import { CreatePaymentInputSchema } from '../src/schemas/invoicing/payments.js';
 import { GetTaxesInputSchema } from '../src/schemas/invoicing/taxes.js';
@@ -1585,5 +1585,33 @@ describe('UploadProductImageInputSchema (file_path + base64)', () => {
     expect(
       UploadProductImageInputSchema.safeParse({ ...baseFields, file_content: 'aGVsbG8=' }).success
     ).toBe(false);
+  });
+});
+
+describe('UpdateDocumentInputSchema', () => {
+  it('rejects currencyChange (Holded does not support exchange-rate update; see bugreports/2026-04-17)', () => {
+    const result = UpdateDocumentInputSchema.safeParse({
+      doc_type: 'invoice',
+      document_id: 'abc123',
+      currencyChange: 1.5,
+    });
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      const unrecognized = result.error.issues.some(
+        (issue) =>
+          issue.code === 'unrecognized_keys' &&
+          (issue as { keys?: string[] }).keys?.includes('currencyChange')
+      );
+      expect(unrecognized).toBe(true);
+    }
+  });
+
+  it('accepts a plain non-currencyChange update', () => {
+    const result = UpdateDocumentInputSchema.safeParse({
+      doc_type: 'invoice',
+      document_id: 'abc123',
+      notes: 'hello',
+    });
+    expect(result.success).toBe(true);
   });
 });

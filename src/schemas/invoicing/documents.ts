@@ -124,7 +124,6 @@ export const UpdateDocumentInputSchema = z.strictObject({
   desc: z.string().optional().describe("Document description"),
   notes: z.string().optional().describe("Document notes"),
   language: z.string().optional().describe("Document language code"),
-  currencyChange: z.number().positive().optional().describe("Currency exchange rate"),
   items: z.array(DocumentItemSchema).optional().describe("Document line items"),
   salesChannelId: z.string().optional().describe("Sales channel ID"),
   paymentMethod: z.string().optional().describe("Payment method ID"),
