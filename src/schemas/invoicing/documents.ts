@@ -108,7 +108,20 @@ export const CreateDocumentInputSchema = z.strictObject({
     .describe("Document line items (required)"),
   customFields: CustomFieldsSchema,
   tags: z.array(z.string()).optional().describe("Document tags"),
-})
+}).superRefine((data, ctx) => {
+  const hasItemAccount = data.items?.some((item) => item.accountingAccountId);
+  if (hasItemAccount && data.applyContactDefaults !== false) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["applyContactDefaults"],
+      message:
+        "When items[].accountingAccountId is set, applyContactDefaults must be " +
+        "explicitly false. Omitting it (Holded defaults to true) or setting it to " +
+        "true causes the contact's default account to override your line-level " +
+        "accountingAccountId.",
+    });
+  }
+});
 
 export type CreateDocumentInput = z.infer<typeof CreateDocumentInputSchema>;
 

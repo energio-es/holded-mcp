@@ -1615,3 +1615,70 @@ describe('UpdateDocumentInputSchema', () => {
     expect(result.success).toBe(true);
   });
 });
+
+describe('CreateDocumentInputSchema applyContactDefaults refinement', () => {
+  const baseValidData = {
+    doc_type: 'invoice' as const,
+    date: 1730109600,
+    items: [{ name: 'Product 1', units: 2, subtotal: 100 }],
+  };
+
+  it('accepts documents with no item-level accountingAccountId (applyContactDefaults omitted)', () => {
+    const result = CreateDocumentInputSchema.safeParse(baseValidData);
+    expect(result.success).toBe(true);
+  });
+
+  it('accepts documents with no item-level accountingAccountId and applyContactDefaults: true', () => {
+    const result = CreateDocumentInputSchema.safeParse({
+      ...baseValidData,
+      applyContactDefaults: true,
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it('accepts item-level accountingAccountId when applyContactDefaults is explicitly false', () => {
+    const result = CreateDocumentInputSchema.safeParse({
+      ...baseValidData,
+      applyContactDefaults: false,
+      items: [{ name: 'Product 1', units: 2, subtotal: 100, accountingAccountId: '705000' }],
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it('rejects item-level accountingAccountId when applyContactDefaults is omitted', () => {
+    const result = CreateDocumentInputSchema.safeParse({
+      ...baseValidData,
+      items: [{ name: 'Product 1', units: 2, subtotal: 100, accountingAccountId: '705000' }],
+    });
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      const issue = result.error.issues.find((i) => i.path[0] === 'applyContactDefaults');
+      expect(issue).toBeDefined();
+      expect(issue!.message).toMatch(/applyContactDefaults/);
+    }
+  });
+
+  it('rejects item-level accountingAccountId when applyContactDefaults is true', () => {
+    const result = CreateDocumentInputSchema.safeParse({
+      ...baseValidData,
+      applyContactDefaults: true,
+      items: [{ name: 'Product 1', units: 2, subtotal: 100, accountingAccountId: '705000' }],
+    });
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      const issue = result.error.issues.find((i) => i.path[0] === 'applyContactDefaults');
+      expect(issue).toBeDefined();
+    }
+  });
+
+  it('rejects when at least one item (not all) has accountingAccountId without safe applyContactDefaults', () => {
+    const result = CreateDocumentInputSchema.safeParse({
+      ...baseValidData,
+      items: [
+        { name: 'Product 1', units: 1, subtotal: 50 },
+        { name: 'Product 2', units: 1, subtotal: 50, accountingAccountId: '705000' },
+      ],
+    });
+    expect(result.success).toBe(false);
+  });
+});
