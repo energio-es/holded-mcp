@@ -685,9 +685,15 @@ Tools that accept or return `customFields` (documents, leads, funnels) use a fla
 
 The server normalizes Holded's internal wire shape (which varies per endpoint and has a known bug in `POST /documents/{docType}` — see `holded_api_specs/DRIFT.md#DRIFT-INV-14`) so the map form round-trips consistently. On reads, previously-mangled records are repaired transparently.
 
-### Updating an invoice's exchange rate
+### Document API quirks
 
-> **Breaking in v1.5.0:** `update_document` no longer accepts `currencyChange`. Holded's PUT endpoint silently drops the field, so attempting an exchange-rate update produced a success response but no change. To change an invoice's exchange rate, delete the invoice and recreate it with the new `currencyChange` at creation time (the create path honors it and recomputes totals).
+A few Holded behaviors that affect `create_document` / `update_document` callers. The tool descriptions carry the full rule — this is a cross-reference for human developers:
+
+- **`items[].subtotal` meaning is asymmetric.** On create, it is in the document currency (Holded divides by `currencyChange` to store the EUR base). On update, it is the EUR base itself (stored verbatim). Re-passing values read from GET preserves state; passing invoice-currency values on update over-books the EUR total.
+- **`currencyChange` is immutable.** The Holded PUT endpoint silently drops the field. To change an invoice's exchange rate, delete and recreate with the new `currencyChange` at creation time. The `update_document` schema rejects the field to prevent silent data loss (breaking change in v1.5.0).
+- **`applyContactDefaults` overrides line-level accounts.** When `items[].accountingAccountId` is set, you must pass `applyContactDefaults: false`. Otherwise the contact's default account silently wins. The `create_document` schema enforces this (breaking change in v1.5.0).
+
+Background: [bug report: currencyChange silently ignored on update](docs/bugreports/2026-04-17-update-document-currency-change-ignored.md).
 
 ## Workflow Examples
 
