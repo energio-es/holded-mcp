@@ -319,8 +319,8 @@ Known quirks (important when calling this tool):
   create). Re-pass values you read from GET to preserve state. Passing
   invoice-currency values over-books the EUR total.
 - currencyChange is immutable. The Holded PUT endpoint silently drops it.
-  To change the rate: delete the document and recreate. This tool
-  rejects the currencyChange field at validation time.
+  To change the rate: delete the document and recreate. Passing
+  currencyChange here returns an "unrecognized key" schema error.
 
 Args:
   - doc_type (string): Document type (required)
