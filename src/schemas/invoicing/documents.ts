@@ -98,7 +98,11 @@ export const CreateDocumentInputSchema = z.strictObject({
   designId: z.string().optional().describe("Document design template ID"),
   warehouseId: z.string().optional().describe("Warehouse ID (for salesorder/purchaseorder/waybill)"),
   approveDoc: z.boolean().optional().describe("Auto-approve document (default false)"),
-  applyContactDefaults: z.boolean().optional().describe("Apply contact defaults (default true)"),
+  applyContactDefaults: z.boolean().optional().describe(
+    "Apply contact defaults (default true). Pass false when " +
+    "items[].accountingAccountId is set — otherwise contact defaults " +
+    "override line-level accounts and this tool's refinement rejects the input."
+  ),
   directDebitProvider: z.string().optional().describe("Direct debit provider (e.g., 'gocardless')"),
   // Shipping
   shippingAddress: z.string().optional().describe("Shipping street address"),
