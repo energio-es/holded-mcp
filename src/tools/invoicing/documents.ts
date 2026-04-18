@@ -248,6 +248,11 @@ Returns:
       description: `Create a new document in Holded (invoice, estimate, purchase, etc.).
 
 Known quirks (important when calling this tool):
+- items[].subtotal is the PER-UNIT price, not the line total, regardless
+  of units. Holded stores it as products[i].price and reports
+  line_total = price × units. When units > 1, passing units × unit_price
+  over-books the document by a factor of units. The tool cannot validate
+  this — Holded accepts any number silently.
 - items[].subtotal is in the DOCUMENT currency, not EUR. Holded stores EUR
   base internally as subtotal / currencyChange. Never pre-convert amounts
   to EUR when currency != EUR — that causes double-conversion.
