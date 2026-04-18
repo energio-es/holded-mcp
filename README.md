@@ -689,11 +689,12 @@ The server normalizes Holded's internal wire shape (which varies per endpoint an
 
 A few Holded behaviors that affect `create_document` / `update_document` callers. The tool descriptions carry the full rule — this is a cross-reference for human developers:
 
+- **`items[].subtotal` is a per-unit price, not the line total.** Holded stores it as `products[i].price` and computes `line_total = price × units`. When `units > 1`, passing the line total silently over-books the document. Example: `{units: 40, subtotal: 100}` (not `subtotal: 4000`) for 40 hours × €100/hour.
 - **`items[].subtotal` meaning is asymmetric.** On create, it is in the document currency (Holded divides by `currencyChange` to store the EUR base). On update, it is the EUR base itself (stored verbatim). Re-passing values read from GET preserves state; passing invoice-currency values on update over-books the EUR total.
 - **`currencyChange` is immutable.** The Holded PUT endpoint silently drops the field. To change an invoice's exchange rate, delete and recreate with the new `currencyChange` at creation time. The `update_document` schema rejects the field as an unrecognized key (breaking change in v1.5.0).
 - **`applyContactDefaults` overrides line-level accounts.** When `items[].accountingAccountId` is set, you must pass `applyContactDefaults: false`. Otherwise the contact's default account silently wins. The `create_document` schema enforces this (breaking change in v1.5.0).
 
-Background: [bug report: currencyChange silently ignored on update](docs/bugreports/2026-04-17-update-document-currency-change-ignored.md).
+Background: [bug report: `items[].subtotal` is a per-unit price](docs/bugreports/2026-04-18-document-item-subtotal-is-per-unit-price.md) · [bug report: `currencyChange` silently ignored on update](docs/bugreports/2026-04-17-update-document-currency-change-ignored.md).
 
 ## Workflow Examples
 
