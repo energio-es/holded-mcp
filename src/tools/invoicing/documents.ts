@@ -320,9 +320,9 @@ Returns:
       description: `Update an existing document in Holded. Only provided fields will be updated.
 
 Known quirks (important when calling this tool):
-- items[].subtotal is the PER-UNIT price (same per-unit semantics as
-  create), not the line total. When units > 1, passing a line total
-  over-books by a factor of units.
+- items[].subtotal is the PER-UNIT price, not the line total. Holded
+  stores it as products[i].price and reports line_total = price × units.
+  When units > 1, passing a line total over-books by a factor of units.
 - items[].subtotal is treated as the EUR BASE on update (asymmetric with
   create). Re-pass values you read from GET to preserve state. Passing
   invoice-currency values over-books the EUR total.
