@@ -139,4 +139,54 @@ describeSmoke("Smoke Tests (Real API)", () => {
       }
     });
   });
+
+  describe("items[].subtotal per-unit semantics", () => {
+    let testContactId: string;
+
+    beforeAll(async () => {
+      const stamp = Math.floor(Date.now() / 1000);
+      const resp = await makeApiRequest<{ id: string }>(
+        "invoicing",
+        "contacts",
+        "POST",
+        { name: `SUBTOTAL-SMOKE-${stamp}`, type: "client" },
+      );
+      testContactId = resp.id;
+    });
+
+    afterAll(async () => {
+      if (testContactId) {
+        await makeApiRequest("invoicing", `contacts/${testContactId}`, "DELETE");
+      }
+    });
+
+    it("stores items[].subtotal as per-unit price on create", async () => {
+      const stamp = Math.floor(Date.now() / 1000);
+      const created = await makeApiRequest<{ id: string }>(
+        "invoicing",
+        "documents/estimate",
+        "POST",
+        {
+          contactId: testContactId,
+          date: stamp,
+          items: [{ name: "subtotal-per-unit smoke", units: 10, subtotal: 1 }],
+        },
+      );
+      try {
+        const read = await makeApiRequest<{
+          products: Array<{ price: number; units: number }>;
+          subtotal: number;
+        }>("invoicing", `documents/estimate/${created.id}`, "GET");
+        expect(read.products[0].price).toBe(1);
+        expect(read.products[0].units).toBe(10);
+        expect(read.subtotal).toBe(10);
+      } finally {
+        await makeApiRequest(
+          "invoicing",
+          `documents/estimate/${created.id}`,
+          "DELETE",
+        );
+      }
+    });
+  });
 }, 30000);
