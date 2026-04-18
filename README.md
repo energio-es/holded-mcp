@@ -720,13 +720,13 @@ const invoice = await holded_invoicing_create_document({
     {
       name: "Web Development Service",
       units: 40,
-      subtotal: 4000,  // 40 hours × €100/hour
+      subtotal: 100,  // per-unit: 40 hours × €100/hour → line total €4,000
       tax: 21  // 21% VAT
     },
     {
       name: "Hosting Service (Annual)",
       units: 1,
-      subtotal: 500,
+      subtotal: 500,  // per-unit; units == 1 so line total is also €500
       tax: 21
     }
   ],
@@ -930,14 +930,14 @@ const salesOrder = await holded_invoicing_create_document({
       name: "Laptop HP ProBook",
       sku: "LAPTOP-HP-001",
       units: 5,
-      subtotal: 3500,
+      subtotal: 700,  // per-unit: €700 × 5 units → line total €3,500
       tax: 21
     },
     {
       name: "USB-C Dock",
-      sku: "DOCK-USBC-001", 
+      sku: "DOCK-USBC-001",
       units: 5,
-      subtotal: 500,
+      subtotal: 100,  // per-unit: €100 × 5 units → line total €500
       tax: 21
     }
   ],
