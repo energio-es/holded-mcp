@@ -22,10 +22,14 @@ export const DocumentItemSchema = z.strictObject({
   desc: z.string().optional().describe("Item description"),
   units: z.number().positive().optional().describe("Quantity"),
   subtotal: z.number().optional().describe(
-    "Subtotal before tax. Interpretation DIFFERS by operation: " +
-    "on create this is in the document currency (Holded divides by " +
-    "currencyChange to store EUR base); on update this is the EUR base " +
-    "itself (stored verbatim). See the tool description for the full rule."
+    "Per-unit price in the document currency — despite the field name, " +
+    "this is NOT the line total. Holded stores it verbatim as " +
+    "products[i].price and computes line_total = price × units. For a " +
+    "line of N units at unit price P, pass {units: N, subtotal: P}, not " +
+    "{units: N, subtotal: N*P}. Interpretation DIFFERS by operation: on " +
+    "create, in document currency (Holded divides by currencyChange to " +
+    "store EUR base); on update, is itself the EUR-base per-unit price " +
+    "(stored verbatim)."
   ),
   tax: z.string().optional().describe("Tax rate ID or percentage (single tax)"),
   taxes: z.array(z.string()).optional().describe("Multiple tax keys (e.g., ['s_iva_21'])"),
