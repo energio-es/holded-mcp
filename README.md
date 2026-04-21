@@ -694,8 +694,6 @@ A few Holded behaviors that affect `create_document` / `update_document` callers
 - **`currencyChange` is immutable.** The Holded PUT endpoint silently drops the field. To change an invoice's exchange rate, delete and recreate with the new `currencyChange` at creation time. The `update_document` schema rejects the field as an unrecognized key (breaking change in v1.5.0).
 - **`applyContactDefaults` overrides line-level accounts.** When `items[].accountingAccountId` is set, you must pass `applyContactDefaults: false`. Otherwise the contact's default account silently wins. The `create_document` schema enforces this (breaking change in v1.5.0).
 
-Background: [bug report: `items[].subtotal` is a per-unit price](docs/bugreports/2026-04-18-document-item-subtotal-is-per-unit-price.md) · [bug report: `currencyChange` silently ignored on update](docs/bugreports/2026-04-17-update-document-currency-change-ignored.md).
-
 ## Workflow Examples
 
 This section demonstrates common real-world workflows combining multiple API operations.
